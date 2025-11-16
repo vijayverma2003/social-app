@@ -1,0 +1,53 @@
+"use client";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import { Bell, Home, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+const Navbar = () => {
+  const { isSignedIn, user } = useUser();
+  const pathname = usePathname();
+
+  return (
+    <aside className="min-h-screen w-64 border-r border-border bg-background p-4 flex flex-col overflow-y-scroll">
+      <div className="mb-4">
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+          <span>Social App</span>
+        </Link>
+      </div>
+
+      <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit">
+        <Link href="/">
+          <Button
+            variant={pathname === "/" ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3",
+              pathname === "/" && "bg-secondary"
+            )}
+          >
+            <Home className="size-5" />
+            <span>Home</span>
+          </Button>
+        </Link>
+        <Link href="/messages">
+          <Button
+            variant={pathname === "/messages" ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start gap-3",
+              pathname === "/messages" && "bg-secondary"
+            )}
+          >
+            <MessageCircle className="size-5" />
+            <span>Messages</span>
+          </Button>
+        </Link>
+      </nav>
+    </aside>
+  );
+};
+
+export default Navbar;

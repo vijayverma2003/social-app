@@ -1,0 +1,12 @@
+{
+  "name": "social-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web dev & pnpm --filter server dev",
+    "build": "pnpm --filter shared build && pnpm --filter web build && pnpm --filter server build"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
