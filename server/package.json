@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec ts-node src/index.ts",
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "Vijay <06.vijay.2003@gmail.com>",
@@ -20,6 +19,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/node": "^20",
     "@types/express": "^5.0.5",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",

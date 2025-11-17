@@ -2,6 +2,7 @@ import express from "express";
 import * as database from "./database";
 import router from "./routes";
 import { clerkMiddleware } from "@clerk/express";
+import { PORT } from "./config/vars";
 
 const app = express();
 
@@ -14,8 +15,8 @@ async function main() {
   await database.connect();
   await database.ensureIndexes();
 
-  const server = app.listen(3000, () => {
-    console.log("Server is running on port 3000...");
+  const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}...`);
   });
 
   const shutdown = async () => {
