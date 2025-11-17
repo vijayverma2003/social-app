@@ -1,44 +1,15 @@
 import { ObjectId } from "mongodb";
-import { z } from "zod";
 import { getCollection } from "../database";
+import {
+  CreateUserData,
+  UpdateUserData,
+  FindUserSchema,
+  UserData,
+  CreateUserSchema,
+  UpdateUserSchema,
+} from "../../../shared/schemas/user";
 
 const COLLECTION_NAME = "users";
-
-export const UserSchema = z.object({
-  _id: z.instanceof(ObjectId),
-  clerkId: z.string().trim(),
-  email: z.email().trim().max(250),
-  username: z.string().trim().min(3).max(50).optional(),
-  discriminator: z.string().trim().max(4).optional(),
-  createdAt: z.date(),
-  updatedAt: z.date().optional(),
-  avatarURL: z.url().optional(),
-  bannerURL: z.url().optional(),
-  bannerColor: z.string().trim().default("#000000"),
-  bio: z.string().trim().default(""),
-  pronouns: z.string().trim().default(""),
-});
-
-const CreateUserSchema = UserSchema.omit({
-  _id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-const UpdateUserSchema = UserSchema.partial().omit({
-  _id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-const FindUserSchema = UserSchema.omit({
-  clerkId: true,
-  email: true,
-});
-
-export type UserData = z.infer<typeof UserSchema>;
-export type CreateUserData = z.infer<typeof CreateUserSchema>;
-export type UpdateUserData = z.infer<typeof UpdateUserSchema>;
 
 export class User {
   static async ensureIndexes() {

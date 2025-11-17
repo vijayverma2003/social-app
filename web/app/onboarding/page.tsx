@@ -1,15 +1,14 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import axios from "axios";
 import OnboardingForm from "@/features/onboarding/components/OnboardingForm";
-import type { OnboardingFormData } from "@/features/onboarding/schema";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import type { OnboardingFormData } from "../../../shared/schemas/user";
+import UserService from "@/services/users";
+import { useRouter } from "next/navigation";
 
 const Onboarding = () => {
   const { getToken } = useAuth();
-
+  const router = useRouter();
   const handleSubmit = async (data: OnboardingFormData) => {
     try {
       const token = await getToken();
@@ -17,26 +16,16 @@ const Onboarding = () => {
         throw new Error("Not authenticated");
       }
 
-      const response = await axios.post(
-        `${API_BASE_URL}/users/create`,
-        {
-          username: data.username,
-          dob: data.dob,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await UserService.createUser(data, token);
 
-      console.log("User created successfully", response);
+      console.log(response);
+
+      router.push("/home");
     } catch (error: any) {
       console.error("Error creating user:", error);
       if (error.response?.status === 409) {
         // User already exists, redirect to home
-        console.log("User already exists: 409");
+        router.push("/home");
       } else {
         console.error("Error creating user:", error);
       }

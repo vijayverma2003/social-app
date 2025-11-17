@@ -1,11 +1,16 @@
 {
   "name": "shared",
   "version": "1.0.0",
-  "private": true,
-  "main": "./index.ts",
-  "types": "./index.ts",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "build": "echo 'Add your build command here'"
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Vijay <06.vijay.2003@gmail.com>",
+  "license": "ISC",
+  "packageManager": "pnpm@10.11.0",
+  "dependencies": {
+    "zod": "^4.1.12"
   }
 }
-

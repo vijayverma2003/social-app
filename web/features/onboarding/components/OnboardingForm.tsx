@@ -6,7 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { onboardingSchema, type OnboardingFormData } from "../schema";
+import {
+  OnboardingSchema,
+  type OnboardingFormData,
+} from "../../../../shared/schemas/user";
 
 interface OnboardingFormProps {
   onSubmit: (data: OnboardingFormData) => Promise<void>;
@@ -20,7 +23,7 @@ const OnboardingForm = ({ onSubmit }: OnboardingFormProps) => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<OnboardingFormData>({
-    resolver: zodResolver(onboardingSchema),
+    resolver: zodResolver(OnboardingSchema),
     defaultValues: {
       username: "",
       dob: "",
