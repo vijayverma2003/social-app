@@ -11,7 +11,9 @@ export default function Home() {
 
   async function checkUserExists() {
     const token = await getToken();
-    const result = await UserService.checkUserExists(token || undefined);
+    if (!token) return;
+
+    const result = await UserService.checkUserExists(token);
     if (result.error) {
       // TODO: Show error toast
     } else if (result.success) router.push("/home");

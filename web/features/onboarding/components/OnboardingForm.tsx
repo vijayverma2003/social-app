@@ -10,14 +10,15 @@ import {
   OnboardingSchema,
   type OnboardingFormData,
 } from "../../../../shared/schemas/user";
+import UserService from "@/services/users";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { AxiosError } from "axios";
 
-interface OnboardingFormProps {
-  onSubmit: (data: OnboardingFormData) => Promise<void>;
-}
-
-const OnboardingForm = ({ onSubmit }: OnboardingFormProps) => {
+const OnboardingForm = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
-
+  const { getToken } = useAuth();
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -33,14 +34,22 @@ const OnboardingForm = ({ onSubmit }: OnboardingFormProps) => {
   const onSubmitForm = async (data: OnboardingFormData) => {
     setSubmitError(null);
     try {
-      await onSubmit(data);
-    } catch (error) {
-      console.error("Form submission error:", error);
-      if (error instanceof Error) {
-        setSubmitError(error.message);
-      } else {
-        setSubmitError("Failed to create user. Please try again.");
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
       }
+
+      await UserService.createUser(data, token);
+      router.push("/home");
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 409) {
+        router.push("/home");
+      } else if (error instanceof AxiosError)
+        setSubmitError(
+          error.response?.data.error ||
+            "Failed to create user. Please try again."
+        );
+      else setSubmitError("Failed to create user. Please try again.");
     }
   };
 

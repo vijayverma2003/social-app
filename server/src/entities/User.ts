@@ -35,6 +35,9 @@ export class User {
       ...validation.data,
       createdAt: now,
       updatedAt: now,
+      discriminator: Math.floor(1000 + Math.random() * 9000)
+        .toString()
+        .padStart(4, "0"),
     };
 
     const userCollection = await getCollection(COLLECTION_NAME);
