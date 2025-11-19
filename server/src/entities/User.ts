@@ -7,6 +7,7 @@ import {
   UserData,
   CreateUserSchema,
   UpdateUserSchema,
+  FindUserData,
 } from "../../../shared/schemas/user";
 
 const COLLECTION_NAME = "users";
@@ -26,13 +27,10 @@ export class User {
   }
 
   static async create(data: CreateUserData) {
-    const validation = CreateUserSchema.safeParse(data);
-    if (!validation.success) throw new Error(validation.error.message);
-
     const now = new Date();
 
     const userData = {
-      ...validation.data,
+      ...data,
       createdAt: now,
       updatedAt: now,
       discriminator: Math.floor(1000 + Math.random() * 9000)
@@ -46,13 +44,10 @@ export class User {
   }
 
   static async update(_id: ObjectId, data: UpdateUserData) {
-    const validation = UpdateUserSchema.safeParse(data);
-    if (!validation.success) throw new Error(validation.error.message);
-
     const now = new Date();
 
     const userData = {
-      ...validation.data,
+      ...data,
       updatedAt: now,
     };
 
@@ -69,18 +64,22 @@ export class User {
     return user || null;
   }
 
-  static async findById(id: string) {
+  static async findById(
+    id: string
+  ): Promise<(FindUserData & { _id: ObjectId }) | null> {
     const userCollection = await getCollection(COLLECTION_NAME);
-    const user = await userCollection.findOne<UserData>({
-      _id: new ObjectId(id),
-    });
+    const user = await userCollection.findOne<FindUserData & { _id: ObjectId }>(
+      {
+        _id: new ObjectId(id),
+      }
+    );
 
     if (!user) return null;
 
     const validation = FindUserSchema.safeParse(user);
     if (!validation.success) return null;
 
-    return validation.data;
+    return { ...validation.data, _id: user._id };
   }
 
   static validateCreate(data: CreateUserData) {

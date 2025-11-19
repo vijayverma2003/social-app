@@ -80,3 +80,4 @@ export type OnboardingFormData = z.infer<typeof OnboardingSchema>;
 export type UserData = z.infer<typeof UserSchema>;
 export type CreateUserData = z.infer<typeof CreateUserSchema>;
 export type UpdateUserData = z.infer<typeof UpdateUserSchema>;
+export type FindUserData = z.infer<typeof FindUserSchema>;
