@@ -36,6 +36,9 @@ importers:
       shared:
         specifier: workspace:*
         version: link:../shared
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19

@@ -1,6 +1,6 @@
 "use client";
 
-import OnboardingForm from "@/features/onboarding/components/OnboardingForm";
+import OnboardingForm from "@/app/onboarding/components/OnboardingForm";
 
 const Onboarding = () => {
   return (

@@ -15,13 +15,11 @@ export const UserSchema = z.object({
 });
 
 export const CreateUserSchema = UserSchema.omit({
-  _id: true,
   createdAt: true,
   updatedAt: true,
 });
 
 export const UpdateUserSchema = UserSchema.partial().omit({
-  _id: true,
   createdAt: true,
   updatedAt: true,
 });
@@ -61,6 +59,23 @@ export const OnboardingSchema = z.object({
     ),
 });
 
+export const ProfileSettingsSchema = z.object({
+  bio: z
+    .string()
+    .trim()
+    .max(400, "Bio must be at most 400 characters")
+    .default(""),
+  pronouns: z
+    .string()
+    .trim()
+    .max(20, "Pronouns must be at most 20 characters")
+    .default(""),
+  bannerColor: z.string().trim().default("#4e83d9"),
+  avatarURL: z.union([z.url(), z.literal("")]).optional(),
+  bannerURL: z.union([z.url(), z.literal("")]).optional(),
+});
+
+export type ProfileSettingsFormData = z.infer<typeof ProfileSettingsSchema>;
 export type OnboardingFormData = z.infer<typeof OnboardingSchema>;
 export type UserData = z.infer<typeof UserSchema>;
 export type CreateUserData = z.infer<typeof CreateUserSchema>;

@@ -28,7 +28,7 @@ const MainHeader = () => {
           </Link>
 
           {isSignedIn ? (
-            <Link href="/profile">
+            <Link href="/settings/profile">
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="size-8">
                   <AvatarImage

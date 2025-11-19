@@ -45,7 +45,7 @@ export class User {
     return { ...userData, _id: result.insertedId };
   }
 
-  static async update(id: string, data: UpdateUserData) {
+  static async update(_id: ObjectId, data: UpdateUserData) {
     const validation = UpdateUserSchema.safeParse(data);
     if (!validation.success) throw new Error(validation.error.message);
 
@@ -57,18 +57,15 @@ export class User {
     };
 
     const userCollection = await getCollection(COLLECTION_NAME);
-    const result = await userCollection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: userData }
-    );
-    return result.modifiedCount > 0
-      ? { ...userData, _id: new ObjectId(id) }
-      : null;
+    const result = await userCollection.updateOne({ _id }, { $set: userData });
+    return result.modifiedCount > 0 ? { ...userData, _id } : null;
   }
 
   static async findByClerkId(clerkId: string) {
     const userCollection = await getCollection(COLLECTION_NAME);
-    const user = await userCollection.findOne<UserData>({ clerkId });
+    const user = await userCollection.findOne<UserData & { _id: ObjectId }>({
+      clerkId,
+    });
     return user || null;
   }
 

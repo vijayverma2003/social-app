@@ -7,13 +7,14 @@ import { Bell, Home, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
 
 const Navbar = () => {
   const { isSignedIn, user } = useUser();
   const pathname = usePathname();
 
   return (
-    <aside className="min-h-screen w-64 border-r border-border bg-background p-4 flex flex-col overflow-y-scroll">
+    <aside className="min-h-screen w-64 border-r border-border bg-background p-4 flex flex-col gap-4 overflow-y-scroll">
       <div className="mb-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
           <span>Social App</span>
@@ -46,6 +47,7 @@ const Navbar = () => {
           </Button>
         </Link>
       </nav>
+      <ProfileSettingsNavigation />
     </aside>
   );
 };

@@ -1,5 +1,6 @@
 import { clerkClient, getAuth } from "@clerk/express";
 import { Router } from "express";
+import { treeifyError, ZodError } from "zod";
 import { User } from "../entities/User";
 import STATUS_CODES from "../services/status";
 
@@ -67,6 +68,36 @@ router.get("/me", async (req, res) => {
       return res
         .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
         .json({ error: "Internal server error while getting user" });
+  }
+});
+
+router.put("/me", async (req, res) => {
+  try {
+    const { userId, isAuthenticated } = getAuth(req);
+    if (!isAuthenticated)
+      return res
+        .status(STATUS_CODES.UNAUTHORIZED)
+        .json({ error: "Unauthorized" });
+
+    const user = await User.findByClerkId(userId);
+    if (!user)
+      return res
+        .status(STATUS_CODES.NOT_FOUND)
+        .json({ error: "User not found" });
+    const validatedData = User.validateUpdate(req.body);
+    const updatedUser = await User.update(user._id, validatedData);
+
+    return res.status(STATUS_CODES.SUCCESS).json({ ...user, ...updatedUser });
+  } catch (error) {
+    console.log(error);
+    if (error instanceof Error)
+      return res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ error: error.message });
+    else
+      return res
+        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json({ error: "Internal server error while updating a user" });
   }
 });
 
