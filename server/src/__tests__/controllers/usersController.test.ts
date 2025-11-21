@@ -100,10 +100,12 @@ describe("UsersController", () => {
           mockNext as any
         );
 
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.UNAUTHORIZED,
-          message: "Unauthorized"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.UNAUTHORIZED,
+            message: "Unauthorized",
+          })
+        );
         expect(User.findByClerkId).not.toHaveBeenCalled();
       });
     });
@@ -121,10 +123,12 @@ describe("UsersController", () => {
         );
 
         expect(User.findByClerkId).toHaveBeenCalledWith(TEST_USER_ID);
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.CONFLICT,
-          message: "User already exists"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.CONFLICT,
+            message: "User already exists",
+          })
+        );
         expect(clerkClient.users.getUser).not.toHaveBeenCalled();
       });
     });
@@ -198,6 +202,32 @@ describe("UsersController", () => {
           email: TEST_EMAIL,
         });
       });
+
+      it("should return 400 when user has no email address", async () => {
+        const clerkUser = {
+          primaryEmailAddress: null,
+          emailAddresses: [],
+        };
+
+        setupAuthenticatedUser();
+        vi.mocked(User.findByClerkId).mockResolvedValue(null);
+        vi.mocked(clerkClient.users.getUser).mockResolvedValue(
+          clerkUser as any
+        );
+
+        await UsersController.createUser(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext as any
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.BAD_REQUEST,
+            message: "User must have an email address",
+          })
+        );
+      });
     });
 
     describe("error handling", () => {
@@ -251,10 +281,12 @@ describe("UsersController", () => {
           mockNext as any
         );
 
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.UNAUTHORIZED,
-          message: "Unauthorized"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.UNAUTHORIZED,
+            message: "Unauthorized",
+          })
+        );
         expect(User.findByClerkId).not.toHaveBeenCalled();
       });
     });
@@ -271,10 +303,12 @@ describe("UsersController", () => {
         );
 
         expect(User.findByClerkId).toHaveBeenCalledWith(TEST_USER_ID);
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.NOT_FOUND,
-          message: "User not found"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: "User not found",
+          })
+        );
       });
 
       it("should return user successfully", async () => {
@@ -322,10 +356,12 @@ describe("UsersController", () => {
           mockNext as any
         );
 
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.UNAUTHORIZED,
-          message: "Unauthorized"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.UNAUTHORIZED,
+            message: "Unauthorized",
+          })
+        );
       });
     });
 
@@ -341,10 +377,34 @@ describe("UsersController", () => {
         );
 
         expect(User.findByClerkId).toHaveBeenCalledWith(TEST_USER_ID);
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.NOT_FOUND,
-          message: "User not found"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: "User not found",
+          })
+        );
+      });
+
+      it("should return 400 when update body is empty", async () => {
+        const userObjectId = new ObjectId();
+        const existingUser = createMockUser({ _id: userObjectId });
+        const validationError = new Error("Update data cannot be empty");
+
+        setupAuthenticatedUser();
+        vi.mocked(User.findByClerkId).mockResolvedValue(existingUser as any);
+        vi.mocked(User.validateUpdate).mockImplementation(() => {
+          throw validationError;
+        });
+
+        setupMockRequest({ body: {} });
+
+        await UsersController.updateCurrentUser(
+          mockRequest as Request,
+          mockResponse as Response,
+          mockNext as any
+        );
+
+        expect(mockNext).toHaveBeenCalledWith(validationError);
       });
     });
 
@@ -405,10 +465,12 @@ describe("UsersController", () => {
           mockNext as any
         );
 
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
-          message: "Failed to update user"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
+            message: "Failed to update user",
+          })
+        );
       });
 
       it("should handle validation errors", async () => {
@@ -444,10 +506,12 @@ describe("UsersController", () => {
           mockNext as any
         );
 
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.BAD_REQUEST,
-          message: "User ID is required"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.BAD_REQUEST,
+            message: "User ID is required",
+          })
+        );
         expect(User.findById).not.toHaveBeenCalled();
       });
     });
@@ -466,10 +530,12 @@ describe("UsersController", () => {
         );
 
         expect(User.findById).toHaveBeenCalledWith(userId);
-        expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-          statusCode: STATUS_CODES.NOT_FOUND,
-          message: "User not found"
-        }));
+        expect(mockNext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            statusCode: STATUS_CODES.NOT_FOUND,
+            message: "User not found",
+          })
+        );
       });
 
       it("should return user successfully", async () => {

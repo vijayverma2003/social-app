@@ -126,6 +126,41 @@ describe("FriendsController", () => {
       );
     });
 
+    it("should return 400 when receiverId is invalid format", async () => {
+      const userId = "user_123";
+      const userObjectId = new ObjectId();
+      const invalidReceiverId = "invalid-id";
+      const mockUser = {
+        _id: userObjectId,
+        clerkId: userId,
+        email: "sender@example.com",
+      };
+      const error = new Error(
+        "BSONError: input must be a 24 character hex string"
+      );
+
+      vi.mocked(getAuth).mockReturnValue({
+        userId,
+        isAuthenticated: true,
+      } as any);
+      vi.mocked(User.findByClerkId).mockResolvedValue(mockUser as any);
+      vi.mocked(FriendRequests.validateCreate).mockReturnValue({
+        senderId: userObjectId.toString(),
+        receiverId: invalidReceiverId,
+      } as any);
+      vi.mocked(User.findById).mockRejectedValue(error);
+
+      mockRequest.body = { receiverId: invalidReceiverId };
+
+      await FriendsController.createFriendRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext as any
+      );
+
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+
     it("should return 400 when user tries to send request to themselves", async () => {
       const userId = "user_123";
       const userObjectId = new ObjectId();

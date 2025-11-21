@@ -25,11 +25,17 @@ export class UsersController {
 
       const clerkUser = await clerkClient.users.getUser(userId);
 
+      const email =
+        clerkUser.primaryEmailAddress?.emailAddress ||
+        clerkUser.emailAddresses[0]?.emailAddress;
+
+      if (!email) {
+        throw new BadRequestError("User must have an email address");
+      }
+
       const data = {
         clerkId: userId,
-        email:
-          clerkUser.primaryEmailAddress?.emailAddress ||
-          clerkUser.emailAddresses[0].emailAddress,
+        email,
         ...req.body,
       };
 
@@ -60,7 +66,11 @@ export class UsersController {
     }
   }
 
-  static async updateCurrentUser(req: Request, res: Response, next: NextFunction) {
+  static async updateCurrentUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const { userId, isAuthenticated } = getAuth(req);
       if (!isAuthenticated) {
