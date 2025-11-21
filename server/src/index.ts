@@ -1,4 +1,6 @@
 import express from "express";
+import { createServer } from "http";
+import SocketIOProvider from "./socket";
 import cors from "cors";
 import * as database from "./database";
 import router from "./routes";
@@ -16,7 +18,6 @@ app.use(
 );
 app.use(express.json());
 
-
 app.use(clerkMiddleware());
 app.use("/api", router);
 app.use(errorHandler);
@@ -25,7 +26,10 @@ async function main() {
   await database.connect();
   await database.ensureIndexes();
 
-  const server = app.listen(PORT, () => {
+  const server = createServer(app);
+  SocketIOProvider.initialize(server);
+
+  server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}...`);
   });
 
