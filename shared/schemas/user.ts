@@ -1,79 +1,115 @@
 import { z } from "zod";
 
+const validateAge = (date: string) => {
+  const birthDate = new Date(date);
+  const today = new Date();
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const actualAge =
+    monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ? age - 1
+      : age;
+  return actualAge >= 13;
+};
+
 export const UserSchema = z.object({
-  clerkId: z.string().trim(),
-  email: z.email().trim().max(250),
-  username: z.string().trim().min(3).max(50).optional(),
-  discriminator: z.string().trim().max(4).optional(),
+  clerkId: z.string().min(1, "Clerk ID is required").trim(),
+  email: z
+    .email("Invalid email address")
+    .min(1, "Email is required")
+    .trim()
+    .max(250, "Email cannot exceed 250 characters"),
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(50, "Username cannot exceed 50 characters")
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      "Username can only contain letters, numbers, and underscores"
+    )
+    .optional(),
+  discriminator: z
+    .string()
+    .trim()
+    .max(4, "Discriminator cannot exceed 4 characters")
+    .optional(),
   createdAt: z.date(),
   updatedAt: z.date().optional(),
-  avatarURL: z.url().optional(),
-  bannerURL: z.url().optional(),
-  bannerColor: z.string().trim().default("#000000"),
-  bio: z.string().trim().default(""),
-  pronouns: z.string().trim().default(""),
+  avatarURL: z.url("Invalid avatar URL").optional(),
+  bannerURL: z.url("Invalid banner URL").optional(),
+  bannerColor: z
+    .string()
+    .trim()
+    .regex(/^#([0-9a-fA-F]{3}){1,2}$/, "Invalid hex color code")
+    .default("#000000"),
+  bio: z
+    .string()
+    .trim()
+    .max(400, "Bio cannot exceed 400 characters")
+    .default(""),
+  pronouns: z
+    .string()
+    .trim()
+    .max(20, "Pronouns cannot exceed 20 characters")
+    .default(""),
+  dob: z
+    .string()
+    .min(1, "Date of birth is required")
+    .refine(validateAge, { message: "You must be at least 13 years old" })
+    .optional(),
 });
 
 export const CreateUserSchema = UserSchema.omit({
   createdAt: true,
   updatedAt: true,
-});
+}).strict();
 
-export const UpdateUserSchema = UserSchema.partial().omit({
-  createdAt: true,
-  updatedAt: true,
-});
+export const UpdateUserSchema = UserSchema.partial()
+  .omit({
+    createdAt: true,
+    updatedAt: true,
+  })
+  .strict();
 
 export const FindUserSchema = UserSchema.omit({
   clerkId: true,
   email: true,
+  dob: true,
 });
 
-export const OnboardingSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(3, "Username must be at least 3 characters")
-    .max(50, "Username must be at most 50 characters")
-    .regex(
-      /^[a-zA-Z0-9_]+$/,
-      "Username can only contain letters, numbers, and underscores"
-    ),
-  dob: z
-    .string()
-    .min(1, "Date of birth is required")
-    .refine(
-      (date) => {
-        const birthDate = new Date(date);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        const actualAge =
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate())
-            ? age - 1
-            : age;
-        return actualAge >= 13;
-      },
-      { message: "You must be at least 13 years old" }
-    ),
-});
+export const OnboardingSchema = z
+  .object({
+    username: z
+      .string()
+      .min(1, "Username is required")
+      .trim()
+      .min(3, "Username must be at least 3 characters")
+      .max(50, "Username cannot exceed 50 characters")
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        "Username can only contain letters, numbers, and underscores"
+      ),
+    dob: z
+      .string()
+      .min(1, "Date of birth is required")
+      .refine(validateAge, { message: "You must be at least 13 years old" }),
+  })
+  .strict();
 
-export const ProfileSettingsSchema = z.object({
-  bio: z
-    .string()
-    .trim()
-    .max(400, "Bio must be at most 400 characters")
-    .default(""),
-  pronouns: z
-    .string()
-    .trim()
-    .max(20, "Pronouns must be at most 20 characters")
-    .default(""),
-  bannerColor: z.string().trim().default("#4e83d9"),
-  avatarURL: z.union([z.url(), z.literal("")]).optional(),
-  bannerURL: z.union([z.url(), z.literal("")]).optional(),
-});
+export const ProfileSettingsSchema = z
+  .object({
+    bio: UserSchema.shape.bio,
+    pronouns: UserSchema.shape.pronouns,
+    bannerColor: UserSchema.shape.bannerColor,
+    avatarURL: z
+      .union([z.string().url("Invalid avatar URL"), z.literal("")])
+      .optional(),
+    bannerURL: z
+      .union([z.string().url("Invalid banner URL"), z.literal("")])
+      .optional(),
+  })
+  .strict();
 
 export type ProfileSettingsFormData = z.infer<typeof ProfileSettingsSchema>;
 export type OnboardingFormData = z.infer<typeof OnboardingSchema>;
