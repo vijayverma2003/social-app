@@ -1,7 +1,7 @@
 "use client";
 
 import UserService from "@/services/users";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, SignInButton, SignedOut } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -9,24 +9,30 @@ export default function Home() {
   const { isLoaded, getToken } = useAuth();
   const router = useRouter();
 
-  async function checkUserExists() {
-    const token = await getToken();
-    if (!token) return;
-
-    const result = await UserService.checkUserExists(token);
-    if (result.error) {
-      // TODO: Show error toast
-    } else if (result.success) router.push("/home");
-    else router.push("/onboarding");
-  }
-
   useEffect(() => {
+    async function checkUserExists() {
+      const token = await getToken();
+      if (!token) return;
+
+      const result = await UserService.checkUserExists(token);
+      if (result.error) {
+        // TODO: Show error toast
+      } else if (result.success) router.push("/home");
+      else router.push("/onboarding");
+    }
+
     if (isLoaded) checkUserExists();
-  }, [isLoaded]);
+  }, [isLoaded, getToken, router]);
 
   return (
     <main className="flex h-screen items-center justify-center">
-      Hello World
+      <SignedOut>
+        <SignInButton mode="modal">
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Login
+          </button>
+        </SignInButton>
+      </SignedOut>
     </main>
   );
 }
