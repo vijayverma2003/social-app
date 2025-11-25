@@ -1,5 +1,10 @@
-// Shared utilities and types
-export const sharedFunction = () => {
-  return 'Hello from shared!';
-};
+// Friend request schemas and types
+export {
+  FriendRequestSchema,
+  CreateFriendRequestSchema,
+  type FriendRequestData,
+  type CreateFriendRequestData,
+} from "./schemas/friends";
 
+// WebSocket event names
+export { FRIEND_REQUEST_EVENTS, type FriendRequestEvent } from "./socketEvents";

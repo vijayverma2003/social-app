@@ -1,8 +1,10 @@
 import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
+import { SocketHandlers } from "./socketHandlers";
 
 class SocketIOProvider {
   private static _instance: Server | null = null;
+  private static _handlers: SocketHandlers | null = null;
 
   public static initialize(httpServer: HttpServer): Server {
     if (this._instance) {
@@ -16,13 +18,9 @@ class SocketIOProvider {
       },
     });
 
-    this._instance.on("connection", (socket) => {
-      console.log("A user connected:", socket.id);
-
-      socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
-      });
-    });
+    // Initialize socket handlers
+    this._handlers = new SocketHandlers(this._instance);
+    this._handlers.initialize();
 
     return this._instance;
   }
@@ -34,6 +32,15 @@ class SocketIOProvider {
       );
     }
     return this._instance;
+  }
+
+  public static get handlers(): SocketHandlers {
+    if (!this._handlers) {
+      throw new Error(
+        "Socket handlers not initialized! Call SocketIOProvider.initialize() first."
+      );
+    }
+    return this._handlers;
   }
 }
 
