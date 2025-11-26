@@ -1,13 +1,13 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { SignInButton, useUser } from "@clerk/nextjs";
-import { Bell, Home, MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useUser } from "@clerk/nextjs";
+import { Home, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
+import ConnectionsNavigation from "../connections/components/UserNavigation";
 
 const Navbar = () => {
   const { isSignedIn, user } = useUser();
@@ -34,20 +34,22 @@ const Navbar = () => {
             <span>Home</span>
           </Button>
         </Link>
-        <Link href="/messages">
+        <Link href="/connections">
           <Button
-            variant={pathname === "/messages" ? "secondary" : "ghost"}
+            variant={pathname === "/connections" ? "secondary" : "ghost"}
             className={cn(
               "w-full justify-start gap-3",
-              pathname === "/messages" && "bg-secondary"
+              pathname === "/connections" && "bg-secondary"
             )}
           >
             <MessageCircle className="size-5" />
-            <span>Messages</span>
+            <span>Friends & DMs</span>
           </Button>
         </Link>
       </nav>
-      <ProfileSettingsNavigation />
+
+      {pathname.startsWith("/settings") && <ProfileSettingsNavigation />}
+      {pathname.startsWith("/connections") && <ConnectionsNavigation />}
     </aside>
   );
 };

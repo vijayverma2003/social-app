@@ -7,13 +7,11 @@ import { useAuth } from "@clerk/nextjs";
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
-  emit: (event: string, data: any, callback?: (response: any) => void) => void;
 }
 
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   isConnected: false,
-  emit: () => console.warn("Socket not initialized"),
 });
 
 export const useSocket = () => {
@@ -32,18 +30,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { isSignedIn, getToken } = useAuth();
-
-  const emit = (
-    event: string,
-    data: any,
-    callback?: (response: any) => void
-  ) => {
-    if (socket && isConnected) {
-      socket.emit(event, data, callback);
-    } else {
-      console.warn("Socket is not connected. Cannot emit event:", event);
-    }
-  };
 
   const initializeSocket = async () => {
     try {
@@ -107,7 +93,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }, [isSignedIn, getToken]);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected, emit }}>
+    <SocketContext.Provider value={{ socket, isConnected }}>
       {children}
     </SocketContext.Provider>
   );

@@ -25,7 +25,7 @@ interface UseFriendRequestsCallbacks {
 }
 
 export const useFriendRequests = (callbacks?: UseFriendRequestsCallbacks) => {
-  const { socket, emit, isConnected } = useSocket();
+  const { socket, isConnected } = useSocket();
   const callbacksRef = useRef(callbacks);
 
   useEffect(() => {
@@ -35,17 +35,17 @@ export const useFriendRequests = (callbacks?: UseFriendRequestsCallbacks) => {
   const emitSocketEvent = useCallback(
     (event: string, data: any): Promise<SocketResponse> => {
       return new Promise((resolve) => {
-        if (!isConnected) {
+        if (!isConnected || !socket) {
           resolve({ error: "Socket not connected" });
           return;
         }
 
-        emit(event, data, (response: SocketResponse) => {
+        socket.emit(event, data, (response: SocketResponse) => {
           resolve(response);
         });
       });
     },
-    [emit, isConnected]
+    [socket, isConnected]
   );
 
   const sendFriendRequest = useCallback(
