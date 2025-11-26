@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { getAuth } from "@clerk/express";
+import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
 import { User } from "./entities/User";
 import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
@@ -22,10 +22,19 @@ export class SocketHandlers {
     this.io.use(async (socket: AuthenticatedSocket, next) => {
       try {
         const request = socket.request as Request;
+
+        await new Promise<void>((resolve, reject) => {
+          const middleware = clerkMiddleware();
+          middleware(request, {} as any, (err?: any) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+
         const { userId, isAuthenticated } = getAuth(request);
 
         if (!isAuthenticated || !userId) {
-          return next(new Error("Unauthorized"));
+          return next(new Error("Invalid or expired token"));
         }
 
         const user = await User.findByClerkId(userId);
@@ -38,6 +47,7 @@ export class SocketHandlers {
 
         next();
       } catch (error) {
+        console.error("Socket authentication error:", error);
         next(new Error("Authentication failed"));
       }
     });

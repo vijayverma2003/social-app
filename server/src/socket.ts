@@ -18,7 +18,6 @@ class SocketIOProvider {
       },
     });
 
-    // Initialize socket handlers
     this._handlers = new SocketHandlers(this._instance);
     this._handlers.initialize();
 

@@ -1,6 +1,3 @@
-/**
- * WebSocket event names for friend requests
- */
 export const FRIEND_REQUEST_EVENTS = {
   // Client -> Server events (actions)
   SEND: "friend_request:send",
@@ -13,8 +10,5 @@ export const FRIEND_REQUEST_EVENTS = {
   REJECTED: "friend_request:rejected",
 } as const;
 
-/**
- * Type for friend request event names
- */
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];

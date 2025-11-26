@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
+import { SocketProvider } from "@/contexts/SocketContext";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -24,7 +25,7 @@ export default function RootLayout({
         <body
           className={`${nunito.variable} antialiased h-screen overflow-hidden`}
         >
-          {children}
+          <SocketProvider>{children}</SocketProvider>
         </body>
       </html>
     </ClerkProvider>
