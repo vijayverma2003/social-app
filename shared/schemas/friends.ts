@@ -16,5 +16,23 @@ export const CreateFriendRequestSchema = z
   })
   .strict();
 
+export const SendFriendRequestInputSchema = z
+  .object({
+    receiverId: z.string().trim().min(1, "Receiver ID is required"),
+  })
+  .strict();
+
+export const FriendRequestActionInputSchema = z
+  .object({
+    requestId: z.string().trim().min(1, "Request ID is required"),
+  })
+  .strict();
+
 export type CreateFriendRequestData = z.infer<typeof CreateFriendRequestSchema>;
 export type FriendRequestData = z.infer<typeof FriendRequestSchema>;
+export type SendFriendRequestInput = z.infer<
+  typeof SendFriendRequestInputSchema
+>;
+export type FriendRequestActionInput = z.infer<
+  typeof FriendRequestActionInputSchema
+>;

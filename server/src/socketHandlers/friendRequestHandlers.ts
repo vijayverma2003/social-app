@@ -1,8 +1,12 @@
 import { Server, Socket } from "socket.io";
-import { User } from "../entities/User";
-import FriendRequests from "../entities/FriendRequests";
-import { FriendRequestData } from "../../../shared/schemas/friends";
+import {
+  FriendRequestActionInputSchema,
+  FriendRequestData,
+  SendFriendRequestInputSchema,
+} from "../../../shared/schemas/friends";
 import { FRIEND_REQUEST_EVENTS } from "../../../shared/socketEvents";
+import FriendRequests from "../entities/FriendRequests";
+import { User } from "../entities/User";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -16,187 +20,254 @@ export class FriendRequestHandlers {
     this.io = io;
   }
 
-  /**
-   * Set up friend request event handlers
-   */
   public setupHandlers(socket: AuthenticatedSocket) {
-    // Handle friend request send
-    socket.on(FRIEND_REQUEST_EVENTS.SEND, async (data, callback) => {
-      try {
-        if (!socket.mongoUserId) {
-          return callback?.({ error: "Unauthorized" });
-        }
+    socket.on(FRIEND_REQUEST_EVENTS.SEND, (data, callback) =>
+      this.handleSendFriendRequest(socket, data, callback)
+    );
 
-        const { receiverId } = data;
+    socket.on(FRIEND_REQUEST_EVENTS.ACCEPT, (data, callback) =>
+      this.handleAcceptFriendRequest(socket, data, callback)
+    );
 
-        // Validate receiverId
-        if (!receiverId) {
-          return callback?.({ error: "Receiver ID is required" });
-        }
+    socket.on(FRIEND_REQUEST_EVENTS.REJECT, (data, callback) =>
+      this.handleRejectFriendRequest(socket, data, callback)
+    );
+  }
 
-        // Check if user is trying to send request to themselves
-        if (socket.mongoUserId === receiverId) {
-          return callback?.({
-            error: "Cannot send friend request to yourself",
-          });
-        }
+  /**
+   * Handle sending a friend request.
+   *
+   * @param socket - Authenticated socket instance
+   * @param data - Request data containing receiverId
+   * @param callback - Optional callback function for response
+   *
+   * @validation
+   * - User must be authenticated
+   * - receiverId is required
+   * - User cannot send request to themselves
+   * - Receiver must exist in database
+   * - No duplicate requests allowed
+   *
+   * @emits friend_request:received - Sent to receiver's room with request data
+   *
+   * @returns Callback with success status and created request data, or error message
+   */
+  private async handleSendFriendRequest(
+    socket: AuthenticatedSocket,
+    data: any,
+    callback?: (response: any) => void
+  ) {
+    try {
+      if (!socket.mongoUserId) {
+        return callback?.({ error: "Unauthorized" });
+      }
 
-        // Check if receiver exists
-        const receiver = await User.findById(receiverId);
-        if (!receiver) {
-          return callback?.({ error: "Receiver not found" });
-        }
-
-        // Check if friend request already exists
-        const existingRequests = await FriendRequests.findRequestsBySenderId(
-          socket.mongoUserId
-        );
-        const duplicateRequest = existingRequests.find(
-          (req) => req.receiverId === receiverId
-        );
-        if (duplicateRequest) {
-          return callback?.({ error: "Friend request already exists" });
-        }
-
-        // Create friend request
-        const friendRequest = await FriendRequests.create({
-          senderId: socket.mongoUserId,
-          receiverId,
+      const validationResult = SendFriendRequestInputSchema.safeParse(data);
+      if (!validationResult.success) {
+        return callback?.({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
         });
+      }
 
-        // Emit event to receiver
-        this.io.to(`user:${receiverId}`).emit(FRIEND_REQUEST_EVENTS.RECEIVED, {
+      const { receiverId } = validationResult.data;
+
+      if (socket.mongoUserId === receiverId) {
+        return callback?.({
+          error: "Cannot send friend request to yourself",
+        });
+      }
+
+      const receiver = await User.findById(receiverId);
+      if (!receiver) {
+        return callback?.({ error: "Receiver not found" });
+      }
+
+      const existingRequests = await FriendRequests.findRequestsBySenderId(
+        socket.mongoUserId
+      );
+      const duplicateRequest = existingRequests.find(
+        (req) => req.receiverId === receiverId
+      );
+      if (duplicateRequest) {
+        return callback?.({ error: "Friend request already exists" });
+      }
+
+      const friendRequest = await FriendRequests.create({
+        senderId: socket.mongoUserId,
+        receiverId,
+      });
+
+      this.io.to(`user:${receiverId}`).emit(FRIEND_REQUEST_EVENTS.RECEIVED, {
+        _id: friendRequest._id.toString(),
+        senderId: friendRequest.senderId,
+        receiverId: friendRequest.receiverId,
+        createdAt: friendRequest.createdAt,
+      });
+
+      callback?.({
+        success: true,
+        data: {
+          _id: friendRequest._id.toString(),
+          senderId: friendRequest.senderId,
+          receiverId: friendRequest.receiverId,
+          createdAt: friendRequest.createdAt,
+        },
+      });
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+      callback?.({ error: "Failed to send friend request" });
+    }
+  }
+
+  /**
+   * Handle accepting a friend request.
+   *
+   * @param socket - Authenticated socket instance
+   * @param data - Request data containing requestId
+   * @param callback - Optional callback function for response
+   *
+   * @validation
+   * - User must be authenticated
+   * - requestId is required
+   * - Friend request must exist
+   * - User must be the receiver of the request
+   *
+   * @emits friend_request:accepted - Sent to sender's room with request data
+   *
+   * @returns Callback with success message or error message
+   */
+  private async handleAcceptFriendRequest(
+    socket: AuthenticatedSocket,
+    data: any,
+    callback?: (response: any) => void
+  ) {
+    try {
+      if (!socket.mongoUserId) {
+        return callback?.({ error: "Unauthorized" });
+      }
+
+      const validationResult = FriendRequestActionInputSchema.safeParse(data);
+      if (!validationResult.success) {
+        return callback?.({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
+      }
+
+      const { requestId } = validationResult.data;
+
+      const friendRequest = await FriendRequests.findRequestById(requestId);
+      if (!friendRequest) {
+        return callback?.({ error: "Friend request not found" });
+      }
+
+      if (friendRequest.receiverId !== socket.mongoUserId) {
+        return callback?.({
+          error: "You can only accept friend requests sent to you",
+        });
+      }
+
+      const deleted = await FriendRequests.deleteRequestById(requestId);
+      if (!deleted) {
+        return callback?.({ error: "Failed to accept friend request" });
+      }
+
+      this.io
+        .to(`user:${friendRequest.senderId}`)
+        .emit(FRIEND_REQUEST_EVENTS.ACCEPTED, {
           _id: friendRequest._id.toString(),
           senderId: friendRequest.senderId,
           receiverId: friendRequest.receiverId,
           createdAt: friendRequest.createdAt,
         });
 
-        // Send success response
-        callback?.({
-          success: true,
-          data: {
-            _id: friendRequest._id.toString(),
-            senderId: friendRequest.senderId,
-            receiverId: friendRequest.receiverId,
-            createdAt: friendRequest.createdAt,
-          },
-        });
-      } catch (error) {
-        console.error("Error sending friend request:", error);
-        callback?.({ error: "Failed to send friend request" });
-      }
-    });
-
-    // Handle friend request accept
-    socket.on(FRIEND_REQUEST_EVENTS.ACCEPT, async (data, callback) => {
-      try {
-        if (!socket.mongoUserId) {
-          return callback?.({ error: "Unauthorized" });
-        }
-
-        const { requestId } = data;
-
-        if (!requestId) {
-          return callback?.({ error: "Request ID is required" });
-        }
-
-        // Find the friend request
-        const friendRequest = await FriendRequests.findRequestById(requestId);
-        if (!friendRequest) {
-          return callback?.({ error: "Friend request not found" });
-        }
-
-        // Check if user is the receiver of the request
-        if (friendRequest.receiverId !== socket.mongoUserId) {
-          return callback?.({
-            error: "You can only accept friend requests sent to you",
-          });
-        }
-
-        // Delete the friend request
-        const deleted = await FriendRequests.deleteRequestById(requestId);
-        if (!deleted) {
-          return callback?.({ error: "Failed to accept friend request" });
-        }
-
-        // Emit event to sender
-        this.io
-          .to(`user:${friendRequest.senderId}`)
-          .emit(FRIEND_REQUEST_EVENTS.ACCEPTED, {
-            _id: friendRequest._id.toString(),
-            senderId: friendRequest.senderId,
-            receiverId: friendRequest.receiverId,
-            createdAt: friendRequest.createdAt,
-          });
-
-        // Send success response
-        callback?.({
-          success: true,
-          message: "Friend request accepted successfully",
-        });
-      } catch (error) {
-        console.error("Error accepting friend request:", error);
-        callback?.({ error: "Failed to accept friend request" });
-      }
-    });
-
-    // Handle friend request reject
-    socket.on(FRIEND_REQUEST_EVENTS.REJECT, async (data, callback) => {
-      try {
-        if (!socket.mongoUserId) {
-          return callback?.({ error: "Unauthorized" });
-        }
-
-        const { requestId } = data;
-
-        if (!requestId) {
-          return callback?.({ error: "Request ID is required" });
-        }
-
-        // Find the friend request
-        const friendRequest = await FriendRequests.findRequestById(requestId);
-        if (!friendRequest) {
-          return callback?.({ error: "Friend request not found" });
-        }
-
-        // Check if user is the receiver of the request
-        if (friendRequest.receiverId !== socket.mongoUserId) {
-          return callback?.({
-            error: "You can only reject friend requests sent to you",
-          });
-        }
-
-        // Delete the friend request
-        const deleted = await FriendRequests.deleteRequestById(requestId);
-        if (!deleted) {
-          return callback?.({ error: "Failed to reject friend request" });
-        }
-
-        // Emit event to sender
-        this.io
-          .to(`user:${friendRequest.senderId}`)
-          .emit(FRIEND_REQUEST_EVENTS.REJECTED, {
-            _id: friendRequest._id.toString(),
-            senderId: friendRequest.senderId,
-            receiverId: friendRequest.receiverId,
-            createdAt: friendRequest.createdAt,
-          });
-
-        // Send success response
-        callback?.({
-          success: true,
-          message: "Friend request rejected successfully",
-        });
-      } catch (error) {
-        console.error("Error rejecting friend request:", error);
-        callback?.({ error: "Failed to reject friend request" });
-      }
-    });
+      callback?.({
+        success: true,
+        message: "Friend request accepted successfully",
+      });
+    } catch (error) {
+      console.error("Error accepting friend request:", error);
+      callback?.({ error: "Failed to accept friend request" });
+    }
   }
 
   /**
-   * Emit friend request received event to a specific user
+   * Handle rejecting a friend request.
+   *
+   * @param socket - Authenticated socket instance
+   * @param data - Request data containing requestId
+   * @param callback - Optional callback function for response
+   *
+   * @validation
+   * - User must be authenticated
+   * - requestId is required
+   * - Friend request must exist
+   * - User must be the receiver of the request
+   *
+   * @emits friend_request:rejected - Sent to sender's room with request data
+   *
+   * @returns Callback with success message or error message
+   */
+  private async handleRejectFriendRequest(
+    socket: AuthenticatedSocket,
+    data: any,
+    callback?: (response: any) => void
+  ) {
+    try {
+      if (!socket.mongoUserId) {
+        return callback?.({ error: "Unauthorized" });
+      }
+
+      const validationResult = FriendRequestActionInputSchema.safeParse(data);
+      if (!validationResult.success) {
+        return callback?.({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
+      }
+
+      const { requestId } = validationResult.data;
+
+      const friendRequest = await FriendRequests.findRequestById(requestId);
+      if (!friendRequest) {
+        return callback?.({ error: "Friend request not found" });
+      }
+
+      if (friendRequest.receiverId !== socket.mongoUserId) {
+        return callback?.({
+          error: "You can only reject friend requests sent to you",
+        });
+      }
+
+      const deleted = await FriendRequests.deleteRequestById(requestId);
+      if (!deleted) {
+        return callback?.({ error: "Failed to reject friend request" });
+      }
+
+      this.io
+        .to(`user:${friendRequest.senderId}`)
+        .emit(FRIEND_REQUEST_EVENTS.REJECTED, {
+          _id: friendRequest._id.toString(),
+          senderId: friendRequest.senderId,
+          receiverId: friendRequest.receiverId,
+          createdAt: friendRequest.createdAt,
+        });
+
+      callback?.({
+        success: true,
+        message: "Friend request rejected successfully",
+      });
+    } catch (error) {
+      console.error("Error rejecting friend request:", error);
+      callback?.({ error: "Failed to reject friend request" });
+    }
+  }
+
+  /**
+   * Emit friend request received event to a specific user.
+   *
+   * @param receiverId - MongoDB user ID of the recipient
+   * @param data - Friend request data including _id, senderId, receiverId, and createdAt
+   *
+   * @emits friend_request:received - Sent to receiver's personal room
    */
   public emitFriendRequestReceived(
     receiverId: string,
@@ -206,7 +277,12 @@ export class FriendRequestHandlers {
   }
 
   /**
-   * Emit friend request accepted event to a specific user
+   * Emit friend request accepted event to a specific user.
+   *
+   * @param senderId - MongoDB user ID of the original sender
+   * @param data - Friend request data including _id, senderId, receiverId, and createdAt
+   *
+   * @emits friend_request:accepted - Sent to sender's personal room
    */
   public emitFriendRequestAccepted(
     senderId: string,
@@ -216,7 +292,12 @@ export class FriendRequestHandlers {
   }
 
   /**
-   * Emit friend request rejected event to a specific user
+   * Emit friend request rejected event to a specific user.
+   *
+   * @param senderId - MongoDB user ID of the original sender
+   * @param data - Friend request data including _id, senderId, receiverId, and createdAt
+   *
+   * @emits friend_request:rejected - Sent to sender's personal room
    */
   public emitFriendRequestRejected(
     senderId: string,
