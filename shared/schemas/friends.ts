@@ -1,5 +1,14 @@
 import z from "zod";
 
+export const FriendSchema = z
+  .object({
+    _id: z.string().trim(),
+    userId: z.string().trim(),
+    friendId: z.string().trim(),
+    createdAt: z.date(),
+  })
+  .strict();
+
 export const FriendRequestSchema = z
   .object({
     _id: z.string().trim(),
@@ -36,3 +45,4 @@ export type SendFriendRequestInput = z.infer<
 export type FriendRequestActionInput = z.infer<
   typeof FriendRequestActionInputSchema
 >;
+export type FriendData = z.infer<typeof FriendSchema>;
