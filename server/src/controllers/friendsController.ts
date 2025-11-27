@@ -11,6 +11,7 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../errors";
+import { FriendRequestData } from "shared/schemas/friends";
 
 export class FriendsController {
   static async getFriendRequests(
@@ -42,18 +43,8 @@ export class FriendsController {
       );
 
       return res.status(STATUS_CODES.SUCCESS).json({
-        incoming: incomingRequests.map((req) => ({
-          _id: req._id.toString(),
-          senderId: req.senderId,
-          receiverId: req.receiverId,
-          createdAt: req.createdAt,
-        })),
-        outgoing: outgoingRequests.map((req) => ({
-          _id: req._id.toString(),
-          senderId: req.senderId,
-          receiverId: req.receiverId,
-          createdAt: req.createdAt,
-        })),
+        incoming: incomingRequests,
+        outgoing: outgoingRequests,
       });
     } catch (error) {
       next(error);
@@ -107,9 +98,16 @@ export class FriendsController {
       const friendRequest = await FriendRequests.create({
         senderId: user._id.toString(),
         receiverId: receiver._id.toString(),
+        senderUsername: user.username,
+        senderAvatarURL: user.avatarURL,
+        receiverUsername: receiver.username,
+        receiverAvatarURL: receiver.avatarURL,
       });
 
-      return res.status(STATUS_CODES.CREATED).json(friendRequest);
+      return res.status(STATUS_CODES.CREATED).json({
+        ...friendRequest,
+        _id: friendRequest._id.toString(),
+      });
     } catch (error) {
       next(error);
     }

@@ -2,14 +2,8 @@
 
 import { FRIEND_REQUEST_EVENTS } from "@/../shared/socketEvents";
 import { useSocket } from "@/contexts/SocketContext";
+import { FriendRequest } from "@/services/friends";
 import { useCallback, useEffect } from "react";
-
-export interface FriendRequest {
-  _id: string;
-  senderId: string;
-  receiverId: string;
-  createdAt: Date;
-}
 
 export interface FriendRequestSocketResponse {
   success?: boolean;
@@ -68,23 +62,14 @@ export const useFriendRequests = ({
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceived = (request: FriendRequest) =>
-      onFriendRequestReceived(request);
-
-    const handleAccepted = (request: FriendRequest) =>
-      onFriendRequestAccepted(request);
-
-    const handleRejected = (request: FriendRequest) =>
-      onFriendRequestRejected(request);
-
-    socket.on(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);
-    socket.on(FRIEND_REQUEST_EVENTS.ACCEPTED, handleAccepted);
-    socket.on(FRIEND_REQUEST_EVENTS.REJECTED, handleRejected);
+    socket.on(FRIEND_REQUEST_EVENTS.RECEIVED, onFriendRequestReceived);
+    socket.on(FRIEND_REQUEST_EVENTS.ACCEPTED, onFriendRequestAccepted);
+    socket.on(FRIEND_REQUEST_EVENTS.REJECTED, onFriendRequestRejected);
 
     return () => {
-      socket.off(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);
-      socket.off(FRIEND_REQUEST_EVENTS.ACCEPTED, handleAccepted);
-      socket.off(FRIEND_REQUEST_EVENTS.REJECTED, handleRejected);
+      socket.off(FRIEND_REQUEST_EVENTS.RECEIVED, onFriendRequestReceived);
+      socket.off(FRIEND_REQUEST_EVENTS.ACCEPTED, onFriendRequestAccepted);
+      socket.off(FRIEND_REQUEST_EVENTS.REJECTED, onFriendRequestRejected);
     };
   }, [socket]);
 

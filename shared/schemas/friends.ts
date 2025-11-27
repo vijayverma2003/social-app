@@ -20,6 +20,10 @@ export const FriendRequestSchema = z
     senderId: z.string().trim(),
     receiverId: z.string().trim(),
     createdAt: z.date(),
+    senderUsername: z.string().trim().optional(),
+    senderAvatarURL: z.string().trim().optional(),
+    receiverUsername: z.string().trim().optional(),
+    receiverAvatarURL: z.string().trim().optional(),
   })
   .strict();
 
@@ -27,6 +31,10 @@ export const CreateFriendRequestSchema = z
   .object({
     senderId: z.string().trim(),
     receiverId: z.string().trim(),
+    senderUsername: z.string().trim().optional(),
+    senderAvatarURL: z.string().trim().optional(),
+    receiverUsername: z.string().trim().optional(),
+    receiverAvatarURL: z.string().trim().optional(),
   })
   .strict();
 

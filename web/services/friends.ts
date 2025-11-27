@@ -1,10 +1,16 @@
 import api from "./api";
 
-interface FriendRequest {
+export interface FriendRequest {
   _id: string;
   senderId: string;
   receiverId: string;
   createdAt: Date;
+  senderUsername?: string;
+  senderAvatarURL?: string;
+  senderDisplayName?: string;
+  receiverUsername?: string;
+  receiverAvatarURL?: string;
+  receiverDisplayName?: string;
 }
 
 interface FriendRequestsResponse {

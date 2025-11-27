@@ -88,6 +88,11 @@ export class FriendRequestHandlers {
 
       const receiverId = receiver._id.toString();
 
+      const sender = await User.findById(socket.mongoUserId);
+      if (!sender) {
+        return callback?.({ error: "Sender not found" });
+      }
+
       if (socket.mongoUserId === receiverId) {
         return callback?.({
           error: "Cannot send friend request to yourself",
@@ -107,23 +112,19 @@ export class FriendRequestHandlers {
       const friendRequest = await FriendRequests.create({
         senderId: socket.mongoUserId,
         receiverId,
+        senderUsername: sender.username,
+        senderAvatarURL: sender.avatarURL,
+        receiverUsername: receiver.username,
+        receiverAvatarURL: receiver.avatarURL,
       });
 
-      this.io.to(`user:${receiverId}`).emit(FRIEND_REQUEST_EVENTS.RECEIVED, {
-        _id: friendRequest._id.toString(),
-        senderId: friendRequest.senderId,
-        receiverId: friendRequest.receiverId,
-        createdAt: friendRequest.createdAt,
-      });
+      this.io
+        .to(`user:${receiverId}`)
+        .emit(FRIEND_REQUEST_EVENTS.RECEIVED, friendRequest);
 
       callback?.({
         success: true,
-        data: {
-          _id: friendRequest._id.toString(),
-          senderId: friendRequest.senderId,
-          receiverId: friendRequest.receiverId,
-          createdAt: friendRequest.createdAt,
-        },
+        data: friendRequest,
       });
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -187,12 +188,7 @@ export class FriendRequestHandlers {
 
       this.io
         .to(`user:${friendRequest.senderId}`)
-        .emit(FRIEND_REQUEST_EVENTS.ACCEPTED, {
-          _id: friendRequest._id.toString(),
-          senderId: friendRequest.senderId,
-          receiverId: friendRequest.receiverId,
-          createdAt: friendRequest.createdAt,
-        });
+        .emit(FRIEND_REQUEST_EVENTS.ACCEPTED, friendRequest);
 
       callback?.({
         success: true,
@@ -258,12 +254,7 @@ export class FriendRequestHandlers {
 
       this.io
         .to(`user:${friendRequest.senderId}`)
-        .emit(FRIEND_REQUEST_EVENTS.REJECTED, {
-          _id: friendRequest._id.toString(),
-          senderId: friendRequest.senderId,
-          receiverId: friendRequest.receiverId,
-          createdAt: friendRequest.createdAt,
-        });
+        .emit(FRIEND_REQUEST_EVENTS.REJECTED, friendRequest);
 
       callback?.({
         success: true,
