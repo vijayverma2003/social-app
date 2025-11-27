@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
-import { useSocket } from "@/contexts/SocketContext";
 import { FRIEND_REQUEST_EVENTS } from "@/../shared/socketEvents";
+import { useSocket } from "@/contexts/SocketContext";
+import { useCallback, useEffect } from "react";
 
-interface FriendRequest {
+export interface FriendRequest {
   _id: string;
   senderId: string;
   receiverId: string;
   createdAt: Date;
 }
 
-interface SocketResponse {
+export interface FriendRequestSocketResponse {
   success?: boolean;
   data?: FriendRequest;
   message?: string;
@@ -19,28 +19,27 @@ interface SocketResponse {
 }
 
 interface UseFriendRequestsCallbacks {
-  onFriendRequestReceived?: (request: FriendRequest) => void;
-  onFriendRequestAccepted?: (request: FriendRequest) => void;
-  onFriendRequestRejected?: (request: FriendRequest) => void;
+  onFriendRequestReceived: (request: FriendRequest) => void;
+  onFriendRequestAccepted: (request: FriendRequest) => void;
+  onFriendRequestRejected: (request: FriendRequest) => void;
 }
 
-export const useFriendRequests = (callbacks?: UseFriendRequestsCallbacks) => {
+export const useFriendRequests = ({
+  onFriendRequestAccepted,
+  onFriendRequestReceived,
+  onFriendRequestRejected,
+}: UseFriendRequestsCallbacks) => {
   const { socket, isConnected } = useSocket();
-  const callbacksRef = useRef(callbacks);
-
-  useEffect(() => {
-    callbacksRef.current = callbacks;
-  }, [callbacks]);
 
   const emitSocketEvent = useCallback(
-    (event: string, data: any): Promise<SocketResponse> => {
+    (event: string, data: any): Promise<FriendRequestSocketResponse> => {
       return new Promise((resolve) => {
         if (!isConnected || !socket) {
           resolve({ error: "Socket not connected" });
           return;
         }
 
-        socket.emit(event, data, (response: SocketResponse) => {
+        socket.emit(event, data, (response: FriendRequestSocketResponse) => {
           resolve(response);
         });
       });
@@ -70,13 +69,13 @@ export const useFriendRequests = (callbacks?: UseFriendRequestsCallbacks) => {
     if (!socket) return;
 
     const handleReceived = (request: FriendRequest) =>
-      callbacksRef.current?.onFriendRequestReceived?.(request);
+      onFriendRequestReceived(request);
 
     const handleAccepted = (request: FriendRequest) =>
-      callbacksRef.current?.onFriendRequestAccepted?.(request);
+      onFriendRequestAccepted(request);
 
     const handleRejected = (request: FriendRequest) =>
-      callbacksRef.current?.onFriendRequestRejected?.(request);
+      onFriendRequestRejected(request);
 
     socket.on(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);
     socket.on(FRIEND_REQUEST_EVENTS.ACCEPTED, handleAccepted);
