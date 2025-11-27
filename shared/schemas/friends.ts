@@ -9,6 +9,11 @@ export const FriendSchema = z
   })
   .strict();
 
+export const CreateFriendSchema = z.object({
+  userId: z.string().trim().min(1),
+  friendId: z.string().trim().min(1),
+});
+
 export const FriendRequestSchema = z
   .object({
     _id: z.string().trim(),

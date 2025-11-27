@@ -4,7 +4,7 @@ import { DATABASE_NAME, DATABASE_URL } from "../config/vars";
 class MongoClientProvider {
   private static client: MongoClient | null = null;
 
-  private static async getClient() {
+  public static async getClient() {
     if (!MongoClientProvider.client) {
       MongoClientProvider.client = new MongoClient(DATABASE_URL!);
       await MongoClientProvider.client.connect();

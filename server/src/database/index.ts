@@ -1,3 +1,4 @@
+import { Friend } from "../entities/Friend";
 import { User } from "../entities/User";
 import MongoClientProvider from "./MongoClientProvider";
 import FriendRequests from "../entities/FriendRequests";
@@ -17,6 +18,7 @@ async function getCollection(collectionName: string) {
 async function ensureIndexes() {
   await User.ensureIndexes();
   await FriendRequests.ensureIndexes();
+  await Friend.ensureIndexes();
 }
 
 export { connect, close, getCollection, ensureIndexes };
