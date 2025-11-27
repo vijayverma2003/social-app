@@ -1,3 +1,4 @@
+import { Friend } from "../entities/Friend";
 import { Server, Socket } from "socket.io";
 import {
   FriendRequestActionInputSchema,
@@ -165,6 +166,8 @@ export class FriendRequestHandlers {
           error: "You can only accept friend requests sent to you",
         });
       }
+
+      await Friend.createFriend(socket.mongoUserId, friendRequest.senderId);
 
       const deleted = await FriendRequests.deleteRequestById(requestId);
       if (!deleted) {
