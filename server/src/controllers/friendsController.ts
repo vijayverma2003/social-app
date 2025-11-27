@@ -13,7 +13,58 @@ import {
 } from "../errors";
 
 export class FriendsController {
-  static async createFriendRequest(req: Request, res: Response, next: NextFunction) {
+  static async getFriendRequests(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { userId, isAuthenticated } = getAuth(req);
+      if (!isAuthenticated) {
+        throw new UnauthorizedError();
+      }
+
+      const user = await User.findByClerkId(userId);
+      if (!user) {
+        throw new NotFoundError("User not found");
+      }
+
+      const mongoUserId = user._id.toString();
+
+      // Get incoming requests (requests sent to this user)
+      const incomingRequests = await FriendRequests.findRequestsByReceiverId(
+        mongoUserId
+      );
+
+      // Get outgoing requests (requests sent by this user)
+      const outgoingRequests = await FriendRequests.findRequestsBySenderId(
+        mongoUserId
+      );
+
+      return res.status(STATUS_CODES.SUCCESS).json({
+        incoming: incomingRequests.map((req) => ({
+          _id: req._id.toString(),
+          senderId: req.senderId,
+          receiverId: req.receiverId,
+          createdAt: req.createdAt,
+        })),
+        outgoing: outgoingRequests.map((req) => ({
+          _id: req._id.toString(),
+          senderId: req.senderId,
+          receiverId: req.receiverId,
+          createdAt: req.createdAt,
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async createFriendRequest(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const { userId, isAuthenticated } = getAuth(req);
       if (!isAuthenticated) {
@@ -64,7 +115,11 @@ export class FriendsController {
     }
   }
 
-  static async rejectFriendRequest(req: Request, res: Response, next: NextFunction) {
+  static async rejectFriendRequest(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       const { userId, isAuthenticated } = getAuth(req);
       if (!isAuthenticated) {
@@ -88,7 +143,9 @@ export class FriendsController {
 
       // Check if user is the receiver of the request
       if (friendRequest.receiverId !== user._id.toString()) {
-        throw new ForbiddenError("You can only reject friend requests sent to you");
+        throw new ForbiddenError(
+          "You can only reject friend requests sent to you"
+        );
       }
 
       const deleted = await FriendRequests.deleteRequestById(id);
