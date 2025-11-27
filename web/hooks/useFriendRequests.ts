@@ -48,8 +48,8 @@ export const useFriendRequests = ({
   );
 
   const sendFriendRequest = useCallback(
-    (receiverId: string) =>
-      emitSocketEvent(FRIEND_REQUEST_EVENTS.SEND, { receiverId }),
+    (receiverTag: string) =>
+      emitSocketEvent(FRIEND_REQUEST_EVENTS.SEND, { receiverTag }),
     [emitSocketEvent]
   );
 

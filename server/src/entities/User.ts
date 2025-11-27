@@ -64,6 +64,26 @@ export class User {
     return user || null;
   }
 
+  static async findByUsernameAndDiscriminator(
+    username: string,
+    discriminator: string
+  ): Promise<(FindUserData & { _id: ObjectId }) | null> {
+    const userCollection = await getCollection(COLLECTION_NAME);
+    const user = await userCollection.findOne<FindUserData & { _id: ObjectId }>(
+      {
+        username,
+        discriminator,
+      }
+    );
+
+    if (!user) return null;
+
+    const validation = FindUserSchema.safeParse(user);
+    if (!validation.success) return null;
+
+    return { ...validation.data, _id: user._id };
+  }
+
   static async findById(
     id: string
   ): Promise<(FindUserData & { _id: ObjectId }) | null> {

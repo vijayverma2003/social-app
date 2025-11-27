@@ -32,7 +32,14 @@ export const CreateFriendRequestSchema = z
 
 export const SendFriendRequestInputSchema = z
   .object({
-    receiverId: z.string().trim().min(1, "Receiver ID is required"),
+    receiverTag: z
+      .string()
+      .trim()
+      .min(1, "Friend tag is required")
+      .regex(
+        /^[a-zA-Z0-9_]{3,50}#[0-9]{4}$/,
+        "Friend tag must look like username#0000"
+      ),
   })
   .strict();
 

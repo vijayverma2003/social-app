@@ -39,12 +39,12 @@ export class FriendRequestHandlers {
    * Handle sending a friend request.
    *
    * @param socket - Authenticated socket instance
-   * @param data - Request data containing receiverId
+   * @param data - Request data containing receiverTag (e.g., username#0000)
    * @param callback - Optional callback function for response
    *
    * @validation
    * - User must be authenticated
-   * - receiverId is required
+   * - receiverTag is required and must be valid
    * - User cannot send request to themselves
    * - Receiver must exist in database
    * - No duplicate requests allowed
@@ -70,17 +70,28 @@ export class FriendRequestHandlers {
         });
       }
 
-      const { receiverId } = validationResult.data;
+      const { receiverTag } = validationResult.data;
+      const [username, discriminator] = receiverTag.split("#");
+
+      if (!username || !discriminator) {
+        return callback?.({ error: "Invalid friend tag format" });
+      }
+
+      const receiver = await User.findByUsernameAndDiscriminator(
+        username,
+        discriminator
+      );
+
+      if (!receiver) {
+        return callback?.({ error: "Receiver not found" });
+      }
+
+      const receiverId = receiver._id.toString();
 
       if (socket.mongoUserId === receiverId) {
         return callback?.({
           error: "Cannot send friend request to yourself",
         });
-      }
-
-      const receiver = await User.findById(receiverId);
-      if (!receiver) {
-        return callback?.({ error: "Receiver not found" });
       }
 
       const existingRequests = await FriendRequests.findRequestsBySenderId(
