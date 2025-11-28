@@ -1,4 +1,4 @@
-import { FriendRequest } from "@/hooks/useFriendRequests";
+import { FriendRequest } from "@/services/friends";
 
 interface PendingRequestsProps {
   sentRequests: FriendRequest[];
@@ -19,10 +19,13 @@ const PendingRequests = ({ sentRequests }: PendingRequestsProps) => {
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground font-semibold">
-                  {request.receiverId.charAt(0).toUpperCase()}
+                  {request?.receiverAvatarURL ??
+                    request.receiverId.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-sm">{request.receiverId}</p>
+                  <p className="font-medium text-sm">
+                    {request?.receiverUsername ?? request.receiverId}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Request pending
                   </p>

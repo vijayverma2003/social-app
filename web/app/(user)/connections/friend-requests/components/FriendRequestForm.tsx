@@ -3,14 +3,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Input } from "@/components/ui/input";
-import {
-  FriendRequest,
-  FriendRequestSocketResponse,
-} from "@/hooks/useFriendRequests";
+import { FriendRequestSocketResponse } from "@/hooks/useFriendRequests";
 import {
   SendFriendRequestInputSchema,
   type SendFriendRequestInput,
 } from "../../../../../../shared/schemas/friends";
+import { FriendRequest } from "@/services/friends";
 
 interface FriendRequestFormProps {
   sendFriendRequest: (

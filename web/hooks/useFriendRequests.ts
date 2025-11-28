@@ -23,40 +23,21 @@ export const useFriendRequests = ({
   onFriendRequestReceived,
   onFriendRequestRejected,
 }: UseFriendRequestsCallbacks) => {
-  const { socket, isConnected } = useSocket();
-
-  const emitSocketEvent = useCallback(
-    (event: string, data: any): Promise<FriendRequestSocketResponse> => {
-      return new Promise((resolve) => {
-        if (!isConnected || !socket) {
-          resolve({ error: "Socket not connected" });
-          return;
-        }
-
-        socket.emit(event, data, (response: FriendRequestSocketResponse) => {
-          resolve(response);
-        });
-      });
-    },
-    [socket, isConnected]
-  );
+  const { socket, emit } = useSocket();
 
   const sendFriendRequest = useCallback(
-    (receiverTag: string) =>
-      emitSocketEvent(FRIEND_REQUEST_EVENTS.SEND, { receiverTag }),
-    [emitSocketEvent]
+    (receiverTag: string) => emit(FRIEND_REQUEST_EVENTS.SEND, { receiverTag }),
+    [emit]
   );
 
   const acceptFriendRequest = useCallback(
-    (requestId: string) =>
-      emitSocketEvent(FRIEND_REQUEST_EVENTS.ACCEPT, { requestId }),
-    [emitSocketEvent]
+    (requestId: string) => emit(FRIEND_REQUEST_EVENTS.ACCEPT, { requestId }),
+    [emit]
   );
 
   const rejectFriendRequest = useCallback(
-    (requestId: string) =>
-      emitSocketEvent(FRIEND_REQUEST_EVENTS.REJECT, { requestId }),
-    [emitSocketEvent]
+    (requestId: string) => emit(FRIEND_REQUEST_EVENTS.REJECT, { requestId }),
+    [emit]
   );
 
   useEffect(() => {

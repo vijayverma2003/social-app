@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useUser } from "@clerk/nextjs";
 import { Home, MessageCircle } from "lucide-react";
 import Link from "next/link";
@@ -12,6 +13,11 @@ import ConnectionsNavigation from "../connections/components/UserNavigation";
 const Navbar = () => {
   const { isSignedIn, user } = useUser();
   const pathname = usePathname();
+  const incomingCount = useFriendRequestsStore(
+    (state) => state.received.length
+  );
+  const hasIncoming = incomingCount > 0;
+  const incomingLabel = incomingCount > 10 ? "10+" : incomingCount.toString();
 
   return (
     <aside className="min-h-screen w-64 border-r border-border bg-background p-4 flex flex-col gap-4 overflow-y-scroll">
@@ -38,12 +44,17 @@ const Navbar = () => {
           <Button
             variant={pathname === "/connections" ? "secondary" : "ghost"}
             className={cn(
-              "w-full justify-start gap-3",
+              "w-full justify-start gap-3 relative",
               pathname === "/connections" && "bg-secondary"
             )}
           >
             <MessageCircle className="size-5" />
             <span>Friends & DMs</span>
+            {hasIncoming && (
+              <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                {incomingLabel}
+              </span>
+            )}
           </Button>
         </Link>
       </nav>

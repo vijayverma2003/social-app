@@ -1,53 +1,47 @@
 "use client";
 
-import { FriendRequest, useFriendRequests } from "@/hooks/useFriendRequests";
+import { useFriendRequests } from "@/hooks/useFriendRequests";
 import { friendsService } from "@/services/friends";
+import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import FriendRequestForm from "./components/FriendRequestForm";
-import ReceivedRequests from "./components/ReceivedRequests";
 import PendingRequests from "./components/PendingRequests";
+import ReceivedRequests from "./components/ReceivedRequests";
 
 const FriendRequestsPage = () => {
-  const [receivedRequests, setReceivedRequests] = useState<FriendRequest[]>([]);
-  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const { getToken } = useAuth();
+
+  const {
+    received,
+    sent,
+    isLoading,
+    setInitialRequests,
+    addReceivedRequest,
+    addSentRequest,
+    removeRequestById,
+    setLoading,
+  } = useFriendRequestsStore();
 
   const { sendFriendRequest, acceptFriendRequest, rejectFriendRequest } =
     useFriendRequests({
-      onFriendRequestReceived: handleFriendRequestReceived,
-      onFriendRequestAccepted: handleFriendRequestAccepted,
-      onFriendRequestRejected: handleFriendRequestRejected,
+      onFriendRequestReceived: addReceivedRequest,
+      onFriendRequestAccepted: (request) => removeRequestById(request._id),
+      onFriendRequestRejected: (request) => removeRequestById(request._id),
     });
-
-  function handleFriendRequestReceived(request: FriendRequest) {
-    setReceivedRequests((prev) => [...prev, request]);
-  }
-
-  function handleFriendRequestAccepted(request: FriendRequest) {
-    setReceivedRequests((prev) => prev.filter((r) => r._id !== request._id));
-    setSentRequests((prev) => prev.filter((r) => r._id !== request._id));
-  }
-
-  function handleFriendRequestRejected(request: FriendRequest) {
-    setReceivedRequests((prev) => prev.filter((r) => r._id !== request._id));
-    setSentRequests((prev) => prev.filter((r) => r._id !== request._id));
-  }
 
   async function loadFriendRequests() {
     try {
+      setLoading(true);
       const token = await getToken();
       const data = await friendsService.getFriendRequests(token || undefined);
-      setReceivedRequests(data.incoming);
-      setSentRequests(data.outgoing);
+      setInitialRequests(data.incoming, data.outgoing);
     } catch (error) {
       console.error("Failed to load friend requests:", error);
       setMessage("Failed to load friend requests");
       setTimeout(() => setMessage(""), 3000);
-    } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }
 
@@ -60,6 +54,8 @@ const FriendRequestsPage = () => {
     if (response.error) {
       setMessage(`Error: ${response.error}`);
       setTimeout(() => setMessage(""), 3000);
+    } else {
+      removeRequestById(requestId);
     }
   }
 
@@ -68,6 +64,8 @@ const FriendRequestsPage = () => {
     if (response.error) {
       setMessage(`Error: ${response.error}`);
       setTimeout(() => setMessage(""), 3000);
+    } else {
+      removeRequestById(requestId);
     }
   }
 
@@ -94,18 +92,16 @@ const FriendRequestsPage = () => {
 
       <FriendRequestForm
         sendFriendRequest={sendFriendRequest}
-        onFriendRequestSent={(newRequest: FriendRequest) =>
-          setSentRequests((prev) => [...prev, newRequest])
-        }
+        onFriendRequestSent={addSentRequest}
       />
 
       <ReceivedRequests
-        receivedRequests={receivedRequests}
+        receivedRequests={received}
         onAccept={handleAccept}
         onReject={handleReject}
       />
 
-      <PendingRequests sentRequests={sentRequests} />
+      <PendingRequests sentRequests={sent} />
     </div>
   );
 };

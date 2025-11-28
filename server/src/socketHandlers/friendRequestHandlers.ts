@@ -99,6 +99,15 @@ export class FriendRequestHandlers {
         });
       }
 
+      // Check if users are already friends
+      const existingFriends = await Friend.getFriends(socket.mongoUserId);
+      const alreadyFriends = existingFriends.some(
+        (friend) => friend.friendId === receiverId
+      );
+      if (alreadyFriends) {
+        return callback?.({ error: "You are already friends with this user" });
+      }
+
       const existingRequests = await FriendRequests.findRequestsBySenderId(
         socket.mongoUserId
       );
@@ -176,6 +185,18 @@ export class FriendRequestHandlers {
       if (friendRequest.receiverId !== socket.mongoUserId) {
         return callback?.({
           error: "You can only accept friend requests sent to you",
+        });
+      }
+
+      // If they are already friends, clean up the stale friend request
+      const existingFriends = await Friend.getFriends(socket.mongoUserId);
+      const alreadyFriends = existingFriends.some(
+        (friend) => friend.friendId === friendRequest.senderId
+      );
+      if (alreadyFriends) {
+        await FriendRequests.deleteRequestById(requestId);
+        return callback?.({
+          error: "You are already friends with this user",
         });
       }
 
