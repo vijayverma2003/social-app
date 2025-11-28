@@ -70,6 +70,26 @@ export class Friend {
     const friends = await collection
       .find<FriendData & { _id: ObjectId }>({ userId })
       .toArray();
-    return friends;
+
+    if (friends.length === 0) {
+      return [];
+    }
+
+    const usersCollection = await getCollection("users");
+    const friendIds = friends.map((friend) => new ObjectId(friend.friendId));
+
+    const profiles = await usersCollection
+      .find({ _id: { $in: friendIds } })
+      .toArray();
+
+    const profileMap = new Map<string, any>();
+    for (const profile of profiles) {
+      profileMap.set(profile._id.toString(), profile);
+    }
+
+    return friends.map((friend) => ({
+      ...friend,
+      profile: profileMap.get(friend.friendId) || null,
+    }));
   }
 }

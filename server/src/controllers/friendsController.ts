@@ -12,7 +12,7 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../errors";
-import { FriendData, FriendRequestData } from "shared/schemas/friends";
+import { FriendRequestData } from "shared/schemas/friends";
 
 export class FriendsController {
   static async getFriends(req: Request, res: Response, next: NextFunction) {
@@ -30,19 +30,7 @@ export class FriendsController {
       const mongoUserId = user._id.toString();
       const friends = await Friend.getFriends(mongoUserId);
 
-      const friendsWithProfiles = await Promise.all(
-        friends.map(async (friend: FriendData) => {
-          const profile = await User.findById(friend.friendId);
-          return {
-            ...friend,
-            profile,
-          };
-        })
-      );
-
-      return res
-        .status(STATUS_CODES.SUCCESS)
-        .json({ friends: friendsWithProfiles });
+      return res.status(STATUS_CODES.SUCCESS).json({ friends });
     } catch (error) {
       next(error);
     }
