@@ -13,9 +13,30 @@ export interface FriendRequest {
   receiverDisplayName?: string;
 }
 
+export interface FriendProfile {
+  _id: string;
+  userId: string;
+  friendId: string;
+  createdAt: string;
+  profile: {
+    _id: string;
+    username?: string;
+    discriminator?: string;
+    avatarURL?: string;
+    bannerURL?: string;
+    bannerColor?: string;
+    bio?: string;
+    pronouns?: string;
+  } | null;
+}
+
 interface FriendRequestsResponse {
   incoming: FriendRequest[];
   outgoing: FriendRequest[];
+}
+
+interface FriendsResponse {
+  friends: FriendProfile[];
 }
 
 export const friendsService = {
@@ -26,6 +47,13 @@ export const friendsService = {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
     );
+    return response.data;
+  },
+
+  async getFriends(token?: string): Promise<FriendsResponse> {
+    const response = await api.get<FriendsResponse>("/friends", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     return response.data;
   },
 };

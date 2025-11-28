@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
 import STATUS_CODES from "../services/status";
 import { User } from "../entities/User";
+import { Friend } from "../entities/Friend";
 import FriendRequests from "../entities/FriendRequests";
 import {
   BadRequestError,
@@ -11,9 +12,42 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../errors";
-import { FriendRequestData } from "shared/schemas/friends";
+import { FriendData, FriendRequestData } from "shared/schemas/friends";
 
 export class FriendsController {
+  static async getFriends(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId, isAuthenticated } = getAuth(req);
+      if (!isAuthenticated) {
+        throw new UnauthorizedError();
+      }
+
+      const user = await User.findByClerkId(userId);
+      if (!user) {
+        throw new NotFoundError("User not found");
+      }
+
+      const mongoUserId = user._id.toString();
+      const friends = await Friend.getFriends(mongoUserId);
+
+      const friendsWithProfiles = await Promise.all(
+        friends.map(async (friend: FriendData) => {
+          const profile = await User.findById(friend.friendId);
+          return {
+            ...friend,
+            profile,
+          };
+        })
+      );
+
+      return res
+        .status(STATUS_CODES.SUCCESS)
+        .json({ friends: friendsWithProfiles });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getFriendRequests(
     req: Request,
     res: Response,
