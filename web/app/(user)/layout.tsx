@@ -1,8 +1,13 @@
+"use client";
+
 import { PropsWithChildren } from "react";
 import MainHeader from "./components/MainHeader";
 import Navbar from "./components/Navbar";
+import { useFriendRequestsBootstrap } from "@/hooks/useFriendRequestsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
+  useFriendRequestsBootstrap();
+
   return (
     <div className="flex max-h-screen">
       <Navbar />
