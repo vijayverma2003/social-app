@@ -3,6 +3,7 @@
 import { friendsService, type FriendProfile } from "@/services/friends";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ConnectionsPage = () => {
   const { getToken } = useAuth();
@@ -74,9 +75,12 @@ const ConnectionsPage = () => {
               className="flex items-center justify-between gap-3 rounded-xl bg-accent/50 p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
+                <Avatar>
+                  <AvatarImage src={profile?.avatarURL} />
+                  <AvatarFallback>
+                    {displayName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <p className="text-sm font-medium">{displayName}</p>
                   {profile?.bio && (
