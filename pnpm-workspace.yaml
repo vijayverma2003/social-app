@@ -2,4 +2,5 @@ packages:
   - 'web'
   - 'server'
   - 'shared'
+  - 'database'
 
