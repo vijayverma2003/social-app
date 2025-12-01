@@ -25,6 +25,13 @@ model User {
 
   profile Profile?
 
+  // Relations
+  friends          Friend[]        @relation("UserFriends")
+  friendOf         Friend[]        @relation("UserFriendOf")
+  sentRequests     FriendRequest[] @relation("FriendRequestSender")
+  receivedRequests FriendRequest[] @relation("FriendRequestReceiver")
+  dmChannelUsers   DMChannelUser[]
+
   @@unique([username, discriminator])
 }
 
@@ -41,4 +48,56 @@ model Profile {
   pronouns             String   @default("") @db.VarChar(20)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+model Friend {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("UserFriends", fields: [userId], references: [id])
+  friend User @relation("UserFriendOf", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+  @@index([userId])
+}
+
+model FriendRequest {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("FriendRequestSender", fields: [senderId], references: [id])
+  receiver User @relation("FriendRequestReceiver", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+enum ChannelType {
+  dm
+}
+
+model DMChannel {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  users DMChannelUser[]
+}
+
+model DMChannelUser {
+  id                  String    @id @default(cuid())
+  channelId           String
+  userId              String
+  lastReadAt          DateTime?
+  totalUnreadMessages Int       @default(0)
+
+  channel DMChannel @relation(fields: [channelId], references: [id])
+  user    User      @relation(fields: [userId], references: [id])
+
+  @@unique([channelId, userId])
+  @@index([userId])
 }
