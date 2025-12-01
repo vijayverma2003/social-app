@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  OnboardingSchema,
-  type OnboardingFormData,
+  createUserSchema,
+  type CreateUserSchema,
 } from "../../../../shared/schemas/user";
 import UserService from "@/services/users";
 import { useAuth } from "@clerk/nextjs";
@@ -23,15 +23,15 @@ const OnboardingForm = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<OnboardingFormData>({
-    resolver: zodResolver(OnboardingSchema),
+  } = useForm<CreateUserSchema>({
+    resolver: zodResolver(createUserSchema),
     defaultValues: {
       username: "",
       dob: "",
     },
   });
 
-  const onSubmitForm = async (data: OnboardingFormData) => {
+  const onSubmitForm = async (data: CreateUserSchema) => {
     setSubmitError(null);
     try {
       const token = await getToken();

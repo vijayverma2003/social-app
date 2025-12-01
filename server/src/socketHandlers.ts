@@ -1,8 +1,8 @@
 import { Server, Socket } from "socket.io";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
-import { User } from "./entities/User";
 import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
+import prisma from "../../database/src/client";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -37,13 +37,13 @@ export class SocketHandlers {
           return next(new Error("Invalid or expired token"));
         }
 
-        const user = await User.findByClerkId(userId);
-        if (!user) {
-          return next(new Error("User not found"));
-        }
+        const user = await prisma.user.findUnique({
+          where: { clerkId: userId },
+        });
+
+        if (!user) return next(new Error("User not found"));
 
         socket.userId = userId;
-        socket.mongoUserId = user._id.toString();
 
         next();
       } catch (error) {
@@ -53,11 +53,9 @@ export class SocketHandlers {
     });
 
     this.io.on("connection", (socket: AuthenticatedSocket) => {
-      console.log(
-        `User connected: ${socket.id} (userId: ${socket.mongoUserId})`
-      );
+      console.log(`User connected: ${socket.id} (userId: ${socket.userId})`);
 
-      if (socket.mongoUserId) socket.join(`user:${socket.mongoUserId}`);
+      if (socket.userId) socket.join(`user:${socket.userId}`);
 
       this.friendRequestHandlers.setupHandlers(socket);
 

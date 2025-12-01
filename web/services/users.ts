@@ -1,31 +1,32 @@
 import { AxiosError, AxiosResponse } from "axios";
 import {
-  OnboardingFormData,
-  ProfileSettingsFormData,
-  UserData,
+  CreateUserSchema,
+  UpdateUserProfileSchema,
 } from "../../shared/schemas/user";
 import api from "./api";
 
 class UserService {
-  static async getUser(token?: string): Promise<AxiosResponse<UserData>> {
+  static async getUser(
+    token?: string
+  ): Promise<AxiosResponse<UpdateUserProfileSchema>> {
     return api.get("/users/me", {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }
 
   static async createUser(
-    data: OnboardingFormData,
+    data: CreateUserSchema,
     token?: string
-  ): Promise<AxiosResponse<UserData>> {
+  ): Promise<AxiosResponse<CreateUserSchema>> {
     return api.post("/users/create", data, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }
 
   static async updateUser(
-    data: ProfileSettingsFormData,
+    data: UpdateUserProfileSchema,
     token?: string
-  ): Promise<AxiosResponse<UserData>> {
+  ): Promise<AxiosResponse<UpdateUserProfileSchema>> {
     return api.put("/users/me", data, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });

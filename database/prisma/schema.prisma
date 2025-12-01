@@ -12,3 +12,33 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id            String   @id @default(cuid())
+  clerkId       String   @unique
+  email         String   @unique @db.VarChar(250)
+  username      String   @db.VarChar(50)
+  discriminator String   @db.VarChar(4)
+  dob           String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  profile Profile?
+
+  @@unique([username, discriminator])
+}
+
+model Profile {
+  userId               String   @id
+  user                 User     @relation(fields: [userId], references: [id])
+  displayName          String?  @db.VarChar(100)
+  avatarURL            String?
+  bannerURL            String?
+  bannerColor          String   @default("#ffffff")
+  profileGradientStart String?
+  profileGradientEnd   String?
+  bio                  String   @default("") @db.VarChar(400)
+  pronouns             String   @default("") @db.VarChar(20)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}

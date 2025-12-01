@@ -1,4 +1,4 @@
-import { z } from "zod";
+import z from "zod";
 
 const validateAge = (date: string) => {
   const birthDate = new Date(date);
@@ -12,108 +12,60 @@ const validateAge = (date: string) => {
   return actualAge >= 13;
 };
 
-export const UserSchema = z.object({
-  clerkId: z.string().min(1, "Clerk ID is required").trim(),
-  email: z
-    .email("Invalid email address")
-    .min(1, "Email is required")
-    .trim()
-    .max(250, "Email cannot exceed 250 characters"),
+export const createUserSchema = z.object({
   username: z
     .string()
+    .min(1, "Username is required")
     .trim()
     .min(3, "Username must be at least 3 characters")
     .max(50, "Username cannot exceed 50 characters")
     .regex(
       /^[a-zA-Z0-9_]+$/,
       "Username can only contain letters, numbers, and underscores"
-    )
-    .optional(),
-  discriminator: z
-    .string()
-    .trim()
-    .max(4, "Discriminator cannot exceed 4 characters")
-    .optional(),
-  createdAt: z.date(),
-  updatedAt: z.date().optional(),
-  avatarURL: z.url("Invalid avatar URL").optional(),
-  bannerURL: z.url("Invalid banner URL").optional(),
-  bannerColor: z
-    .string()
-    .trim()
-    .regex(/^#([0-9a-fA-F]{3}){1,2}$/, "Invalid hex color code")
-    .default("#000000"),
-  bio: z
-    .string()
-    .trim()
-    .max(400, "Bio cannot exceed 400 characters")
-    .default(""),
-  pronouns: z
-    .string()
-    .trim()
-    .max(20, "Pronouns cannot exceed 20 characters")
-    .default(""),
+    ),
   dob: z
     .string()
     .min(1, "Date of birth is required")
-    .refine(validateAge, { message: "You must be at least 13 years old" })
-    .optional(),
+    .refine(validateAge, { message: "You must be at least 13 years old" }),
 });
 
-export const CreateUserSchema = UserSchema.omit({
-  createdAt: true,
-  updatedAt: true,
-}).strict();
-
-export const UpdateUserSchema = UserSchema.partial()
-  .omit({
-    createdAt: true,
-    updatedAt: true,
-  })
-  .strict();
-
-export const FindUserSchema = UserSchema.omit({
-  clerkId: true,
-  email: true,
-  dob: true,
-});
-
-export const OnboardingSchema = z
+export const updateUserSchema = z
   .object({
     username: z
       .string()
-      .min(1, "Username is required")
       .trim()
       .min(3, "Username must be at least 3 characters")
       .max(50, "Username cannot exceed 50 characters")
       .regex(
         /^[a-zA-Z0-9_]+$/,
         "Username can only contain letters, numbers, and underscores"
-      ),
+      )
+      .optional(),
     dob: z
       .string()
       .min(1, "Date of birth is required")
-      .refine(validateAge, { message: "You must be at least 13 years old" }),
+      .refine(validateAge, { message: "You must be at least 13 years old" })
+      .optional(),
   })
   .strict();
 
-export const ProfileSettingsSchema = z
+export const updateUserProfileSchema = z
   .object({
-    bio: UserSchema.shape.bio,
-    pronouns: UserSchema.shape.pronouns,
-    bannerColor: UserSchema.shape.bannerColor,
-    avatarURL: z
-      .union([z.string().url("Invalid avatar URL"), z.literal("")])
+    displayName: z.string().trim().max(100).optional(),
+    avatarURL: z.url("Invalid avatar URL").optional(),
+    bannerURL: z.url("Invalid banner URL").optional(),
+    bannerColor: z
+      .string()
+      .trim()
+      .regex(/^#([0-9a-fA-F]{3}){1,2}$/, "Invalid hex color code")
       .optional(),
-    bannerURL: z
-      .union([z.string().url("Invalid banner URL"), z.literal("")])
-      .optional(),
+    bio: z.string().trim().max(400).optional(),
+    pronouns: z.string().trim().max(20).optional(),
+    profileGradientStart: z.string().optional(),
+    profileGradientEnd: z.string().optional(),
   })
   .strict();
 
-export type ProfileSettingsFormData = z.infer<typeof ProfileSettingsSchema>;
-export type OnboardingFormData = z.infer<typeof OnboardingSchema>;
-export type UserData = z.infer<typeof UserSchema>;
-export type CreateUserData = z.infer<typeof CreateUserSchema>;
-export type UpdateUserData = z.infer<typeof UpdateUserSchema>;
-export type FindUserData = z.infer<typeof FindUserSchema>;
+export type CreateUserSchema = z.infer<typeof createUserSchema>;
+export type UpdateUserSchema = z.infer<typeof updateUserSchema>;
+export type UpdateUserProfileSchema = z.infer<typeof updateUserProfileSchema>;

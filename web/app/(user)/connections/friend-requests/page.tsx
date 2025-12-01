@@ -10,21 +10,11 @@ import ReceivedRequests from "./components/ReceivedRequests";
 const FriendRequestsPage = () => {
   const [message, setMessage] = useState("");
 
-  const {
-    received,
-    sent,
-    isLoading,
-    addReceivedRequest,
-    addSentRequest,
-    removeRequestById,
-  } = useFriendRequestsStore();
+  const { received, sent, isLoading, addSentRequest, removeRequestById } =
+    useFriendRequestsStore();
 
   const { sendFriendRequest, acceptFriendRequest, rejectFriendRequest } =
-    useFriendRequests({
-      onFriendRequestReceived: addReceivedRequest,
-      onFriendRequestAccepted: (request) => removeRequestById(request._id),
-      onFriendRequestRejected: (request) => removeRequestById(request._id),
-    });
+    useFriendRequests();
 
   async function handleAccept(requestId: string) {
     const response = await acceptFriendRequest(requestId);

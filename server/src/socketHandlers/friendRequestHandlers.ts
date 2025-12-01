@@ -7,11 +7,9 @@ import {
 } from "../../../shared/schemas/friends";
 import { FRIEND_REQUEST_EVENTS } from "../../../shared/socketEvents";
 import FriendRequests from "../entities/FriendRequests";
-import { User } from "../entities/User";
-
+import prisma from "../../../database/src/client";
 interface AuthenticatedSocket extends Socket {
   userId?: string;
-  mongoUserId?: string;
 }
 
 export class FriendRequestHandlers {
@@ -59,7 +57,7 @@ export class FriendRequestHandlers {
     callback?: (response: any) => void
   ) {
     try {
-      if (!socket.mongoUserId) {
+      if (!socket.userId) {
         return callback?.({ error: "Unauthorized" });
       }
 
@@ -77,10 +75,9 @@ export class FriendRequestHandlers {
         return callback?.({ error: "Invalid friend tag format" });
       }
 
-      const receiver = await User.findByUsernameAndDiscriminator(
-        username,
-        discriminator
-      );
+      const receiver = await prisma.user.findUnique({
+        where: { username_discriminator: { username, discriminator } },
+      });
 
       if (!receiver) {
         return callback?.({ error: "Receiver not found" });
@@ -88,19 +85,22 @@ export class FriendRequestHandlers {
 
       const receiverId = receiver._id.toString();
 
-      const sender = await User.findById(socket.mongoUserId);
+      const sender = await prisma.user.findUnique({
+        where: { id: socket.userId },
+      });
+
       if (!sender) {
         return callback?.({ error: "Sender not found" });
       }
 
-      if (socket.mongoUserId === receiverId) {
+      if (socket.userId === receiver.id) {
         return callback?.({
           error: "Cannot send friend request to yourself",
         });
       }
 
       // Check if users are already friends
-      const existingFriends = await Friend.getFriends(socket.mongoUserId);
+      const existingFriends = await Friend.getFriends(socket.userId);
       const alreadyFriends = existingFriends.some(
         (friend) => friend.friendId === receiverId
       );
@@ -109,7 +109,7 @@ export class FriendRequestHandlers {
       }
 
       const existingRequests = await FriendRequests.findRequestsBySenderId(
-        socket.mongoUserId
+        socket.userId
       );
       const duplicateRequest = existingRequests.find(
         (req) => req.receiverId === receiverId
@@ -119,7 +119,7 @@ export class FriendRequestHandlers {
       }
 
       const friendRequest = await FriendRequests.create({
-        senderId: socket.mongoUserId,
+        senderId: socket.userId,
         receiverId,
         senderUsername: sender.username,
         senderAvatarURL: sender.avatarURL,
@@ -164,7 +164,7 @@ export class FriendRequestHandlers {
     callback?: (response: any) => void
   ) {
     try {
-      if (!socket.mongoUserId) {
+      if (!socket.userId) {
         return callback?.({ error: "Unauthorized" });
       }
 
@@ -182,14 +182,14 @@ export class FriendRequestHandlers {
         return callback?.({ error: "Friend request not found" });
       }
 
-      if (friendRequest.receiverId !== socket.mongoUserId) {
+      if (friendRequest.receiverId !== socket.userId) {
         return callback?.({
           error: "You can only accept friend requests sent to you",
         });
       }
 
       // If they are already friends, clean up the stale friend request
-      const existingFriends = await Friend.getFriends(socket.mongoUserId);
+      const existingFriends = await Friend.getFriends(socket.userId);
       const alreadyFriends = existingFriends.some(
         (friend) => friend.friendId === friendRequest.senderId
       );
@@ -200,7 +200,7 @@ export class FriendRequestHandlers {
         });
       }
 
-      await Friend.createFriend(socket.mongoUserId, friendRequest.senderId);
+      await Friend.createFriend(socket.userId, friendRequest.senderId);
 
       const deleted = await FriendRequests.deleteRequestById(requestId);
       if (!deleted) {
@@ -244,7 +244,7 @@ export class FriendRequestHandlers {
     callback?: (response: any) => void
   ) {
     try {
-      if (!socket.mongoUserId) {
+      if (!socket.userId) {
         return callback?.({ error: "Unauthorized" });
       }
 
@@ -262,7 +262,7 @@ export class FriendRequestHandlers {
         return callback?.({ error: "Friend request not found" });
       }
 
-      if (friendRequest.receiverId !== socket.mongoUserId) {
+      if (friendRequest.receiverId !== socket.userId) {
         return callback?.({
           error: "You can only reject friend requests sent to you",
         });

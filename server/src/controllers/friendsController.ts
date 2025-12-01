@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
 import STATUS_CODES from "../services/status";
-import { User } from "../entities/User";
 import { Friend } from "../entities/Friend";
 import FriendRequests from "../entities/FriendRequests";
 import {
@@ -13,22 +12,20 @@ import {
   UnauthorizedError,
 } from "../errors";
 import { FriendRequestData } from "shared/schemas/friends";
+import prisma from "../../../database/src/client";
 
 export class FriendsController {
   static async getFriends(req: Request, res: Response, next: NextFunction) {
     try {
-      const { userId, isAuthenticated } = getAuth(req);
-      if (!isAuthenticated) {
-        throw new UnauthorizedError();
-      }
+      const { userId: clerkId, isAuthenticated } = getAuth(req);
+      if (!isAuthenticated) throw new UnauthorizedError();
 
-      const user = await User.findByClerkId(userId);
-      if (!user) {
-        throw new NotFoundError("User not found");
-      }
+      const user = await prisma.user.findUnique({
+        where: { clerkId },
+      });
+      if (!user) throw new NotFoundError("User not found");
 
-      const mongoUserId = user._id.toString();
-      const friends = await Friend.getFriends(mongoUserId);
+      const friends = await Friend.getFriends(user.id);
 
       return res.status(STATUS_CODES.SUCCESS).json({ friends });
     } catch (error) {
@@ -42,15 +39,13 @@ export class FriendsController {
     next: NextFunction
   ) {
     try {
-      const { userId, isAuthenticated } = getAuth(req);
-      if (!isAuthenticated) {
-        throw new UnauthorizedError();
-      }
+      const { userId: clerkId, isAuthenticated } = getAuth(req);
+      if (!isAuthenticated) throw new UnauthorizedError();
 
-      const user = await User.findByClerkId(userId);
-      if (!user) {
-        throw new NotFoundError("User not found");
-      }
+      const user = await prisma.user.findUnique({
+        where: { clerkId },
+      });
+      if (!user) throw new NotFoundError("User not found");
 
       const mongoUserId = user._id.toString();
 
@@ -79,15 +74,13 @@ export class FriendsController {
     next: NextFunction
   ) {
     try {
-      const { userId, isAuthenticated } = getAuth(req);
-      if (!isAuthenticated) {
-        throw new UnauthorizedError();
-      }
+      const { userId: clerkId, isAuthenticated } = getAuth(req);
+      if (!isAuthenticated) throw new UnauthorizedError();
 
-      const user = await User.findByClerkId(userId);
-      if (!user) {
-        throw new NotFoundError("User not found");
-      }
+      const user = await prisma.user.findUnique({
+        where: { clerkId },
+      });
+      if (!user) throw new NotFoundError("User not found");
 
       const validatedData = FriendRequests.validateCreate(req.body);
 
@@ -101,7 +94,9 @@ export class FriendsController {
         throw new BadRequestError("Cannot send friend request to yourself");
       }
 
-      const receiver = await User.findById(validatedData.receiverId);
+      const receiver = await prisma.user.findUnique({
+        where: { id: validatedData.receiverId },
+      });
       if (!receiver) {
         throw new NotFoundError("Receiver not found");
       }
@@ -141,7 +136,7 @@ export class FriendsController {
     next: NextFunction
   ) {
     try {
-      const { userId, isAuthenticated } = getAuth(req);
+      const { userId: clerkId, isAuthenticated } = getAuth(req);
       if (!isAuthenticated) {
         throw new UnauthorizedError();
       }
@@ -151,7 +146,9 @@ export class FriendsController {
         throw new BadRequestError("Friend request ID is required");
       }
 
-      const user = await User.findByClerkId(userId);
+      const user = await prisma.user.findUnique({
+        where: { clerkId },
+      });
       if (!user) {
         throw new NotFoundError("User not found");
       }

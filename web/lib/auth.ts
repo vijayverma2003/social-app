@@ -1,7 +1,7 @@
 import UserService from "@/services/users";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { UserData } from "../../shared/schemas/user";
+import { UpdateUserProfileSchema } from "../../shared/schemas/user";
 import { AxiosError } from "axios";
 
 /**
@@ -13,7 +13,7 @@ import { AxiosError } from "axios";
  * @throws Redirects to "/onboarding" if user doesn't exist in database
  * @throws Redirects to "/" if there's a server error (to prevent infinite loops)
  */
-export async function getAuthenticatedUser(): Promise<UserData> {
+export async function getAuthenticatedUser(): Promise<UpdateUserProfileSchema> {
   const { userId, getToken, isAuthenticated } = await auth();
 
   if (!isAuthenticated || !userId) redirect("/");

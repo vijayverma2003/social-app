@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  ProfileSettingsSchema,
-  type ProfileSettingsFormData,
-  type UserData,
+  updateUserProfileSchema,
+  type UpdateUserProfileSchema,
 } from "../../../../../../shared/schemas/user";
 import UserService from "@/services/users";
 import { useAuth } from "@clerk/nextjs";
@@ -17,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
 
 interface ProfileSettingsFormProps {
-  user: UserData;
+  user: UpdateUserProfileSchema;
 }
 
 const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
@@ -30,17 +29,20 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(ProfileSettingsSchema),
+    resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
       bio: user.bio || "",
       pronouns: user.pronouns || "",
       bannerColor: user.bannerColor || "#4e83d9",
       avatarURL: user.avatarURL || "",
       bannerURL: user.bannerURL || "",
+      profileGradientStart: user.profileGradientStart || "",
+      profileGradientEnd: user.profileGradientEnd || "",
+      displayName: user.displayName || "",
     },
   });
 
-  const onSubmitForm = async (data: ProfileSettingsFormData) => {
+  const onSubmitForm = async (data: UpdateUserProfileSchema) => {
     setSubmitError(null);
     setSubmitSuccess(false);
     try {
@@ -49,14 +51,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         throw new Error("Not authenticated");
       }
 
-      // Convert empty strings to undefined for optional URL fields
-      const updateData: ProfileSettingsFormData = {
-        ...data,
-        avatarURL: data.avatarURL === "" ? undefined : data.avatarURL,
-        bannerURL: data.bannerURL === "" ? undefined : data.bannerURL,
-      };
-
-      await UserService.updateUser(updateData, token);
+      await UserService.updateUser(data, token);
       setSubmitSuccess(true);
       router.refresh();
     } catch (error) {
