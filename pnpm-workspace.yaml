@@ -1,6 +1,12 @@
 packages:
-  - 'web'
-  - 'server'
-  - 'shared'
-  - 'database'
-
+  - apps/web
+  - apps/server
+  - shared
+  - database/postgres
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@prisma/engines'
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver

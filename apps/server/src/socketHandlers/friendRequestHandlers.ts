@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import prisma from "@database";
+import prisma from "@database/postgres";
 import {
   FriendRequestActionInputSchema,
   SendFriendRequestInputSchema,

@@ -1,7 +1,7 @@
 import { clerkClient, getAuth } from "@clerk/express";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
-import prisma from "@database";
+import prisma from "@database/postgres";
 import {
   createUserSchema,
   updateUserProfileSchema,

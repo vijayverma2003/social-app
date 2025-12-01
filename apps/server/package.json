@@ -16,11 +16,12 @@
   "type": "commonjs",
   "dependencies": {
     "@clerk/express": "^1.7.43",
+    "@database/postgres": "workspace:*",
+    "@shared": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "mongodb": "^6.20.0",
-    "shared": "workspace:*",
     "socket.io": "^4.8.1",
     "zod": "^4.1.12"
   },

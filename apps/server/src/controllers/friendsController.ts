@@ -1,6 +1,6 @@
 import { getAuth } from "@clerk/express";
 import { NextFunction, Request, Response } from "express";
-import prisma from "@database";
+import prisma from "@database/postgres";
 import { NotFoundError, UnauthorizedError } from "../errors";
 import STATUS_CODES from "../services/status";
 

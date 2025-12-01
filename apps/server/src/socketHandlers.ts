@@ -2,11 +2,10 @@ import { Server, Socket } from "socket.io";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
 import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
-import prisma from "@database";
+import prisma from "@database/postgres";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
-  mongoUserId?: string;
 }
 
 export class SocketHandlers {
