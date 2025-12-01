@@ -1,12 +1,12 @@
 import { clerkClient, getAuth } from "@clerk/express";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
-import prisma from "../../../database/src/client";
+import prisma from "@database";
 import {
   createUserSchema,
   updateUserProfileSchema,
   updateUserSchema,
-} from "../../../shared/schemas/user";
+} from "@shared/schemas/user";
 import {
   UnauthorizedError,
   BadRequestError,

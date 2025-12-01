@@ -1,13 +1,11 @@
-import { Friend } from "../entities/Friend";
 import { Server, Socket } from "socket.io";
+import prisma from "@database";
 import {
   FriendRequestActionInputSchema,
-  FriendRequestData,
   SendFriendRequestInputSchema,
-} from "../../../shared/schemas/friends";
-import { FRIEND_REQUEST_EVENTS } from "../../../shared/socketEvents";
-import FriendRequests from "../entities/FriendRequests";
-import prisma from "../../../database/src/client";
+} from "@shared/schemas/friends";
+import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
+import { SendFriendRequestInput } from "@shared/schemas/friends";
 interface AuthenticatedSocket extends Socket {
   userId?: string;
 }
@@ -21,314 +19,238 @@ export class FriendRequestHandlers {
 
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(FRIEND_REQUEST_EVENTS.SEND, (data, callback) =>
-      this.handleSendFriendRequest(socket, data, callback)
+      this.sendFriendRequest(socket, data, callback)
     );
 
     socket.on(FRIEND_REQUEST_EVENTS.ACCEPT, (data, callback) =>
-      this.handleAcceptFriendRequest(socket, data, callback)
+      this.acceptFriendRequest(socket, data, callback)
     );
 
     socket.on(FRIEND_REQUEST_EVENTS.REJECT, (data, callback) =>
-      this.handleRejectFriendRequest(socket, data, callback)
+      this.rejectFriendRequest(socket, data, callback)
     );
   }
 
-  /**
-   * Handle sending a friend request.
-   *
-   * @param socket - Authenticated socket instance
-   * @param data - Request data containing receiverTag (e.g., username#0000)
-   * @param callback - Optional callback function for response
-   *
-   * @validation
-   * - User must be authenticated
-   * - receiverTag is required and must be valid
-   * - User cannot send request to themselves
-   * - Receiver must exist in database
-   * - No duplicate requests allowed
-   *
-   * @emits friend_request:received - Sent to receiver's room with request data
-   *
-   * @returns Callback with success status and created request data, or error message
-   */
-  private async handleSendFriendRequest(
+  private async sendFriendRequest(
     socket: AuthenticatedSocket,
-    data: any,
-    callback?: (response: any) => void
+    data: SendFriendRequestInput,
+    cb: (response: { error?: string; success?: boolean; data?: any }) => void
   ) {
     try {
-      if (!socket.userId) {
-        return callback?.({ error: "Unauthorized" });
-      }
+      if (!socket.userId) return cb({ error: "Unauthorized" });
 
       const validationResult = SendFriendRequestInputSchema.safeParse(data);
-      if (!validationResult.success) {
-        return callback?.({
-          error: validationResult.error.issues[0]?.message || "Invalid input",
-        });
-      }
+      if (!validationResult.success)
+        return cb({ error: validationResult.error.message });
 
       const { receiverTag } = validationResult.data;
       const [username, discriminator] = receiverTag.split("#");
 
-      if (!username || !discriminator) {
-        return callback?.({ error: "Invalid friend tag format" });
-      }
+      if (!username || !discriminator)
+        return cb({ error: "Invalid friend tag format" });
 
       const receiver = await prisma.user.findUnique({
         where: { username_discriminator: { username, discriminator } },
       });
-
-      if (!receiver) {
-        return callback?.({ error: "Receiver not found" });
-      }
-
-      const receiverId = receiver._id.toString();
+      if (!receiver) return cb({ error: "Receiver not found" });
 
       const sender = await prisma.user.findUnique({
         where: { id: socket.userId },
       });
 
-      if (!sender) {
-        return callback?.({ error: "Sender not found" });
-      }
+      if (!sender) return cb({ error: "Sender not found" });
 
-      if (socket.userId === receiver.id) {
-        return callback?.({
-          error: "Cannot send friend request to yourself",
-        });
-      }
+      if (socket.userId === receiver.id)
+        return cb({ error: "Cannot send friend request to yourself" });
 
       // Check if users are already friends
-      const existingFriends = await Friend.getFriends(socket.userId);
-      const alreadyFriends = existingFriends.some(
-        (friend) => friend.friendId === receiverId
-      );
-      if (alreadyFriends) {
-        return callback?.({ error: "You are already friends with this user" });
-      }
+      const existingFriends = await prisma.friend.findUnique({
+        where: {
+          userId_friendId: { userId: socket.userId, friendId: receiver.id },
+        },
+      });
+      if (existingFriends)
+        return cb({ error: "You are already friends with this user" });
 
-      const existingRequests = await FriendRequests.findRequestsBySenderId(
-        socket.userId
-      );
-      const duplicateRequest = existingRequests.find(
-        (req) => req.receiverId === receiverId
-      );
-      if (duplicateRequest) {
-        return callback?.({ error: "Friend request already exists" });
-      }
+      // Check whether the friend requests from both sender and receiver already exists
+      const existingSenderRequest = await prisma.friendRequest.findUnique({
+        where: {
+          senderId_receiverId: {
+            senderId: socket.userId,
+            receiverId: receiver.id,
+          },
+        },
+      });
 
-      const friendRequest = await FriendRequests.create({
-        senderId: socket.userId,
-        receiverId,
-        senderUsername: sender.username,
-        senderAvatarURL: sender.avatarURL,
-        receiverUsername: receiver.username,
-        receiverAvatarURL: receiver.avatarURL,
+      if (existingSenderRequest)
+        return cb({
+          error: "You have already sent a friend request to the person",
+        });
+
+      const existingReceiverRequest = await prisma.friendRequest.findUnique({
+        where: {
+          senderId_receiverId: {
+            senderId: receiver.id,
+            receiverId: socket.userId,
+          },
+        },
+      });
+
+      if (existingReceiverRequest)
+        return cb({
+          error: "The person has already sent you a friend request",
+        });
+
+      const friendRequest = await prisma.friendRequest.create({
+        data: {
+          senderId: socket.userId,
+          receiverId: receiver.id,
+        },
       });
 
       this.io
-        .to(`user:${receiverId}`)
+        .to(`user:${receiver.id}`)
         .emit(FRIEND_REQUEST_EVENTS.RECEIVED, friendRequest);
 
-      callback?.({
+      cb({
         success: true,
         data: friendRequest,
       });
     } catch (error) {
       console.error("Error sending friend request:", error);
-      callback?.({ error: "Failed to send friend request" });
+      cb({ error: "Failed to send friend request" });
     }
   }
 
-  /**
-   * Handle accepting a friend request.
-   *
-   * @param socket - Authenticated socket instance
-   * @param data - Request data containing requestId
-   * @param callback - Optional callback function for response
-   *
-   * @validation
-   * - User must be authenticated
-   * - requestId is required
-   * - Friend request must exist
-   * - User must be the receiver of the request
-   *
-   * @emits friend_request:accepted - Sent to sender's room with request data
-   *
-   * @returns Callback with success message or error message
-   */
-  private async handleAcceptFriendRequest(
+  private async acceptFriendRequest(
     socket: AuthenticatedSocket,
     data: any,
-    callback?: (response: any) => void
+    callback: (response: any) => void
   ) {
     try {
       if (!socket.userId) {
-        return callback?.({ error: "Unauthorized" });
+        return callback({ error: "Unauthorized" });
       }
 
       const validationResult = FriendRequestActionInputSchema.safeParse(data);
-      if (!validationResult.success) {
-        return callback?.({
+      if (!validationResult.success)
+        return callback({
           error: validationResult.error.issues[0]?.message || "Invalid input",
         });
-      }
 
       const { requestId } = validationResult.data;
 
-      const friendRequest = await FriendRequests.findRequestById(requestId);
-      if (!friendRequest) {
-        return callback?.({ error: "Friend request not found" });
-      }
+      const friendRequest = await prisma.friendRequest.findUnique({
+        where: { id: requestId },
+      });
+      if (!friendRequest)
+        return callback({ error: "Friend request not found" });
 
-      if (friendRequest.receiverId !== socket.userId) {
-        return callback?.({
+      if (friendRequest.receiverId !== socket.userId)
+        return callback({
           error: "You can only accept friend requests sent to you",
         });
-      }
 
       // If they are already friends, clean up the stale friend request
-      const existingFriends = await Friend.getFriends(socket.userId);
-      const alreadyFriends = existingFriends.some(
-        (friend) => friend.friendId === friendRequest.senderId
-      );
-      if (alreadyFriends) {
-        await FriendRequests.deleteRequestById(requestId);
-        return callback?.({
-          error: "You are already friends with this user",
+      const existingFriends = await prisma.friend.findUnique({
+        where: {
+          userId_friendId: {
+            userId: socket.userId,
+            friendId: friendRequest.senderId,
+          },
+        },
+      });
+
+      if (!existingFriends) {
+        await prisma.$transaction([
+          prisma.dMChannel.create({
+            data: {
+              users: {
+                create: [
+                  { userId: socket.userId },
+                  { userId: friendRequest.senderId },
+                ],
+              },
+              friends: {
+                create: [
+                  {
+                    userId: socket.userId,
+                    friendId: friendRequest.senderId,
+                  },
+                  {
+                    userId: friendRequest.senderId,
+                    friendId: socket.userId,
+                  },
+                ],
+              },
+            },
+          }),
+          prisma.friendRequest.delete({
+            where: { id: requestId },
+          }),
+        ]);
+      } else {
+        await prisma.friendRequest.delete({
+          where: { id: requestId },
         });
-      }
-
-      await Friend.createFriend(socket.userId, friendRequest.senderId);
-
-      const deleted = await FriendRequests.deleteRequestById(requestId);
-      if (!deleted) {
-        return callback?.({ error: "Failed to accept friend request" });
       }
 
       this.io
         .to(`user:${friendRequest.senderId}`)
         .emit(FRIEND_REQUEST_EVENTS.ACCEPTED, friendRequest);
 
-      callback?.({
+      callback({
         success: true,
         message: "Friend request accepted successfully",
       });
     } catch (error) {
       console.error("Error accepting friend request:", error);
-      callback?.({ error: "Failed to accept friend request" });
+      callback({ error: "Failed to accept friend request" });
     }
   }
 
-  /**
-   * Handle rejecting a friend request.
-   *
-   * @param socket - Authenticated socket instance
-   * @param data - Request data containing requestId
-   * @param callback - Optional callback function for response
-   *
-   * @validation
-   * - User must be authenticated
-   * - requestId is required
-   * - Friend request must exist
-   * - User must be the receiver of the request
-   *
-   * @emits friend_request:rejected - Sent to sender's room with request data
-   *
-   * @returns Callback with success message or error message
-   */
-  private async handleRejectFriendRequest(
+  private async rejectFriendRequest(
     socket: AuthenticatedSocket,
     data: any,
-    callback?: (response: any) => void
+    cb: (response: any) => void
   ) {
     try {
-      if (!socket.userId) {
-        return callback?.({ error: "Unauthorized" });
-      }
+      if (!socket.userId) return cb({ error: "Unauthorized" });
 
       const validationResult = FriendRequestActionInputSchema.safeParse(data);
-      if (!validationResult.success) {
-        return callback?.({
+      if (!validationResult.success)
+        return cb({
           error: validationResult.error.issues[0]?.message || "Invalid input",
         });
-      }
 
       const { requestId } = validationResult.data;
 
-      const friendRequest = await FriendRequests.findRequestById(requestId);
-      if (!friendRequest) {
-        return callback?.({ error: "Friend request not found" });
-      }
+      const friendRequest = await prisma.friendRequest.findUnique({
+        where: { id: requestId },
+      });
 
-      if (friendRequest.receiverId !== socket.userId) {
-        return callback?.({
+      if (!friendRequest) return cb({ error: "Friend request not found" });
+
+      if (friendRequest.receiverId !== socket.userId)
+        return cb({
           error: "You can only reject friend requests sent to you",
         });
-      }
 
-      const deleted = await FriendRequests.deleteRequestById(requestId);
-      if (!deleted) {
-        return callback?.({ error: "Failed to reject friend request" });
-      }
+      await prisma.friendRequest.delete({
+        where: { id: requestId },
+      });
 
       this.io
         .to(`user:${friendRequest.senderId}`)
         .emit(FRIEND_REQUEST_EVENTS.REJECTED, friendRequest);
 
-      callback?.({
+      cb({
         success: true,
         message: "Friend request rejected successfully",
       });
     } catch (error) {
       console.error("Error rejecting friend request:", error);
-      callback?.({ error: "Failed to reject friend request" });
+      cb({ error: "Failed to reject friend request" });
     }
-  }
-
-  /**
-   * Emit friend request received event to a specific user.
-   *
-   * @param receiverId - MongoDB user ID of the recipient
-   * @param data - Friend request data including _id, senderId, receiverId, and createdAt
-   *
-   * @emits friend_request:received - Sent to receiver's personal room
-   */
-  public emitFriendRequestReceived(
-    receiverId: string,
-    data: FriendRequestData & { _id: string }
-  ) {
-    this.io.to(`user:${receiverId}`).emit(FRIEND_REQUEST_EVENTS.RECEIVED, data);
-  }
-
-  /**
-   * Emit friend request accepted event to a specific user.
-   *
-   * @param senderId - MongoDB user ID of the original sender
-   * @param data - Friend request data including _id, senderId, receiverId, and createdAt
-   *
-   * @emits friend_request:accepted - Sent to sender's personal room
-   */
-  public emitFriendRequestAccepted(
-    senderId: string,
-    data: FriendRequestData & { _id: string }
-  ) {
-    this.io.to(`user:${senderId}`).emit(FRIEND_REQUEST_EVENTS.ACCEPTED, data);
-  }
-
-  /**
-   * Emit friend request rejected event to a specific user.
-   *
-   * @param senderId - MongoDB user ID of the original sender
-   * @param data - Friend request data including _id, senderId, receiverId, and createdAt
-   *
-   * @emits friend_request:rejected - Sent to sender's personal room
-   */
-  public emitFriendRequestRejected(
-    senderId: string,
-    data: FriendRequestData & { _id: string }
-  ) {
-    this.io.to(`user:${senderId}`).emit(FRIEND_REQUEST_EVENTS.REJECTED, data);
   }
 }

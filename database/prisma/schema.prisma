@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -51,13 +51,15 @@ model Profile {
 }
 
 model Friend {
-  id        String   @id @default(cuid())
-  userId    String
-  friendId  String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  dmChannelId String?
+  userId      String
+  friendId    String
+  createdAt   DateTime @default(now())
 
-  user   User @relation("UserFriends", fields: [userId], references: [id])
-  friend User @relation("UserFriendOf", fields: [friendId], references: [id])
+  user      User       @relation("UserFriends", fields: [userId], references: [id])
+  friend    User       @relation("UserFriendOf", fields: [friendId], references: [id])
+  dmChannel DMChannel? @relation(fields: [dmChannelId], references: [id])
 
   @@unique([userId, friendId])
   @@index([userId])
@@ -85,7 +87,8 @@ model DMChannel {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
-  users DMChannelUser[]
+  users   DMChannelUser[]
+  friends Friend[]
 }
 
 model DMChannelUser {

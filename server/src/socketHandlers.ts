@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
 import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
-import prisma from "../../database/src/client";
+import prisma from "@database";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;

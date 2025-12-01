@@ -1,18 +1,8 @@
-import { Request, Response, NextFunction } from "express";
 import { getAuth } from "@clerk/express";
+import { NextFunction, Request, Response } from "express";
+import prisma from "@database";
+import { NotFoundError, UnauthorizedError } from "../errors";
 import STATUS_CODES from "../services/status";
-import { Friend } from "../entities/Friend";
-import FriendRequests from "../entities/FriendRequests";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  InternalServerError,
-  NotFoundError,
-  UnauthorizedError,
-} from "../errors";
-import { FriendRequestData } from "shared/schemas/friends";
-import prisma from "../../../database/src/client";
 
 export class FriendsController {
   static async getFriends(req: Request, res: Response, next: NextFunction) {
@@ -25,9 +15,27 @@ export class FriendsController {
       });
       if (!user) throw new NotFoundError("User not found");
 
-      const friends = await Friend.getFriends(user.id);
+      const friendsData = await prisma.friend.findMany({
+        where: {
+          userId: user.id,
+        },
+        include: {
+          friend: {
+            include: { profile: true },
+            select: {
+              profile: true,
+            },
+          },
+        },
+      });
 
-      return res.status(STATUS_CODES.SUCCESS).json({ friends });
+      const friends = friendsData.map((friend: any) => ({
+        id: friend.id,
+        dmChannelId: friend.dmChannelId,
+        profile: friend.friend.profile,
+      }));
+
+      return res.status(STATUS_CODES.SUCCESS).json(friends);
     } catch (error) {
       next(error);
     }
@@ -47,133 +55,21 @@ export class FriendsController {
       });
       if (!user) throw new NotFoundError("User not found");
 
-      const mongoUserId = user._id.toString();
-
-      // Get incoming requests (requests sent to this user)
-      const incomingRequests = await FriendRequests.findRequestsByReceiverId(
-        mongoUserId
-      );
-
+      const incomingRequests = await prisma.friendRequest.findMany({
+        where: {
+          receiverId: user.id,
+        },
+      });
       // Get outgoing requests (requests sent by this user)
-      const outgoingRequests = await FriendRequests.findRequestsBySenderId(
-        mongoUserId
-      );
-
-      return res.status(STATUS_CODES.SUCCESS).json({
-        incoming: incomingRequests,
-        outgoing: outgoingRequests,
+      const outgoingRequests = await prisma.friendRequest.findMany({
+        where: {
+          senderId: user.id,
+        },
       });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  static async createFriendRequest(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const { userId: clerkId, isAuthenticated } = getAuth(req);
-      if (!isAuthenticated) throw new UnauthorizedError();
-
-      const user = await prisma.user.findUnique({
-        where: { clerkId },
-      });
-      if (!user) throw new NotFoundError("User not found");
-
-      const validatedData = FriendRequests.validateCreate(req.body);
-
-      // Check if receiverId is provided
-      if (!validatedData.receiverId) {
-        throw new BadRequestError("Receiver ID is required");
-      }
-
-      // Check if user is trying to send request to themselves
-      if (user._id.toString() === validatedData.receiverId) {
-        throw new BadRequestError("Cannot send friend request to yourself");
-      }
-
-      const receiver = await prisma.user.findUnique({
-        where: { id: validatedData.receiverId },
-      });
-      if (!receiver) {
-        throw new NotFoundError("Receiver not found");
-      }
-
-      // Check if friend request already exists
-      const existingRequests = await FriendRequests.findRequestsBySenderId(
-        user._id.toString()
-      );
-      const duplicateRequest = existingRequests.find(
-        (req) => req.receiverId === validatedData.receiverId
-      );
-      if (duplicateRequest) {
-        throw new ConflictError("Friend request already exists");
-      }
-
-      const friendRequest = await FriendRequests.create({
-        senderId: user._id.toString(),
-        receiverId: receiver._id.toString(),
-        senderUsername: user.username,
-        senderAvatarURL: user.avatarURL,
-        receiverUsername: receiver.username,
-        receiverAvatarURL: receiver.avatarURL,
-      });
-
-      return res.status(STATUS_CODES.CREATED).json({
-        ...friendRequest,
-        _id: friendRequest._id.toString(),
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  static async rejectFriendRequest(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      const { userId: clerkId, isAuthenticated } = getAuth(req);
-      if (!isAuthenticated) {
-        throw new UnauthorizedError();
-      }
-
-      const { id } = req.params;
-      if (!id) {
-        throw new BadRequestError("Friend request ID is required");
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { clerkId },
-      });
-      if (!user) {
-        throw new NotFoundError("User not found");
-      }
-
-      const friendRequest = await FriendRequests.findRequestById(id);
-      if (!friendRequest) {
-        throw new NotFoundError("Friend request not found");
-      }
-
-      // Check if user is the receiver of the request
-      if (friendRequest.receiverId !== user._id.toString()) {
-        throw new ForbiddenError(
-          "You can only reject friend requests sent to you"
-        );
-      }
-
-      const deleted = await FriendRequests.deleteRequestById(id);
-
-      if (!deleted) {
-        throw new InternalServerError("Failed to reject friend request");
-      }
 
       return res
         .status(STATUS_CODES.SUCCESS)
-        .json({ message: "Friend request rejected successfully" });
+        .json({ incomingRequests, outgoingRequests });
     } catch (error) {
       next(error);
     }
