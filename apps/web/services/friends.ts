@@ -1,54 +1,28 @@
 import api from "./api";
+import {
+  Profile,
+  FriendRequest,
+} from "@database/postgres/generated/prisma/client";
 
-export interface FriendRequest {
-  _id: string;
-  senderId: string;
-  receiverId: string;
-  createdAt: Date;
-  senderUsername?: string;
-  senderAvatarURL?: string;
-  senderDisplayName?: string;
-  receiverUsername?: string;
-  receiverAvatarURL?: string;
-  receiverDisplayName?: string;
+export interface Friends {
+  id: string;
+  username: string;
+  discriminator: string;
+  dmChannelId: string;
+  profile: Profile;
 }
 
-export interface FriendProfile {
-  _id: string;
-  userId: string;
-  friendId: string;
-  createdAt: string;
-  profile: {
-    _id: string;
-    username?: string;
-    discriminator?: string;
-    avatarURL?: string;
-    bannerURL?: string;
-    bannerColor?: string;
-    bio?: string;
-    pronouns?: string;
-  } | null;
-}
-
-interface FriendRequestsResponse {
-  incoming: FriendRequest[];
-  outgoing: FriendRequest[];
-}
-
-interface FriendsResponse {
-  friends: FriendProfile[];
-}
-
-export async function getFriendRequests(token?: string): Promise<FriendRequestsResponse> {
-  const response = await api.get<FriendRequestsResponse>("/friends/requests", {
+export async function getFriendRequests(token?: string) {
+  return await api.get<{
+    incomingRequests: FriendRequest[];
+    outgoingRequests: FriendRequest[];
+  }>("/friends/requests", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  return response.data;
 }
 
-export async function getFriends(token?: string): Promise<FriendsResponse> {
-  const response = await api.get<FriendsResponse>("/friends", {
+export async function getFriends(token?: string) {
+  return await api.get<Friends[]>("/friends", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  return response.data;
 }

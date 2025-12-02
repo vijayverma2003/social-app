@@ -1,8 +1,7 @@
-import UserService from "@/services/users";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { UpdateUserProfileSchema } from "@shared/schemas/user";
 import { AxiosError } from "axios";
+import { getCurrentUser } from "@/services/users";
 
 /**
  * Gets the authenticated user for server components.
@@ -13,7 +12,7 @@ import { AxiosError } from "axios";
  * @throws Redirects to "/onboarding" if user doesn't exist in database
  * @throws Redirects to "/" if there's a server error (to prevent infinite loops)
  */
-export async function getAuthenticatedUser(): Promise<UpdateUserProfileSchema> {
+export async function getAuthenticatedUser() {
   const { userId, getToken, isAuthenticated } = await auth();
 
   if (!isAuthenticated || !userId) redirect("/");
@@ -22,7 +21,7 @@ export async function getAuthenticatedUser(): Promise<UpdateUserProfileSchema> {
   if (!token) redirect("/");
 
   try {
-    const response = await UserService.getUser(token);
+    const response = await getCurrentUser(token);
     return response.data;
   } catch (error) {
     console.error("Unexpected error fetching user:", error);

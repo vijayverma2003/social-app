@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { Home, MessageCircle } from "lucide-react";
@@ -15,7 +16,6 @@ const Navbar = () => {
     (state) => state.received.length
   );
   const hasIncoming = incomingCount > 0;
-  const incomingLabel = incomingCount > 10 ? "10+" : incomingCount.toString();
 
   return (
     <aside className="min-h-screen w-64 border-r border-border bg-background p-4 flex flex-col gap-4 overflow-y-scroll">
@@ -48,11 +48,7 @@ const Navbar = () => {
           >
             <MessageCircle className="size-5" />
             <span>Friends & DMs</span>
-            {hasIncoming && (
-              <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-700 px-1 text-[10px] font-bold text-white">
-                {incomingLabel}
-              </span>
-            )}
+            {hasIncoming && <NotificationBadge count={incomingCount} />}
           </Button>
         </Link>
       </nav>

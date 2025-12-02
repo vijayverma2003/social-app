@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import Link from "next/link";
@@ -12,7 +13,6 @@ const ConnectionsNavigation = () => {
     (state) => state.received.length
   );
   const hasIncoming = incomingCount > 0;
-  const incomingLabel = incomingCount > 10 ? "10+" : incomingCount.toString();
 
   const connectionsRoutes = [
     {
@@ -38,9 +38,7 @@ const ConnectionsNavigation = () => {
           >
             <span>{route.label}</span>
             {route.href === "/connections/friend-requests" && hasIncoming && (
-              <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                {incomingLabel}
-              </span>
+              <NotificationBadge count={incomingCount} />
             )}
           </Button>
         </Link>

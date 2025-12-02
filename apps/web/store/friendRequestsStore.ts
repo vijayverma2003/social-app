@@ -1,5 +1,5 @@
+import { FriendRequest } from "@database/postgres/generated/prisma/client";
 import { create } from "zustand";
-import type { FriendRequest } from "@/services/friends";
 
 interface FriendRequestsState {
   received: FriendRequest[];
@@ -43,8 +43,8 @@ export const useFriendRequestsStore = create<FriendRequestsState>((set) => ({
 
   removeRequestById: (requestId) =>
     set((state) => ({
-      received: state.received.filter((r) => r._id !== requestId),
-      sent: state.sent.filter((r) => r._id !== requestId),
+      received: state.received.filter((r) => r.id !== requestId),
+      sent: state.sent.filter((r) => r.id !== requestId),
     })),
 
   setLoading: (isLoading) => set({ isLoading }),

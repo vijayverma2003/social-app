@@ -42,7 +42,7 @@ export class SocketHandlers {
 
         if (!user) return next(new Error("User not found"));
 
-        socket.userId = userId;
+        socket.userId = user.id;
 
         next();
       } catch (error) {

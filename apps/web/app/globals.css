@@ -3,6 +3,7 @@
 
 html {
   font-size: 14px;
+  font-weight: 400;
 }
 
 @custom-variant dark (&:is(.dark *));

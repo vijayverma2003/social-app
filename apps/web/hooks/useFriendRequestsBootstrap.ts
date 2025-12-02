@@ -2,13 +2,14 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { getFriendRequests, type FriendRequest } from "@/services/friends";
+import { getFriendRequests } from "@/services/friends";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useSocket } from "@/contexts/SocketContext";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
+import { FriendRequest } from "@database/postgres/generated/prisma/client";
 
 export const useFriendRequestsBootstrap = () => {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const {
     setInitialRequests,
     setLoading,
@@ -19,22 +20,26 @@ export const useFriendRequestsBootstrap = () => {
   const { socket } = useSocket();
 
   useEffect(() => {
-    if (!isSignedIn) return;
-
     let cancelled = false;
 
     const loadFriendRequests = async () => {
       try {
         setLoading(true);
         const token = await getToken();
-        const data = await getFriendRequests(token || undefined);
-        console.log(data);
         if (cancelled) return;
-        setInitialRequests(data.incoming, data.outgoing);
+
+        const response = await getFriendRequests(token || undefined);
+        console.log(response);
+        if (cancelled) return;
+
+        const data = response.data;
+
+        setInitialRequests(data.incomingRequests, data.outgoingRequests);
       } catch (error) {
         console.error("Failed to load friend requests:", error);
-        if (cancelled) return;
-        setError("Failed to load friend requests");
+        if (!cancelled) {
+          setError("Failed to load friend requests");
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -47,7 +52,7 @@ export const useFriendRequestsBootstrap = () => {
     return () => {
       cancelled = true;
     };
-  }, [getToken, isSignedIn, setInitialRequests, setLoading, setError]);
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -57,11 +62,11 @@ export const useFriendRequestsBootstrap = () => {
     };
 
     const handleAccepted = (request: FriendRequest) => {
-      removeRequestById(request._id);
+      removeRequestById(request.id);
     };
 
     const handleRejected = (request: FriendRequest) => {
-      removeRequestById(request._id);
+      removeRequestById(request.id);
     };
 
     socket.on(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);

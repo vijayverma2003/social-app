@@ -1,13 +1,13 @@
 "use client";
 
-import { friendsService, type FriendProfile } from "@/services/friends";
+import { getFriends, type Friends } from "@/services/friends";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ConnectionsPage = () => {
   const { getToken } = useAuth();
-  const [friends, setFriends] = useState<FriendProfile[]>([]);
+  const [friends, setFriends] = useState<Friends[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,8 +16,9 @@ const ConnectionsPage = () => {
       try {
         setIsLoading(true);
         const token = await getToken();
-        const data = await friendsService.getFriends(token || undefined);
-        setFriends(data.friends);
+        const response = await getFriends(token || undefined);
+        console.log(response.data);
+        setFriends(response.data ?? []);
       } catch (err) {
         console.error("Failed to load friends:", err);
         setError("Failed to load friends");
@@ -63,29 +64,23 @@ const ConnectionsPage = () => {
       <h2 className="text-sm text-muted-foreground font-bold">Your Friends</h2>
       <div className="space-y-3">
         {friends.map((friend) => {
-          const profile = friend.profile;
-          const displayName =
-            profile?.username && profile?.discriminator
-              ? `${profile.username}#${profile.discriminator}`
-              : profile?.username || "Unknown User";
-
           return (
             <div
-              key={friend._id}
+              key={friend.id}
               className="flex items-center justify-between gap-3 rounded-xl bg-accent/50 p-4"
             >
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={profile?.avatarURL} />
+                  <AvatarImage src={friend.profile.avatarURL || ""} />
                   <AvatarFallback>
-                    {displayName.charAt(0).toUpperCase()}
+                    {friend.username.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{displayName}</p>
-                  {profile?.bio && (
+                  <p className="text-sm font-medium">{friend.username}</p>
+                  {friend.profile.bio && (
                     <p className="text-xs text-muted-foreground line-clamp-1">
-                      {profile.bio}
+                      {friend.profile.bio}
                     </p>
                   )}
                 </div>

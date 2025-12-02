@@ -49,11 +49,13 @@ export class FriendRequestHandlers {
       if (!username || !discriminator)
         return cb({ error: "Invalid friend tag format" });
 
+      console.log(username, discriminator);
+
       const receiver = await prisma.user.findUnique({
         where: { username_discriminator: { username, discriminator } },
       });
       if (!receiver) return cb({ error: "Receiver not found" });
-
+      console.log(socket.userId);
       const sender = await prisma.user.findUnique({
         where: { id: socket.userId },
       });

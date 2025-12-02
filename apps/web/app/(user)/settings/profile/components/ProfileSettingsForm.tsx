@@ -10,13 +10,14 @@ import {
   updateUserProfileSchema,
   type UpdateUserProfileSchema,
 } from "@shared/schemas/user";
-import UserService from "@/services/users";
+import { updateUser } from "@/services/users";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
+import { Profile, User } from "@database/postgres/generated/prisma/client";
 
 interface ProfileSettingsFormProps {
-  user: UpdateUserProfileSchema;
+  user: User & { profile: Profile };
 }
 
 const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
@@ -31,18 +32,18 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
   } = useForm({
     resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
-      bio: user.bio || "",
-      pronouns: user.pronouns || "",
-      bannerColor: user.bannerColor || "#4e83d9",
-      avatarURL: user.avatarURL || "",
-      bannerURL: user.bannerURL || "",
-      profileGradientStart: user.profileGradientStart || "",
-      profileGradientEnd: user.profileGradientEnd || "",
-      displayName: user.displayName || "",
+      bio: user.profile.bio || "",
+      pronouns: user.profile.pronouns || "",
+      bannerColor: user.profile.bannerColor || "#4e83d9",
+      avatarURL: user.profile.avatarURL || "",
+      bannerURL: user.profile.bannerURL || "",
+      profileGradientStart: user.profile.profileGradientStart || "",
+      profileGradientEnd: user.profile.profileGradientEnd || "",
+      displayName: user.profile.displayName || "",
     },
   });
 
-  const onSubmitForm = async (data: UpdateUserProfileSchema) => {
+  const onSubmitForm = async (data: Profile) => {
     setSubmitError(null);
     setSubmitSuccess(false);
     try {
@@ -51,7 +52,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         throw new Error("Not authenticated");
       }
 
-      await UserService.updateUser(data, token);
+      await updateUser(data, token);
       setSubmitSuccess(true);
       router.refresh();
     } catch (error) {

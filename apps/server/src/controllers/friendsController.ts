@@ -21,8 +21,7 @@ export class FriendsController {
         },
         include: {
           friend: {
-            include: { profile: true },
-            select: {
+            include: {
               profile: true,
             },
           },
@@ -31,6 +30,8 @@ export class FriendsController {
 
       const friends = friendsData.map((friend: any) => ({
         id: friend.id,
+        username: friend.friend.username,
+        discriminator: friend.friend.discriminator,
         dmChannelId: friend.dmChannelId,
         profile: friend.friend.profile,
       }));
