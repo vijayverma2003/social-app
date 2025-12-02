@@ -29,7 +29,6 @@ export const useFriendRequestsBootstrap = () => {
         if (cancelled) return;
 
         const response = await getFriendRequests(token || undefined);
-        console.log(response);
         if (cancelled) return;
 
         const data = response.data;

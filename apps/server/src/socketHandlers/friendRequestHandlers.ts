@@ -134,6 +134,8 @@ export class FriendRequestHandlers {
         return callback({ error: "Unauthorized" });
       }
 
+      console.log(data);
+
       const validationResult = FriendRequestActionInputSchema.safeParse(data);
       if (!validationResult.success)
         return callback({

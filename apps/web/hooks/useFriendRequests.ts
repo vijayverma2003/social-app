@@ -2,7 +2,7 @@
 
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/contexts/SocketContext";
-import { FriendRequest } from "@/services/friends";
+import { FriendRequest } from "@database/postgres/generated/prisma/client";
 import { useCallback } from "react";
 
 export interface FriendRequestSocketResponse {

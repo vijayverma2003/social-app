@@ -17,7 +17,6 @@ const ConnectionsPage = () => {
         setIsLoading(true);
         const token = await getToken();
         const response = await getFriends(token || undefined);
-        console.log(response.data);
         setFriends(response.data ?? []);
       } catch (err) {
         console.error("Failed to load friends:", err);
