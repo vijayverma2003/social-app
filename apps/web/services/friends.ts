@@ -1,28 +1,20 @@
-import api from "./api";
 import {
-  Profile,
-  FriendRequest,
-} from "@database/postgres/generated/prisma/client";
-
-export interface Friends {
-  id: string;
-  username: string;
-  discriminator: string;
-  dmChannelId: string;
-  profile: Profile;
-}
+  FriendsListResponse,
+  IncomingAndOutgoingFriendRequestsResponse,
+} from "@shared/types";
+import api from "./api";
 
 export async function getFriendRequests(token?: string) {
-  return await api.get<{
-    incomingRequests: FriendRequest[];
-    outgoingRequests: FriendRequest[];
-  }>("/friends/requests", {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  return await api.get<IncomingAndOutgoingFriendRequestsResponse>(
+    "/friends/requests",
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
 }
 
 export async function getFriends(token?: string) {
-  return await api.get<Friends[]>("/friends", {
+  return await api.get<FriendsListResponse[]>("/friends", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 }

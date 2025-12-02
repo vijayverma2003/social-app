@@ -1,13 +1,14 @@
 "use client";
 
-import { getFriends, type Friends } from "@/services/friends";
+import { getFriends } from "@/services/friends";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FriendsListResponse } from "@shared/types";
 
 const ConnectionsPage = () => {
   const { getToken } = useAuth();
-  const [friends, setFriends] = useState<Friends[]>([]);
+  const [friends, setFriends] = useState<FriendsListResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,14 +71,14 @@ const ConnectionsPage = () => {
             >
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={friend.profile.avatarURL || ""} />
+                  <AvatarImage src={friend.profile?.avatarURL || ""} />
                   <AvatarFallback>
                     {friend.username.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">{friend.username}</p>
-                  {friend.profile.bio && (
+                  {friend.profile?.bio && (
                     <p className="text-xs text-muted-foreground line-clamp-1">
                       {friend.profile.bio}
                     </p>
