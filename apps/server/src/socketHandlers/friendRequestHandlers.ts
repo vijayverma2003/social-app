@@ -1,14 +1,13 @@
-import { Server, Socket } from "socket.io";
 import prisma from "@database/postgres";
 import {
   FriendRequestActionInputSchema,
+  SendFriendRequestInput,
   SendFriendRequestInputSchema,
 } from "@shared/schemas/friends";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
-import { SendFriendRequestInput } from "@shared/schemas/friends";
-interface AuthenticatedSocket extends Socket {
-  userId?: string;
-}
+import { FriendRequestResponse, SocketResponse } from "@shared/types/responses";
+import { Server } from "socket.io";
+import { AuthenticatedSocket } from "../socketHandlers";
 
 export class FriendRequestHandlers {
   private io: Server;
@@ -34,7 +33,7 @@ export class FriendRequestHandlers {
   private async sendFriendRequest(
     socket: AuthenticatedSocket,
     data: SendFriendRequestInput,
-    cb: (response: { error?: string; success?: boolean; data?: any }) => void
+    cb: (response: SocketResponse<FriendRequestResponse>) => void
   ) {
     try {
       if (!socket.userId) return cb({ error: "Unauthorized" });
@@ -127,7 +126,7 @@ export class FriendRequestHandlers {
   private async acceptFriendRequest(
     socket: AuthenticatedSocket,
     data: any,
-    callback: (response: any) => void
+    callback: (response: SocketResponse<FriendRequestResponse>) => void
   ) {
     try {
       if (!socket.userId) {
@@ -205,7 +204,7 @@ export class FriendRequestHandlers {
 
       callback({
         success: true,
-        message: "Friend request accepted successfully",
+        data: friendRequest,
       });
     } catch (error) {
       console.error("Error accepting friend request:", error);
@@ -216,7 +215,7 @@ export class FriendRequestHandlers {
   private async rejectFriendRequest(
     socket: AuthenticatedSocket,
     data: any,
-    cb: (response: any) => void
+    cb: (response: SocketResponse<FriendRequestResponse>) => void
   ) {
     try {
       if (!socket.userId) return cb({ error: "Unauthorized" });
@@ -250,7 +249,7 @@ export class FriendRequestHandlers {
 
       cb({
         success: true,
-        message: "Friend request rejected successfully",
+        data: friendRequest,
       });
     } catch (error) {
       console.error("Error rejecting friend request:", error);

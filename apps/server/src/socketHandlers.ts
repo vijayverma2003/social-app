@@ -4,7 +4,7 @@ import { Request } from "express";
 import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
 import prisma from "@database/postgres";
 
-interface AuthenticatedSocket extends Socket {
+export interface AuthenticatedSocket extends Socket {
   userId?: string;
 }
 

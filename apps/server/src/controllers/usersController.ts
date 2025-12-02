@@ -1,6 +1,4 @@
 import { clerkClient, getAuth } from "@clerk/express";
-import { NextFunction, Request, Response } from "express";
-import z from "zod";
 import prisma from "@database/postgres";
 import {
   createUserSchema,
@@ -8,16 +6,27 @@ import {
   updateUserSchema,
 } from "@shared/schemas/user";
 import {
-  UnauthorizedError,
+  ProfileResponse,
+  UserResponse,
+  UserWithProfileResponse,
+} from "@shared/types/responses";
+import { NextFunction, Request, Response } from "express";
+import z from "zod";
+import {
   BadRequestError,
-  NotFoundError,
   ConflictError,
+  NotFoundError,
+  UnauthorizedError,
 } from "../errors";
 import STATUS_CODES from "../services/status";
 import { generateDiscriminator } from "../services/utils";
 
 export class UsersController {
-  static async createUser(req: Request, res: Response, next: NextFunction) {
+  static async createUser(
+    req: Request,
+    res: Response<UserWithProfileResponse>,
+    next: NextFunction
+  ) {
     try {
       const { userId: clerkId, isAuthenticated } = getAuth(req);
       if (!isAuthenticated) throw new UnauthorizedError();
@@ -62,7 +71,11 @@ export class UsersController {
     }
   }
 
-  static async getCurrentUser(req: Request, res: Response, next: NextFunction) {
+  static async getCurrentUser(
+    req: Request,
+    res: Response<UserWithProfileResponse>,
+    next: NextFunction
+  ) {
     try {
       const { userId, isAuthenticated } = getAuth(req);
       if (!isAuthenticated) {
@@ -83,7 +96,7 @@ export class UsersController {
 
   static async updateCurrentUser(
     req: Request,
-    res: Response,
+    res: Response<UserResponse>,
     next: NextFunction
   ) {
     try {
@@ -122,7 +135,7 @@ export class UsersController {
 
   static async getProfileByUserId(
     req: Request,
-    res: Response,
+    res: Response<ProfileResponse>,
     next: NextFunction
   ) {
     try {
@@ -143,7 +156,7 @@ export class UsersController {
 
   static async updateUserProfile(
     req: Request,
-    res: Response,
+    res: Response<UserWithProfileResponse>,
     next: NextFunction
   ) {
     try {

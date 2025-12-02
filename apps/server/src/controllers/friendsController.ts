@@ -1,11 +1,19 @@
 import { getAuth } from "@clerk/express";
-import { NextFunction, Request, Response } from "express";
 import prisma from "@database/postgres";
+import {
+  FriendsListResponse,
+  IncomingAndOutgoingFriendRequestsResponse,
+} from "@shared/types/responses";
+import { NextFunction, Request, Response } from "express";
 import { NotFoundError, UnauthorizedError } from "../errors";
 import STATUS_CODES from "../services/status";
 
 export class FriendsController {
-  static async getFriends(req: Request, res: Response, next: NextFunction) {
+  static async getFriends(
+    req: Request,
+    res: Response<FriendsListResponse[]>,
+    next: NextFunction
+  ) {
     try {
       const { userId: clerkId, isAuthenticated } = getAuth(req);
       if (!isAuthenticated) throw new UnauthorizedError();
@@ -36,7 +44,9 @@ export class FriendsController {
         profile: friend.friend.profile,
       }));
 
-      return res.status(STATUS_CODES.SUCCESS).json(friends);
+      return res
+        .status(STATUS_CODES.SUCCESS)
+        .json(friends as FriendsListResponse[]);
     } catch (error) {
       next(error);
     }
@@ -44,7 +54,7 @@ export class FriendsController {
 
   static async getFriendRequests(
     req: Request,
-    res: Response,
+    res: Response<IncomingAndOutgoingFriendRequestsResponse>,
     next: NextFunction
   ) {
     try {
@@ -56,21 +66,42 @@ export class FriendsController {
       });
       if (!user) throw new NotFoundError("User not found");
 
-      const incomingRequests = await prisma.friendRequest.findMany({
+      const friendRequests = await prisma.friendRequest.findMany({
         where: {
-          receiverId: user.id,
+          OR: [{ receiverId: user.id }, { senderId: user.id }],
         },
-      });
-      // Get outgoing requests (requests sent by this user)
-      const outgoingRequests = await prisma.friendRequest.findMany({
-        where: {
-          senderId: user.id,
+        include: {
+          receiver: { include: { profile: true } },
+          sender: { include: { profile: true } },
         },
       });
 
+      const incomingRequests = friendRequests
+        .filter((request) => request.receiverId === user.id)
+        .map((request) => ({
+          id: request.id,
+          username: request.sender.username,
+          discriminator: request.sender.discriminator,
+          profile: request.sender.profile,
+          createdAt: request.createdAt,
+        }));
+
+      const outgoingRequests = friendRequests
+        .filter((request) => request.senderId === user.id)
+        .map((request) => ({
+          id: request.id,
+          username: request.receiver.username,
+          discriminator: request.receiver.discriminator,
+          profile: request.receiver.profile,
+          createdAt: request.createdAt,
+        }));
+
       return res
         .status(STATUS_CODES.SUCCESS)
-        .json({ incomingRequests, outgoingRequests });
+        .json({
+          incomingRequests,
+          outgoingRequests,
+        } as IncomingAndOutgoingFriendRequestsResponse);
     } catch (error) {
       next(error);
     }
