@@ -49,18 +49,19 @@ export const updateUserSchema = z
 
 export const updateUserProfileSchema = z
   .object({
-    displayName: z.string().trim().max(100).optional(),
-    avatarURL: z.url("Invalid avatar URL").optional(),
-    bannerURL: z.url("Invalid banner URL").optional(),
+    displayName: z.string().trim().max(100).optional().or(z.literal("")),
+    avatarURL: z.url("Invalid avatar URL").optional().or(z.literal("")),
+    bannerURL: z.url("Invalid banner URL").optional().or(z.literal("")),
     bannerColor: z
       .string()
       .trim()
       .regex(/^#([0-9a-fA-F]{3}){1,2}$/, "Invalid hex color code")
-      .optional(),
-    bio: z.string().trim().max(400).optional(),
-    pronouns: z.string().trim().max(20).optional(),
-    profileGradientStart: z.string().optional(),
-    profileGradientEnd: z.string().optional(),
+      .optional()
+      .or(z.literal("")),
+    bio: z.string().trim().max(400).optional().or(z.literal("")),
+    pronouns: z.string().trim().max(20).optional().or(z.literal("")),
+    profileGradientStart: z.string().optional().or(z.literal("")),
+    profileGradientEnd: z.string().optional().or(z.literal("")),
   })
   .strict();
 

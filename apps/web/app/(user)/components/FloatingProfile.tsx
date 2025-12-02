@@ -1,16 +1,19 @@
 import Image from "next/image";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Profile, User } from "@database/postgres/generated/prisma/client";
+import { UserWithProfileResponse } from "@shared/types";
 
-const FloatingProfile = ({ user }: { user: User & { profile: Profile } }) => {
+const FloatingProfile = ({ user }: { user: UserWithProfileResponse }) => {
+  const profile = user.profile;
+  if (!profile) return null;
+
   return (
     <div className="max-w-md rounded-xl overflow-hidden bg-accent">
       <div className="relative w-full h-40">
-        {user.profile.bannerURL ? (
+        {profile.bannerURL ? (
           <Image
-            src={user.profile.bannerURL || ""}
-            alt={user.profile.displayName || ""}
+            src={profile.bannerURL || ""}
+            alt={profile.displayName || ""}
             fill
           />
         ) : (
@@ -24,21 +27,21 @@ const FloatingProfile = ({ user }: { user: User & { profile: Profile } }) => {
       <span className="absolute -translate-y-1/2 translate-x-1/5 inline-block rounded-full border-2 border-muted-foreground">
         <Avatar className="size-32">
           <AvatarImage
-            src={user.profile.avatarURL || ""}
-            alt={user.profile.displayName || ""}
+            src={profile.avatarURL || ""}
+            alt={profile.displayName || ""}
           />
           <AvatarFallback>U</AvatarFallback>
         </Avatar>
       </span>
       <div className="p-4 mt-14 mx-4">
-        <h1 className="text-2xl font-bold">{user.profile.displayName}</h1>
+        <h1 className="text-2xl font-bold">{profile.displayName}</h1>
         <p className="text-sm text-muted-foreground">
           {user.username + user.discriminator}
         </p>
       </div>
       <div className="p-4 mx-4 mb-4 min-h-24">
-        {user.profile.bio && (
-          <p className="text-sm text-muted-foreground">{user.profile.bio}</p>
+        {profile.bio && (
+          <p className="text-sm text-muted-foreground">{user.profile?.bio}</p>
         )}
       </div>
     </div>

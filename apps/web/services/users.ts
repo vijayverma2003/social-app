@@ -1,5 +1,7 @@
-import { Profile } from "@database/postgres/generated/prisma/client";
-import { CreateUserSchema } from "@shared/schemas/user";
+import {
+  CreateUserSchema,
+  UpdateUserProfileSchema,
+} from "@shared/schemas/user";
 import { UserWithProfileResponse } from "@shared/types";
 import { AxiosError, AxiosResponse } from "axios";
 import api from "./api";
@@ -22,10 +24,19 @@ export async function createUser(
 }
 
 export async function updateUser(
-  data: Profile,
+  data: UpdateUserProfileSchema,
   token?: string
 ): Promise<AxiosResponse<UserWithProfileResponse>> {
   return api.put("/users/me", data, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+export async function updateUserProfile(
+  data: UpdateUserProfileSchema,
+  token?: string
+): Promise<AxiosResponse<UserWithProfileResponse>> {
+  return api.put("/users/me/profile", data, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 }

@@ -171,7 +171,7 @@ export class UsersController {
 
       const validation = updateUserProfileSchema.safeParse(req.body);
       if (!validation.success)
-        throw new BadRequestError(z.treeifyError(validation.error).errors[0]);
+        throw new BadRequestError(validation.error.message);
 
       const {
         displayName,

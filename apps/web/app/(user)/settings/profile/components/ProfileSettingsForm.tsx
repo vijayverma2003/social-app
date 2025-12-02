@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { updateUserProfile } from "@/services/users";
+import { useAuth } from "@clerk/nextjs";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   updateUserProfileSchema,
   type UpdateUserProfileSchema,
 } from "@shared/schemas/user";
-import { updateUser } from "@/services/users";
-import { useAuth } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { UserWithProfileResponse } from "@shared/types";
 import { AxiosError } from "axios";
-import { Profile, User } from "@database/postgres/generated/prisma/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface ProfileSettingsFormProps {
-  user: User & { profile: Profile };
+  user: UserWithProfileResponse;
 }
 
 const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
@@ -29,21 +29,21 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({
+  } = useForm<UpdateUserProfileSchema>({
     resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
-      bio: user.profile.bio || "",
-      pronouns: user.profile.pronouns || "",
-      bannerColor: user.profile.bannerColor || "#4e83d9",
-      avatarURL: user.profile.avatarURL || "",
-      bannerURL: user.profile.bannerURL || "",
-      profileGradientStart: user.profile.profileGradientStart || "",
-      profileGradientEnd: user.profile.profileGradientEnd || "",
-      displayName: user.profile.displayName || "",
+      bio: user.profile?.bio || "",
+      pronouns: user.profile?.pronouns || "",
+      bannerColor: user.profile?.bannerColor || "#4e83d9",
+      avatarURL: user.profile?.avatarURL || "",
+      bannerURL: user.profile?.bannerURL || "",
+      profileGradientStart: user.profile?.profileGradientStart || "",
+      profileGradientEnd: user.profile?.profileGradientEnd || "",
+      displayName: user.profile?.displayName || "",
     },
   });
 
-  const onSubmitForm = async (data: Profile) => {
+  const onSubmitForm = async (data: UpdateUserProfileSchema) => {
     setSubmitError(null);
     setSubmitSuccess(false);
     try {
@@ -52,7 +52,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         throw new Error("Not authenticated");
       }
 
-      await updateUser(data, token);
+      await updateUserProfile(data, token);
       setSubmitSuccess(true);
       router.refresh();
     } catch (error) {
@@ -72,6 +72,22 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
       onSubmit={handleSubmit(onSubmitForm)}
       className="mt-4 space-y-4 max-w-lg"
     >
+      <div className="space-y-2">
+        <Label htmlFor="displayName">Display Name</Label>
+        <Input
+          id="displayName"
+          type="text"
+          placeholder="Your display name"
+          {...register("displayName")}
+          disabled={isSubmitting}
+        />
+        {errors.displayName && (
+          <p className="text-sm text-destructive">
+            {errors.displayName.message}
+          </p>
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="bio">Bio</Label>
         <textarea
@@ -151,6 +167,56 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         />
         {errors.bannerURL && (
           <p className="text-sm text-destructive">{errors.bannerURL.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="profileGradientStart">Profile Gradient Start</Label>
+        <div className="flex gap-2 items-center">
+          <Input
+            id="profileGradientStart"
+            type="color"
+            {...register("profileGradientStart")}
+            disabled={isSubmitting}
+            className="w-20 h-10 cursor-pointer"
+          />
+          <Input
+            type="text"
+            placeholder="#4e83d9"
+            {...register("profileGradientStart")}
+            disabled={isSubmitting}
+            className="flex-1"
+          />
+        </div>
+        {errors.profileGradientStart && (
+          <p className="text-sm text-destructive">
+            {errors.profileGradientStart.message}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="profileGradientEnd">Profile Gradient End</Label>
+        <div className="flex gap-2 items-center">
+          <Input
+            id="profileGradientEnd"
+            type="color"
+            {...register("profileGradientEnd")}
+            disabled={isSubmitting}
+            className="w-20 h-10 cursor-pointer"
+          />
+          <Input
+            type="text"
+            placeholder="#8b5cf6"
+            {...register("profileGradientEnd")}
+            disabled={isSubmitting}
+            className="flex-1"
+          />
+        </div>
+        {errors.profileGradientEnd && (
+          <p className="text-sm text-destructive">
+            {errors.profileGradientEnd.message}
+          </p>
         )}
       </div>
 
