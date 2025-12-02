@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import UserService from "@/services/users";
 import { useAuth, SignInButton, SignedOut } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
@@ -28,9 +29,7 @@ export default function Home() {
     <main className="flex h-screen items-center justify-center">
       <SignedOut>
         <SignInButton mode="modal">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Login
-          </button>
+          <Button>Login</Button>
         </SignInButton>
       </SignedOut>
     </main>
