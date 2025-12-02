@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import UserService from "@/services/users";
+import { checkUserExists } from "@/services/users";
 import { useAuth, SignInButton, SignedOut } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -11,18 +11,18 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    async function checkUserExists() {
+    async function userExists() {
       const token = await getToken();
       if (!token) return;
 
-      const result = await UserService.checkUserExists(token);
+      const result = await checkUserExists(token);
       if (result.error) {
         // TODO: Show error toast
       } else if (result.success) router.push("/home");
       else router.push("/onboarding");
     }
 
-    if (isLoaded) checkUserExists();
+    if (isLoaded) userExists();
   }, [isLoaded, getToken, router]);
 
   return (

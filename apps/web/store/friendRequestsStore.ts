@@ -25,8 +25,8 @@ export const useFriendRequestsStore = create<FriendRequestsState>((set) => ({
 
   setInitialRequests: (incoming, outgoing) =>
     set({
-      received: incoming,
-      sent: outgoing,
+      received: incoming ?? [],
+      sent: outgoing ?? [],
       isLoading: false,
       error: null,
     }),

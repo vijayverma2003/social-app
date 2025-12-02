@@ -1,11 +1,11 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import { Quicksand } from "next/font/google";
 import "./globals.css";
 import { SocketProvider } from "@/contexts/SocketContext";
 
-const nunito = Nunito({
-  variable: "--font-nunito",
+const quicksand = Quicksand({
+  variable: "--font-quicksand",
   subsets: ["latin"],
 });
 
@@ -23,7 +23,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${nunito.variable} antialiased h-screen overflow-hidden`}
+          className={`${quicksand.variable} antialiased h-screen overflow-hidden`}
         >
           <SocketProvider>{children}</SocketProvider>
         </body>

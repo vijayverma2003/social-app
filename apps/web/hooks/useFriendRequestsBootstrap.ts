@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { friendsService, type FriendRequest } from "@/services/friends";
+import { getFriendRequests, type FriendRequest } from "@/services/friends";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useSocket } from "@/contexts/SocketContext";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
@@ -27,7 +27,8 @@ export const useFriendRequestsBootstrap = () => {
       try {
         setLoading(true);
         const token = await getToken();
-        const data = await friendsService.getFriendRequests(token || undefined);
+        const data = await getFriendRequests(token || undefined);
+        console.log(data);
         if (cancelled) return;
         setInitialRequests(data.incoming, data.outgoing);
       } catch (error) {

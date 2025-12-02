@@ -3,15 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
-import { useUser } from "@clerk/nextjs";
 import { Home, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
 import ConnectionsNavigation from "../connections/components/UserNavigation";
+import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
 
 const Navbar = () => {
-  const { isSignedIn, user } = useUser();
   const pathname = usePathname();
   const incomingCount = useFriendRequestsStore(
     (state) => state.received.length
@@ -51,7 +49,7 @@ const Navbar = () => {
             <MessageCircle className="size-5" />
             <span>Friends & DMs</span>
             {hasIncoming && (
-              <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+              <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-700 px-1 text-[10px] font-bold text-white">
                 {incomingLabel}
               </span>
             )}

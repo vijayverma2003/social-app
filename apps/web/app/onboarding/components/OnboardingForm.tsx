@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { createUserSchema, type CreateUserSchema } from "@shared/schemas/user";
-import UserService from "@/services/users";
+import { createUser } from "@/services/users";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
@@ -19,14 +20,22 @@ const OnboardingForm = () => {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateUserSchema>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       username: "",
-      dob: "",
+      dob: new Date(),
     },
   });
+
+  const dobValue = watch("dob");
+
+  const handleDateChange = (date: Date) => {
+    setValue("dob", date, { shouldValidate: true });
+  };
 
   const onSubmitForm = async (data: CreateUserSchema) => {
     setSubmitError(null);
@@ -36,7 +45,7 @@ const OnboardingForm = () => {
         throw new Error("Not authenticated");
       }
 
-      await UserService.createUser(data, token);
+      await createUser(data, token);
       router.push("/home");
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 409) {
@@ -57,7 +66,6 @@ const OnboardingForm = () => {
         <Input
           id="username"
           type="text"
-          placeholder="Enter your username"
           {...register("username")}
           disabled={isSubmitting}
         />
@@ -68,12 +76,15 @@ const OnboardingForm = () => {
 
       <div className="space-y-2">
         <Label htmlFor="dob">Date of Birth</Label>
-        <Input
+        <DatePicker
           id="dob"
-          type="date"
-          {...register("dob")}
+          value={dobValue}
+          onChange={handleDateChange}
           disabled={isSubmitting}
+          placeholder="Pick a date"
+          maxDate={new Date()}
         />
+        <input type="hidden" {...register("dob")} />
         {errors.dob && (
           <p className="text-sm text-destructive">{errors.dob.message}</p>
         )}

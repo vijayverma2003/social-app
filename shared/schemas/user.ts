@@ -1,8 +1,8 @@
 import z from "zod";
 
-const validateAge = (date: string) => {
-  const birthDate = new Date(date);
+const validateAge = (date: Date) => {
   const today = new Date();
+  const birthDate = new Date(date);
   const age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
   const actualAge =
@@ -23,10 +23,9 @@ export const createUserSchema = z.object({
       /^[a-zA-Z0-9_]+$/,
       "Username can only contain letters, numbers, and underscores"
     ),
-  dob: z
-    .string()
-    .min(1, "Date of birth is required")
-    .refine(validateAge, { message: "You must be at least 13 years old" }),
+  dob: z.date().refine(validateAge, {
+    message: "You must be at least 13 years old",
+  }),
 });
 
 export const updateUserSchema = z
@@ -42,8 +41,7 @@ export const updateUserSchema = z
       )
       .optional(),
     dob: z
-      .string()
-      .min(1, "Date of birth is required")
+      .date()
       .refine(validateAge, { message: "You must be at least 13 years old" })
       .optional(),
   })

@@ -35,9 +35,12 @@ export class UsersController {
 
       if (!email) throw new BadRequestError("User must have an email address");
 
-      const validation = createUserSchema.safeParse(req.body);
+      const validation = createUserSchema.safeParse({
+        ...req.body,
+        dob: new Date(req.body.dob),
+      });
       if (!validation.success)
-        throw new BadRequestError(z.treeifyError(validation.error).errors[0]);
+        throw new BadRequestError(validation.error.message);
 
       const userWithProfile = await prisma.user.create({
         data: {
@@ -45,7 +48,7 @@ export class UsersController {
           email,
           username: validation.data.username,
           discriminator: generateDiscriminator(),
-          dob: validation.data.dob,
+          dob: validation.data.dob.toISOString(),
           profile: {
             create: {},
           },
@@ -107,7 +110,7 @@ export class UsersController {
         where: { id: existingUser.id },
         data: {
           username,
-          dob,
+          dob: dob?.toISOString() ?? undefined,
         },
       });
 

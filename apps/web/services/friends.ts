@@ -39,21 +39,16 @@ interface FriendsResponse {
   friends: FriendProfile[];
 }
 
-export const friendsService = {
-  async getFriendRequests(token?: string): Promise<FriendRequestsResponse> {
-    const response = await api.get<FriendRequestsResponse>(
-      "/friends/requests",
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }
-    );
-    return response.data;
-  },
+export async function getFriendRequests(token?: string): Promise<FriendRequestsResponse> {
+  const response = await api.get<FriendRequestsResponse>("/friends/requests", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return response.data;
+}
 
-  async getFriends(token?: string): Promise<FriendsResponse> {
-    const response = await api.get<FriendsResponse>("/friends", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    return response.data;
-  },
-};
+export async function getFriends(token?: string): Promise<FriendsResponse> {
+  const response = await api.get<FriendsResponse>("/friends", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return response.data;
+}
