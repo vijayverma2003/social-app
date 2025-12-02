@@ -7,7 +7,7 @@ import { FriendRequestSocketResponse } from "@/hooks/useFriendRequests";
 import {
   SendFriendRequestInputSchema,
   type SendFriendRequestInput,
-} from "../../../../../../shared/schemas/friends";
+} from "@shared/schemas/friends";
 import { FriendRequest } from "@/services/friends";
 
 interface FriendRequestFormProps {

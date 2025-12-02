@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { UpdateUserProfileSchema } from "../../../../shared/schemas/user";
+import { UpdateUserProfileSchema } from "@shared/schemas/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const FloatingProfile = ({ user }: { user: UpdateUserProfileSchema }) => {

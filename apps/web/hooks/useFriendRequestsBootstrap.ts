@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { friendsService, type FriendRequest } from "@/services/friends";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useSocket } from "@/contexts/SocketContext";
-import { FRIEND_REQUEST_EVENTS } from "@/../shared/socketEvents";
+import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
 
 export const useFriendRequestsBootstrap = () => {
   const { getToken, isSignedIn } = useAuth();

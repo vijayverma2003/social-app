@@ -6,10 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  createUserSchema,
-  type CreateUserSchema,
-} from "../../../../shared/schemas/user";
+import { createUserSchema, type CreateUserSchema } from "@shared/schemas/user";
 import UserService from "@/services/users";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";

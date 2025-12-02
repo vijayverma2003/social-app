@@ -1,7 +1,7 @@
 import UserService from "@/services/users";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { UpdateUserProfileSchema } from "../../shared/schemas/user";
+import { UpdateUserProfileSchema } from "@shared/schemas/user";
 import { AxiosError } from "axios";
 
 /**

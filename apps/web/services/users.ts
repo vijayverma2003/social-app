@@ -2,7 +2,7 @@ import { AxiosError, AxiosResponse } from "axios";
 import {
   CreateUserSchema,
   UpdateUserProfileSchema,
-} from "../../shared/schemas/user";
+} from "@shared/schemas/user";
 import api from "./api";
 
 class UserService {

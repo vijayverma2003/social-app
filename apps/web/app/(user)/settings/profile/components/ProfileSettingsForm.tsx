@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import {
   updateUserProfileSchema,
   type UpdateUserProfileSchema,
-} from "../../../../../../shared/schemas/user";
+} from "@shared/schemas/user";
 import UserService from "@/services/users";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
