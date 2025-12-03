@@ -26,12 +26,12 @@ const Navbar = () => {
       </div>
 
       <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit">
-        <Link href="/">
+        <Link href="/home">
           <Button
-            variant={pathname === "/" ? "secondary" : "ghost"}
+            variant={pathname === "/home" ? "secondary" : "ghost"}
             className={cn(
               "w-full justify-start gap-3",
-              pathname === "/" && "bg-secondary"
+              pathname === "/home" && "bg-secondary"
             )}
           >
             <Home className="size-5" />
@@ -53,8 +53,8 @@ const Navbar = () => {
         </Link>
       </nav>
 
-      {pathname.startsWith("/settings") && <ProfileSettingsNavigation />}
-      {pathname.startsWith("/connections") && <ConnectionsNavigation />}
+      {pathname.startsWith("/settings") ? <ProfileSettingsNavigation /> : null}
+      {pathname.startsWith("/connections") ? <ConnectionsNavigation /> : null}
     </aside>
   );
 };

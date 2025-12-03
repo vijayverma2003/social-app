@@ -12,7 +12,7 @@ const MainHeader = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="flex h-16 items-center justify-between px-6 gap-4">
+      <div className="flex h-16 items-center justify-between px-4 gap-4">
         <div className="flex-1 max-w-2xl">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
