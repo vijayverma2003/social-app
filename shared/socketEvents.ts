@@ -15,7 +15,14 @@ export const FRIEND_EVENTS = {
   REMOVED: "friends:removed",
 } as const;
 
+export const DM_EVENTS = {
+  // Client -> Server events (actions)
+  GET_LIST: "dm:get_list",
+} as const;
+
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];
 
 export type FriendEvent = (typeof FRIEND_EVENTS)[keyof typeof FRIEND_EVENTS];
+
+export type DMEvent = (typeof DM_EVENTS)[keyof typeof DM_EVENTS];

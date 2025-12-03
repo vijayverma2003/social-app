@@ -5,10 +5,12 @@ import MainHeader from "./components/MainHeader";
 import Navbar from "./components/Navbar";
 import { useFriendRequestsBootstrap } from "@/hooks/useFriendRequestsBootstrap";
 import { useFriendsBootstrap } from "@/hooks/useFriendsBootstrap";
+import { useDMChannelsBootstrap } from "@/hooks/useDMChannelsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
   useFriendsBootstrap();
+  useDMChannelsBootstrap();
 
   return (
     <div className="flex max-h-screen">

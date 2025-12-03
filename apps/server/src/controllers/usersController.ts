@@ -62,7 +62,12 @@ export class UsersController {
             create: {},
           },
         },
-        include: { profile: true },
+        select: {
+          id: true,
+          username: true,
+          discriminator: true,
+          profile: true,
+        },
       });
 
       return res.status(STATUS_CODES.CREATED).json(userWithProfile);
@@ -165,6 +170,7 @@ export class UsersController {
 
       const existingUser = await prisma.user.findUnique({
         where: { clerkId },
+        
       });
 
       if (!existingUser) throw new NotFoundError("User not found");

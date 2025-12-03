@@ -56,13 +56,23 @@ export class FriendRequestHandlers {
 
       const receiver = await prisma.user.findUnique({
         where: { username_discriminator: { username, discriminator } },
-        include: { profile: true },
+        select: {
+          id: true,
+          username: true,
+          discriminator: true,
+          profile: true,
+        },
       });
       if (!receiver) return cb({ error: "Receiver not found" });
 
       const sender = await prisma.user.findUnique({
         where: { id: socket.userId },
-        include: { profile: true },
+        select: {
+          id: true,
+          username: true,
+          discriminator: true,
+          profile: true,
+        },
       });
 
       if (!sender) return cb({ error: "Sender not found" });

@@ -29,7 +29,10 @@ export class FriendsController {
         },
         include: {
           friend: {
-            include: {
+            select: {
+              id: true,
+              username: true,
+              discriminator: true,
               profile: true,
             },
           },
@@ -71,8 +74,22 @@ export class FriendsController {
           OR: [{ receiverId: user.id }, { senderId: user.id }],
         },
         include: {
-          receiver: { include: { profile: true } },
-          sender: { include: { profile: true } },
+          receiver: {
+            select: {
+              id: true,
+              username: true,
+              discriminator: true,
+              profile: true,
+            },
+          },
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              discriminator: true,
+              profile: true,
+            },
+          },
         },
       });
 
@@ -96,12 +113,10 @@ export class FriendsController {
           createdAt: request.createdAt,
         }));
 
-      return res
-        .status(STATUS_CODES.SUCCESS)
-        .json({
-          incomingRequests,
-          outgoingRequests,
-        } as IncomingAndOutgoingFriendRequestsResponse);
+      return res.status(STATUS_CODES.SUCCESS).json({
+        incomingRequests,
+        outgoingRequests,
+      } as IncomingAndOutgoingFriendRequestsResponse);
     } catch (error) {
       next(error);
     }

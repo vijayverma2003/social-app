@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ConnectionsNavigation from "../connections/components/UserNavigation";
 import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
+import DMNavigation from "../connections/components/DMNavigation";
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -54,7 +55,12 @@ const Navbar = () => {
       </nav>
 
       {pathname.startsWith("/settings") ? <ProfileSettingsNavigation /> : null}
-      {pathname.startsWith("/connections") ? <ConnectionsNavigation /> : null}
+      {pathname.startsWith("/connections") ? (
+        <div className="flex flex-col gap-4">
+          <ConnectionsNavigation />
+          <DMNavigation />
+        </div>
+      ) : null}
     </aside>
   );
 };

@@ -3,13 +3,23 @@ import {
   Profile,
   FriendRequest,
   Friend,
+  DMChannel,
+  DMChannelUser,
 } from "@database/postgres/generated/prisma/client";
 
+// Public user type - only includes safe fields (username, discriminator, id)
+export type PublicUserResponse = {
+  id: string;
+  username: string;
+  discriminator: string;
+};
+
+// Legacy UserResponse - keeping for backward compatibility but should be replaced
 export type UserResponse = User;
 export type ProfileResponse = Profile;
 export type FriendRequestResponse = FriendRequest;
 
-export type UserWithProfileResponse = UserResponse & {
+export type UserWithProfileResponse = PublicUserResponse & {
   profile: Profile | null;
 };
 
@@ -39,3 +49,15 @@ export type SocketResponse<T> = {
   success?: boolean;
   error?: string;
 };
+
+export type DMChannelUserResponse = DMChannelUser & {
+  user: PublicUserResponse & {
+    profile: Profile | null;
+  };
+};
+
+export type DMChannelResponse = DMChannel & {
+  users: DMChannelUserResponse[];
+};
+
+export type DMChannelsListResponse = DMChannelResponse[];
