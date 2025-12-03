@@ -178,49 +178,86 @@ export class FriendRequestHandlers {
           error: "You can only accept friend requests sent to you",
         });
 
-      // If they are already friends, clean up the stale friend request
-      const existingFriends = await prisma.friend.findUnique({
-        where: {
-          userId_friendId: {
-            userId: socket.userId,
-            friendId: friendRequest.senderId,
+      await prisma.$transaction(async (tx) => {
+        // Check if they are already friends
+        const existingFriends = await tx.friend.findUnique({
+          where: {
+            userId_friendId: {
+              userId: socket.userId!,
+              friendId: friendRequest.senderId,
+            },
           },
-        },
-      });
+        });
 
-      if (!existingFriends) {
-        await prisma.$transaction([
-          prisma.dMChannel.create({
+        // Check if a DM channel already exists between these two users
+        const potentialChannels = await tx.dMChannel.findMany({
+          where: {
+            AND: [
+              {
+                users: {
+                  some: {
+                    userId: socket.userId!,
+                  },
+                },
+              },
+              {
+                users: {
+                  some: {
+                    userId: friendRequest.senderId,
+                  },
+                },
+              },
+            ],
+          },
+          include: {
+            users: true,
+          },
+        });
+
+        // Find a channel that has exactly 2 users (DM channels should only have 2 users)
+        const existingDMChannel = potentialChannels.find(
+          (channel) => channel.users.length === 2
+        );
+
+        let dmChannelId = existingDMChannel?.id;
+
+        if (!existingDMChannel) {
+          const newDMChannel = await tx.dMChannel.create({
             data: {
               users: {
                 create: [
-                  { userId: socket.userId },
+                  { userId: socket.userId! },
                   { userId: friendRequest.senderId },
                 ],
               },
-              friends: {
-                create: [
-                  {
-                    userId: socket.userId,
-                    friendId: friendRequest.senderId,
-                  },
-                  {
-                    userId: friendRequest.senderId,
-                    friendId: socket.userId,
-                  },
-                ],
-              },
             },
-          }),
-          prisma.friendRequest.delete({
-            where: { id: requestId },
-          }),
-        ]);
-      } else {
-        await prisma.friendRequest.delete({
+          });
+
+          dmChannelId = newDMChannel.id;
+        }
+
+        if (!existingFriends) {
+          await tx.friend.create({
+            data: {
+              userId: socket.userId!,
+              friendId: friendRequest.senderId,
+              dmChannelId: dmChannelId!,
+            },
+          });
+
+          await tx.friend.create({
+            data: {
+              userId: friendRequest.senderId,
+              friendId: socket.userId!,
+              dmChannelId: dmChannelId!,
+            },
+          });
+        }
+
+        await tx.friendRequest.delete({
           where: { id: requestId },
         });
-      }
+      });
 
       this.io
         .to(`user:${friendRequest.senderId}`)
