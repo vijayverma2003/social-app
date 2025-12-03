@@ -1,7 +1,8 @@
-import { FriendRequest } from "@/services/friends";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FriendRequestsListResponse } from "@shared/types";
 
 interface PendingRequestsProps {
-  sentRequests: FriendRequest[];
+  sentRequests: FriendRequestsListResponse[];
 }
 
 const PendingRequests = ({ sentRequests }: PendingRequestsProps) => {
@@ -14,17 +15,19 @@ const PendingRequests = ({ sentRequests }: PendingRequestsProps) => {
           </h2>
           {sentRequests.map((request) => (
             <div
-              key={request._id}
+              key={request.id}
               className="group relative flex items-center justify-between gap-4 rounded-xl border bg-background/50 p-4 opacity-60"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground font-semibold">
-                  {request?.receiverAvatarURL ??
-                    request.receiverId.charAt(0).toUpperCase()}
-                </div>
+                <Avatar>
+                  <AvatarImage src={request.profile?.avatarURL || ""} />
+                  <AvatarFallback>
+                    {request.username.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1">
                   <p className="font-medium text-sm">
-                    {request?.receiverUsername ?? request.receiverId}
+                    {request.username}#{request.discriminator}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Request pending

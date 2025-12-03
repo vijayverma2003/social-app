@@ -1,6 +1,6 @@
 "use client";
 
-import { useFriendRequests } from "@/hooks/useFriendRequests";
+import { useFriendActions } from "@/hooks/useFriendActions";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useState } from "react";
 import FriendRequestForm from "./components/FriendRequestForm";
@@ -14,7 +14,7 @@ const FriendRequestsPage = () => {
     useFriendRequestsStore();
 
   const { sendFriendRequest, acceptFriendRequest, rejectFriendRequest } =
-    useFriendRequests();
+    useFriendActions();
 
   async function handleAccept(requestId: string) {
     const response = await acceptFriendRequest(requestId);

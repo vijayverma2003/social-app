@@ -4,9 +4,11 @@ import { PropsWithChildren } from "react";
 import MainHeader from "./components/MainHeader";
 import Navbar from "./components/Navbar";
 import { useFriendRequestsBootstrap } from "@/hooks/useFriendRequestsBootstrap";
+import { useFriendsBootstrap } from "@/hooks/useFriendsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
+  useFriendsBootstrap();
 
   return (
     <div className="flex max-h-screen">

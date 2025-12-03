@@ -1,11 +1,16 @@
 import prisma from "@database/postgres";
 import {
   FriendRequestActionInputSchema,
+  RemoveFriendInputSchema,
   SendFriendRequestInput,
   SendFriendRequestInputSchema,
 } from "@shared/schemas/friends";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
-import { FriendRequestResponse, SocketResponse } from "@shared/types/responses";
+import {
+  FriendRequestResponse,
+  FriendRequestsListResponse,
+  SocketResponse,
+} from "@shared/types/responses";
 import { Server } from "socket.io";
 import { AuthenticatedSocket } from "../socketHandlers";
 
@@ -28,12 +33,16 @@ export class FriendRequestHandlers {
     socket.on(FRIEND_REQUEST_EVENTS.REJECT, (data, callback) =>
       this.rejectFriendRequest(socket, data, callback)
     );
+
+    socket.on(FRIEND_REQUEST_EVENTS.REMOVE, (data, callback) =>
+      this.removeFriend(socket, data, callback)
+    );
   }
 
   private async sendFriendRequest(
     socket: AuthenticatedSocket,
     data: SendFriendRequestInput,
-    cb: (response: SocketResponse<FriendRequestResponse>) => void
+    cb: (response: SocketResponse<FriendRequestsListResponse>) => void
   ) {
     try {
       if (!socket.userId) return cb({ error: "Unauthorized" });
@@ -52,11 +61,13 @@ export class FriendRequestHandlers {
 
       const receiver = await prisma.user.findUnique({
         where: { username_discriminator: { username, discriminator } },
+        include: { profile: true },
       });
       if (!receiver) return cb({ error: "Receiver not found" });
-      console.log(socket.userId);
+
       const sender = await prisma.user.findUnique({
         where: { id: socket.userId },
+        include: { profile: true },
       });
 
       if (!sender) return cb({ error: "Sender not found" });
@@ -109,13 +120,23 @@ export class FriendRequestHandlers {
         },
       });
 
-      this.io
-        .to(`user:${receiver.id}`)
-        .emit(FRIEND_REQUEST_EVENTS.RECEIVED, friendRequest);
+      this.io.to(`user:${receiver.id}`).emit(FRIEND_REQUEST_EVENTS.RECEIVED, {
+        id: friendRequest.id,
+        username: sender?.username || "",
+        discriminator: sender?.discriminator || "",
+        profile: sender?.profile || null,
+        createdAt: friendRequest.createdAt,
+      } as FriendRequestsListResponse);
 
       cb({
         success: true,
-        data: friendRequest,
+        data: {
+          id: friendRequest.id,
+          username: receiver?.username || "",
+          discriminator: receiver?.discriminator || "",
+          profile: receiver?.profile || null,
+          createdAt: friendRequest.createdAt,
+        } as FriendRequestsListResponse,
       });
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -126,14 +147,12 @@ export class FriendRequestHandlers {
   private async acceptFriendRequest(
     socket: AuthenticatedSocket,
     data: any,
-    callback: (response: SocketResponse<FriendRequestResponse>) => void
+    callback: (response: SocketResponse<{ requestId: string }>) => void
   ) {
     try {
       if (!socket.userId) {
         return callback({ error: "Unauthorized" });
       }
-
-      console.log(data);
 
       const validationResult = FriendRequestActionInputSchema.safeParse(data);
       if (!validationResult.success)
@@ -200,11 +219,11 @@ export class FriendRequestHandlers {
 
       this.io
         .to(`user:${friendRequest.senderId}`)
-        .emit(FRIEND_REQUEST_EVENTS.ACCEPTED, friendRequest);
+        .emit(FRIEND_REQUEST_EVENTS.ACCEPTED, { requestId });
 
       callback({
         success: true,
-        data: friendRequest,
+        data: { requestId },
       });
     } catch (error) {
       console.error("Error accepting friend request:", error);
@@ -215,7 +234,7 @@ export class FriendRequestHandlers {
   private async rejectFriendRequest(
     socket: AuthenticatedSocket,
     data: any,
-    cb: (response: SocketResponse<FriendRequestResponse>) => void
+    cb: (response: SocketResponse<{ requestId: string }>) => void
   ) {
     try {
       if (!socket.userId) return cb({ error: "Unauthorized" });
@@ -245,15 +264,85 @@ export class FriendRequestHandlers {
 
       this.io
         .to(`user:${friendRequest.senderId}`)
-        .emit(FRIEND_REQUEST_EVENTS.REJECTED, friendRequest);
+        .emit(FRIEND_REQUEST_EVENTS.REJECTED, { requestId });
 
       cb({
         success: true,
-        data: friendRequest,
+        data: { requestId },
       });
     } catch (error) {
       console.error("Error rejecting friend request:", error);
       cb({ error: "Failed to reject friend request" });
+    }
+  }
+
+  private async removeFriend(
+    socket: AuthenticatedSocket,
+    data: any,
+    cb: (response: SocketResponse<{ friendId: string }>) => void
+  ) {
+    try {
+      if (!socket.userId) return cb({ error: "Unauthorized" });
+
+      const validationResult = RemoveFriendInputSchema.safeParse(data);
+      if (!validationResult.success)
+        return cb({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
+
+      const { friendId } = validationResult.data;
+
+      // Find the friend relationship
+      const friendRelationship = await prisma.friend.findUnique({
+        where: { id: friendId },
+      });
+
+      if (!friendRelationship)
+        return cb({ error: "Friend relationship not found" });
+
+      // Verify the user owns this friend relationship
+      if (friendRelationship.userId !== socket.userId)
+        return cb({
+          error: "You can only remove your own friends",
+        });
+
+      const otherUserId = friendRelationship.friendId;
+
+      // Find the reverse friend relationship
+      const reverseFriendRelationship = await prisma.friend.findUnique({
+        where: {
+          userId_friendId: {
+            userId: otherUserId,
+            friendId: socket.userId,
+          },
+        },
+      });
+
+      // Delete both friend relationships
+      await prisma.$transaction(async (tx) => {
+        await tx.friend.delete({
+          where: { id: friendId },
+        });
+
+        if (reverseFriendRelationship) {
+          await tx.friend.delete({
+            where: { id: reverseFriendRelationship.id },
+          });
+        }
+      });
+
+      this.io.to(`user:${otherUserId}`).emit(FRIEND_REQUEST_EVENTS.REMOVED, {
+        friendId: reverseFriendRelationship?.id || friendId,
+        userId: socket.userId,
+      });
+
+      cb({
+        success: true,
+        data: { friendId },
+      });
+    } catch (error) {
+      console.error("Error removing friend:", error);
+      cb({ error: "Failed to remove friend" });
     }
   }
 }

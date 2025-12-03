@@ -6,7 +6,7 @@ import { getFriendRequests } from "@/services/friends";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useSocket } from "@/contexts/SocketContext";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
-import { FriendRequest } from "@database/postgres/generated/prisma/client";
+import { FriendRequestsListResponse } from "@shared/types";
 
 export const useFriendRequestsBootstrap = () => {
   const { getToken, isSignedIn, isLoaded } = useAuth();
@@ -31,9 +31,7 @@ export const useFriendRequestsBootstrap = () => {
         const response = await getFriendRequests(token || undefined);
         if (cancelled) return;
 
-        const data = response.data;
-
-        setInitialRequests(data.incomingRequests, data.outgoingRequests);
+        setInitialRequests(response.data);
       } catch (error) {
         console.error("Failed to load friend requests:", error);
         if (!cancelled) {
@@ -56,16 +54,16 @@ export const useFriendRequestsBootstrap = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceived = (request: FriendRequest) => {
+    const handleReceived = (request: FriendRequestsListResponse) => {
       addReceivedRequest(request);
     };
 
-    const handleAccepted = (request: FriendRequest) => {
-      removeRequestById(request.id);
+    const handleAccepted = (request: { requestId: string }) => {
+      removeRequestById(request.requestId);
     };
 
-    const handleRejected = (request: FriendRequest) => {
-      removeRequestById(request.id);
+    const handleRejected = (request: { requestId: string }) => {
+      removeRequestById(request.requestId);
     };
 
     socket.on(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);

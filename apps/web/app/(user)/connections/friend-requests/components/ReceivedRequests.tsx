@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { FriendRequest } from "@database/postgres/generated/prisma/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FriendRequestsListResponse } from "@shared/types";
 import { Check, X } from "lucide-react";
 
 interface ReceivedRequestsProps {
-  receivedRequests: FriendRequest[];
+  receivedRequests: FriendRequestsListResponse[];
   onAccept: (requestId: string) => void;
   onReject: (requestId: string) => void;
 }
@@ -26,11 +27,16 @@ const ReceivedRequests = ({
               className="group relative flex items-center justify-between gap-4 rounded-xl bg-accent/50 p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                  {request.senderId.charAt(0).toUpperCase()}
-                </div>
+                <Avatar>
+                  <AvatarImage src={request.profile?.avatarURL || ""} />
+                  <AvatarFallback>
+                    {request.username.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1">
-                  <p className="font-medium text-sm">{request.senderId}</p>
+                  <p className="font-medium text-sm">
+                    {request.username}#{request.discriminator}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     wants to connect
                   </p>

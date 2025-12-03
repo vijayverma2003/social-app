@@ -1,16 +1,16 @@
 "use client";
 
 import { getFriends } from "@/services/friends";
+import { useFriendsStore } from "@/store/friendsStore";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FriendsListResponse } from "@shared/types";
+import FriendsList from "./components/FriendsList";
 
 const ConnectionsPage = () => {
   const { getToken } = useAuth();
-  const [friends, setFriends] = useState<FriendsListResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { friends, setFriends } = useFriendsStore();
 
   useEffect(() => {
     const loadFriends = async () => {
@@ -63,31 +63,7 @@ const ConnectionsPage = () => {
     <div className="max-w-2xl space-y-4 py-4">
       <h2 className="text-sm text-muted-foreground font-bold">Your Friends</h2>
       <div className="space-y-3">
-        {friends.map((friend) => {
-          return (
-            <div
-              key={friend.id}
-              className="flex items-center justify-between gap-3 rounded-xl bg-accent/50 p-4"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src={friend.profile?.avatarURL || ""} />
-                  <AvatarFallback>
-                    {friend.username.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{friend.username}</p>
-                  {friend.profile?.bio && (
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {friend.profile.bio}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        <FriendsList friends={friends} />
       </div>
     </div>
   );

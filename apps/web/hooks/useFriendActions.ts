@@ -13,14 +13,14 @@ export interface FriendRequestSocketResponse {
   error?: string;
 }
 
-export const useFriendRequests = () => {
+export const useFriendActions = () => {
   const { emit } = useSocket();
 
   const sendFriendRequest = useCallback(
     (receiverTag: string) =>
       emit(FRIEND_REQUEST_EVENTS.SEND, {
         receiverTag,
-      }) as SocketResponse<FriendRequestResponse>,
+      }) as Promise<SocketResponse<FriendRequestResponse>>,
     [emit]
   );
 
@@ -28,7 +28,7 @@ export const useFriendRequests = () => {
     (requestId: string) =>
       emit(FRIEND_REQUEST_EVENTS.ACCEPT, {
         requestId,
-      }) as SocketResponse<FriendRequestResponse>,
+      }) as Promise<SocketResponse<FriendRequestResponse>>,
     [emit]
   );
 
@@ -36,7 +36,15 @@ export const useFriendRequests = () => {
     (requestId: string) =>
       emit(FRIEND_REQUEST_EVENTS.REJECT, {
         requestId,
-      }) as SocketResponse<FriendRequestResponse>,
+      }) as Promise<SocketResponse<FriendRequestResponse>>,
+    [emit]
+  );
+
+  const removeFriend = useCallback(
+    (friendId: string) =>
+      emit(FRIEND_REQUEST_EVENTS.REMOVE, {
+        friendId,
+      }) as Promise<SocketResponse<{ friendId: string }>>,
     [emit]
   );
 
@@ -44,5 +52,6 @@ export const useFriendRequests = () => {
     sendFriendRequest,
     acceptFriendRequest,
     rejectFriendRequest,
+    removeFriend,
   };
 };

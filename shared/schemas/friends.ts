@@ -19,9 +19,16 @@ export const FriendRequestActionInputSchema = z
   })
   .strict();
 
+export const RemoveFriendInputSchema = z
+  .object({
+    friendId: z.string().trim().min(1, "Friend ID is required"),
+  })
+  .strict();
+
 export type SendFriendRequestInput = z.infer<
   typeof SendFriendRequestInputSchema
 >;
 export type FriendRequestActionInput = z.infer<
   typeof FriendRequestActionInputSchema
 >;
+export type RemoveFriendInput = z.infer<typeof RemoveFriendInputSchema>;
