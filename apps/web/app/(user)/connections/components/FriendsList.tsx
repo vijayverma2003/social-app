@@ -14,6 +14,7 @@ import { FriendsListResponse } from "@shared/types/responses";
 import { MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface FriendsListProps {
   friends: FriendsListResponse[];
@@ -47,7 +48,16 @@ const FriendsList = ({ friends }: FriendsListProps) => {
 
     setRemovingFriendId(friend.id);
     try {
-      await removeFriend(friend.id);
+      const response = await removeFriend(friend.id);
+
+      // Check if the server returned an error
+      if (response.error || !response.success) {
+        const errorMessage = response.error || "Failed to remove friend";
+        toast.error(errorMessage);
+        return;
+      }
+
+      // Only remove from store if the operation was successful
       removeFriendById(friend.id);
     } catch (error) {
       console.error("Error removing friend:", error);
