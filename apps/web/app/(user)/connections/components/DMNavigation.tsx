@@ -17,18 +17,26 @@ const DMNavigation = () => {
   const { channels, isLoading } = useDMChannelsStore();
   const { getToken } = useAuth();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoadingCurrentUser, setIsLoadingCurrentUser] = useState(true);
 
   // Load current user ID
   useEffect(() => {
     const loadCurrentUser = async () => {
       try {
+        setIsLoadingCurrentUser(true);
         const token = await getToken();
-        if (!token) return;
+        if (!token) {
+          setIsLoadingCurrentUser(false);
+          return;
+        }
 
         const response = await getCurrentUser(token);
         setCurrentUserId(response.data.id);
       } catch (error) {
         console.error("Failed to load current user:", error);
+        // Don't set currentUserId on error to prevent showing wrong users
+      } finally {
+        setIsLoadingCurrentUser(false);
       }
     };
 
@@ -37,7 +45,8 @@ const DMNavigation = () => {
 
   const getOtherUser = (channel: DMChannelResponse) => {
     // Find the user that is not the current user
-    if (!currentUserId) return channel.users[0];
+    // Only proceed if currentUserId is loaded
+    if (!currentUserId) return null;
     return (
       channel.users.find((u) => u.userId !== currentUserId) || channel.users[0]
     );
@@ -49,13 +58,31 @@ const DMNavigation = () => {
     return channelUser?.totalUnreadMessages || 0;
   };
 
-  return (
-    <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
-      {isLoading ? (
+  // Don't render channels until currentUserId is loaded to prevent showing wrong users
+  if (isLoading || isLoadingCurrentUser) {
+    return (
+      <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
         <p className="text-sm text-muted-foreground text-center py-4">
           Loading...
         </p>
-      ) : channels.length === 0 ? (
+      </nav>
+    );
+  }
+
+  // If currentUserId failed to load, don't render channels to avoid showing incorrect data
+  if (!currentUserId) {
+    return (
+      <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
+        <p className="text-sm text-muted-foreground text-center py-4">
+          Unable to load user data
+        </p>
+      </nav>
+    );
+  }
+
+  return (
+    <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
+      {channels.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
           No direct messages yet
         </p>

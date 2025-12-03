@@ -219,24 +219,25 @@ export class FriendRequestHandlers {
           (channel) => channel.users.length === 2
         );
 
-        let dmChannelId = existingDMChannel?.id;
-
-        if (!existingDMChannel) {
-          const newDMChannel = await tx.dMChannel.create({
-            data: {
-              users: {
-                create: [
-                  { userId: socket.userId! },
-                  { userId: friendRequest.senderId },
-                ],
-              },
-            },
-          });
-
-          dmChannelId = newDMChannel.id;
-        }
-
         if (!existingFriends) {
+          // Only create DM channel if we're creating new friend relationships
+          let dmChannelId = existingDMChannel?.id;
+
+          if (!existingDMChannel) {
+            const newDMChannel = await tx.dMChannel.create({
+              data: {
+                users: {
+                  create: [
+                    { userId: socket.userId! },
+                    { userId: friendRequest.senderId },
+                  ],
+                },
+              },
+            });
+
+            dmChannelId = newDMChannel.id;
+          }
+
           await tx.friend.create({
             data: {
               userId: socket.userId!,
