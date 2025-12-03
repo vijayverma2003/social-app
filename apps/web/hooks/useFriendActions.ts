@@ -1,6 +1,6 @@
 "use client";
 
-import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
+import { FRIEND_REQUEST_EVENTS, FRIEND_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/contexts/SocketContext";
 import { FriendRequest } from "@database/postgres/generated/prisma/client";
 import { useCallback } from "react";
@@ -42,7 +42,7 @@ export const useFriendActions = () => {
 
   const removeFriend = useCallback(
     (friendId: string) =>
-      emit(FRIEND_REQUEST_EVENTS.REMOVE, {
+      emit(FRIEND_EVENTS.REMOVE, {
         friendId,
       }) as Promise<SocketResponse<{ friendId: string }>>,
     [emit]

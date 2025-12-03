@@ -3,14 +3,19 @@ export const FRIEND_REQUEST_EVENTS = {
   SEND: "friend_request:send",
   ACCEPT: "friend_request:accept",
   REJECT: "friend_request:reject",
-  REMOVE: "friend_request:remove",
 
   // Server -> Client events (notifications)
   RECEIVED: "friend_request:received",
   ACCEPTED: "friend_request:accepted",
   REJECTED: "friend_request:rejected",
-  REMOVED: "friend_request:removed",
+} as const;
+
+export const FRIEND_EVENTS = {
+  REMOVE: "friends:remove",
+  REMOVED: "friends:removed",
 } as const;
 
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];
+
+export type FriendEvent = (typeof FRIEND_EVENTS)[keyof typeof FRIEND_EVENTS];

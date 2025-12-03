@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
 import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
+import { FriendsHandlers } from "./socketHandlers/friendsHandlers";
 import prisma from "@database/postgres";
 
 export interface AuthenticatedSocket extends Socket {
@@ -11,10 +12,12 @@ export interface AuthenticatedSocket extends Socket {
 export class SocketHandlers {
   private io: Server;
   private friendRequestHandlers: FriendRequestHandlers;
+  private friendsHandlers: FriendsHandlers;
 
   constructor(io: Server) {
     this.io = io;
     this.friendRequestHandlers = new FriendRequestHandlers(io);
+    this.friendsHandlers = new FriendsHandlers(io);
   }
 
   public initialize() {
@@ -57,6 +60,7 @@ export class SocketHandlers {
       if (socket.userId) socket.join(`user:${socket.userId}`);
 
       this.friendRequestHandlers.setupHandlers(socket);
+      this.friendsHandlers.setupHandlers(socket);
 
       socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.id}`);
