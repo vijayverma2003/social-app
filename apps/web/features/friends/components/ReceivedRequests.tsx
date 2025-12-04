@@ -1,19 +1,16 @@
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { FriendRequests } from "@shared/types";
 import { Check, X } from "lucide-react";
 
 interface ReceivedRequestsProps {
   receivedRequests: FriendRequests[];
-  onAccept: (requestId: string) => void;
-  onReject: (requestId: string) => void;
 }
 
-const ReceivedRequests = ({
-  receivedRequests,
-  onAccept,
-  onReject,
-}: ReceivedRequestsProps) => {
+const ReceivedRequests = ({ receivedRequests }: ReceivedRequestsProps) => {
+  const { acceptFriendRequest, rejectFriendRequest } = useFriendActions();
+
   return (
     <div>
       {receivedRequests.length > 0 && (
@@ -45,7 +42,7 @@ const ReceivedRequests = ({
 
               <div className="flex items-center gap-2">
                 <Button
-                  onClick={() => onAccept(request.id)}
+                  onClick={() => acceptFriendRequest(request.id)}
                   variant="outline"
                   size="icon"
                   title="Accept"
@@ -53,7 +50,7 @@ const ReceivedRequests = ({
                   <Check className="h-5 w-5 text-green-500" />
                 </Button>
                 <Button
-                  onClick={() => onReject(request.id)}
+                  onClick={() => rejectFriendRequest(request.id)}
                   variant="outline"
                   size="icon"
                   title="Reject"

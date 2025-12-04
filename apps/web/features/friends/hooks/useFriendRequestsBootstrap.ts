@@ -7,6 +7,7 @@ import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsS
 import { useSocket } from "@/providers/SocketContextProvider";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
+import { toast } from "sonner";
 
 export const useFriendRequestsBootstrap = () => {
   const { getToken } = useAuth();
@@ -18,20 +19,20 @@ export const useFriendRequestsBootstrap = () => {
   } = useFriendRequestsStore();
   const { socket } = useSocket();
 
+  const loadFriendRequests = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      const response = await getFriendRequests(token || undefined);
+      setInitialRequests(response.data);
+    } catch (error) {
+      toast.error("Failed to load friend requests");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadFriendRequests = async () => {
-      try {
-        setLoading(true);
-
-        const token = await getToken();
-        const response = await getFriendRequests(token || undefined);
-
-        setInitialRequests(response.data);
-      } catch (error) {
-        console.error("Failed to load friend requests:", error);
-      }
-    };
-
     loadFriendRequests();
   }, []);
 

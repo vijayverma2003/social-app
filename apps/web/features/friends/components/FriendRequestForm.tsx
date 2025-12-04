@@ -9,12 +9,7 @@ import { FriendRequests } from "@shared/types/responses";
 import React from "react";
 import { useForm } from "react-hook-form";
 
-interface FriendRequestFormProps {
-  onFriendRequestSent: (newRequest: FriendRequests) => void;
-}
-
-const FriendRequestForm = ({ onFriendRequestSent }: FriendRequestFormProps) => {
-  const [message, setMessage] = React.useState("");
+const FriendRequestForm = () => {
   const { sendFriendRequest } = useFriendActions();
 
   const {
@@ -32,16 +27,8 @@ const FriendRequestForm = ({ onFriendRequestSent }: FriendRequestFormProps) => {
   const handleSendRequest = async (data: SendFriendRequestPayload) => {
     if (isSubmitting) return;
 
-    sendFriendRequest(data.receiverTag.trim(), (response) => {
-      if (response.error) {
-        setMessage(`Error: ${response.error}`);
-        setTimeout(() => setMessage(""), 3000);
-      } else if (response.success && response.data) {
-        setMessage("Friend request sent successfully!");
-        setTimeout(() => setMessage(""), 3000);
-        reset({ receiverTag: "" });
-        onFriendRequestSent(response.data);
-      }
+    sendFriendRequest(data.receiverTag.trim(), () => {
+      reset({ receiverTag: "" });
     });
   };
 
@@ -69,11 +56,6 @@ const FriendRequestForm = ({ onFriendRequestSent }: FriendRequestFormProps) => {
       </div>
       {errors.receiverTag && (
         <p className="text-xs text-destructive">{errors.receiverTag.message}</p>
-      )}
-      {message && (
-        <p className="text-xs text-muted-foreground" aria-live="polite">
-          {message}
-        </p>
       )}
     </form>
   );

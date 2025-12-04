@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
 import { SocketContextProvider } from "@/providers/SocketContextProvider";
+import { Toaster } from "sonner";
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
@@ -26,6 +27,7 @@ export default function RootLayout({
           className={`${quicksand.variable} antialiased h-screen overflow-hidden`}
         >
           <SocketContextProvider>{children}</SocketContextProvider>
+          <Toaster position="top-center" />
         </body>
       </html>
     </ClerkProvider>

@@ -6,60 +6,15 @@ import FriendRequestForm from "@/features/friends/components/FriendRequestForm";
 import FriendsList from "@/features/friends/components/FriendsList";
 import PendingRequests from "@/features/friends/components/PendingRequests";
 import ReceivedRequests from "@/features/friends/components/ReceivedRequests";
-import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
-import { useState } from "react";
 
 const FriendsPage = () => {
-  const [message, setMessage] = useState("");
   const { friends } = useFriendsStore();
-  const { received, sent, addSentRequest, removeRequestById } =
-    useFriendRequestsStore();
-  const { acceptFriendRequest, rejectFriendRequest, cancelFriendRequest } =
-    useFriendActions();
-
-  const handleAccept = (requestId: string) => {
-    acceptFriendRequest(requestId, (response) => {
-      if (response.error) {
-        setMessage(`Error: ${response.error}`);
-        setTimeout(() => setMessage(""), 3000);
-      } else {
-        removeRequestById(requestId);
-      }
-    });
-  };
-
-  const handleReject = (requestId: string) => {
-    rejectFriendRequest(requestId, (response) => {
-      if (response.error) {
-        setMessage(`Error: ${response.error}`);
-        setTimeout(() => setMessage(""), 3000);
-      } else {
-        removeRequestById(requestId);
-      }
-    });
-  };
-
-  const handleCancel = (requestId: string) => {
-    cancelFriendRequest(requestId, (response) => {
-      if (response.error) {
-        setMessage(`Error: ${response.error}`);
-        setTimeout(() => setMessage(""), 3000);
-      } else {
-        removeRequestById(requestId);
-      }
-    });
-  };
+  const { received, sent } = useFriendRequestsStore();
 
   return (
     <div className="max-w-2xl space-y-4 py-2">
-      {message && (
-        <div className="animate-in fade-in slide-in-from-top-2 duration-300 rounded-lg border bg-background/95 backdrop-blur-sm px-4 py-3 shadow-lg">
-          <p className="text-sm">{message}</p>
-        </div>
-      )}
-
       <Tabs defaultValue="friends" className="w-full">
         <TabsList>
           <TabsTrigger value="friends">Friends</TabsTrigger>
@@ -91,11 +46,7 @@ const FriendsPage = () => {
               No incoming friend requests at the moment.
             </p>
           ) : (
-            <ReceivedRequests
-              receivedRequests={received}
-              onAccept={handleAccept}
-              onReject={handleReject}
-            />
+            <ReceivedRequests receivedRequests={received} />
           )}
         </TabsContent>
 
@@ -104,11 +55,11 @@ const FriendsPage = () => {
             <h2 className="text-sm text-muted-foreground font-bold mb-4">
               Send Friend Request
             </h2>
-            <FriendRequestForm onFriendRequestSent={addSentRequest} />
+            <FriendRequestForm />
           </div>
           {sent.length > 0 && (
             <div>
-              <PendingRequests sentRequests={sent} onCancel={handleCancel} />
+              <PendingRequests sentRequests={sent} />
             </div>
           )}
         </TabsContent>

@@ -9,12 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
-import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { type FriendsList } from "@shared/types/responses";
 import { MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 
 interface FriendsListProps {
   friends: FriendsList[];
@@ -22,9 +19,7 @@ interface FriendsListProps {
 
 const FriendsList = ({ friends }: FriendsListProps) => {
   const router = useRouter();
-  const [removingFriendId, setRemovingFriendId] = useState<string | null>(null);
   const { removeFriend } = useFriendActions();
-  const { removeFriendById } = useFriendsStore();
 
   const handleViewProfile = (friend: FriendsList) => {
     // TODO: Update this route based on your profile routing structure
@@ -41,25 +36,6 @@ const FriendsList = ({ friends }: FriendsListProps) => {
       // If no DM channel exists, you might want to create one first
       console.warn("No DM channel ID available for this friend");
     }
-  };
-
-  const handleRemoveFriend = (friend: FriendsList) => {
-    if (removingFriendId === friend.id) return;
-
-    setRemovingFriendId(friend.id);
-    removeFriend(friend.id, (response) => {
-      // Check if the server returned an error
-      if (response.error || !response.success) {
-        const errorMessage = response.error || "Failed to remove friend";
-        toast.error(errorMessage);
-        setRemovingFriendId(null);
-        return;
-      }
-
-      // Only remove from store if the operation was successful
-      removeFriendById(friend.id);
-      setRemovingFriendId(null);
-    });
   };
 
   return (
@@ -113,16 +89,11 @@ const FriendsList = ({ friends }: FriendsListProps) => {
                   <span>Send Message</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => handleRemoveFriend(friend)}
+                  onClick={() => removeFriend(friend.id)}
                   className="cursor-pointer text-destructive focus:text-destructive"
                   variant="destructive"
-                  disabled={removingFriendId === friend.id}
                 >
-                  <span>
-                    {removingFriendId === friend.id
-                      ? "Removing..."
-                      : "Remove Friend"}
-                  </span>
+                  <span>Remove Friend</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

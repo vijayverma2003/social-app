@@ -4,6 +4,9 @@ import { FRIEND_REQUEST_EVENTS, FRIEND_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/providers/SocketContextProvider";
 import { useCallback } from "react";
 import { ClientToServerEvents } from "@shared/types/socket";
+import { toast } from "sonner";
+import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
 
 // Extract callback types from ClientToServerEvents
 type SendFriendRequestCallback = Parameters<
@@ -24,40 +27,87 @@ type RemoveFriendCallback = Parameters<
 
 export const useFriendActions = () => {
   const { emit } = useSocket();
+  const { removeRequestById, addSentRequest } = useFriendRequestsStore();
+  const { removeFriendById } = useFriendsStore();
 
   const sendFriendRequest = useCallback(
-    (receiverTag: string, callback: SendFriendRequestCallback) => {
-      emit(FRIEND_REQUEST_EVENTS.SEND, { receiverTag }, callback);
+    (receiverTag: string, onSuccess: () => void) => {
+      emit(FRIEND_REQUEST_EVENTS.SEND, { receiverTag }, ((response) => {
+        if (response.error) {
+          toast.error("Failed to send friend request", {
+            description: response.error,
+          });
+        } else if (response.success && response.data) {
+          toast.success("Friend request sent successfully!");
+          addSentRequest(response.data);
+          onSuccess();
+        }
+      }) as SendFriendRequestCallback);
     },
-    [emit]
+    [emit, addSentRequest]
   );
 
   const acceptFriendRequest = useCallback(
-    (requestId: string, callback: AcceptFriendRequestCallback) => {
-      emit(FRIEND_REQUEST_EVENTS.ACCEPT, { requestId }, callback);
+    (requestId: string) => {
+      emit(FRIEND_REQUEST_EVENTS.ACCEPT, { requestId }, ((response) => {
+        if (response.error) {
+          toast.error("Failed to accept friend request", {
+            description: response.error,
+          });
+        } else {
+          toast.success("Friend request accepted");
+          removeRequestById(requestId);
+        }
+      }) as AcceptFriendRequestCallback);
     },
-    [emit]
+    [emit, removeRequestById]
   );
 
   const rejectFriendRequest = useCallback(
-    (requestId: string, callback: RejectFriendRequestCallback) => {
-      emit(FRIEND_REQUEST_EVENTS.REJECT, { requestId }, callback);
+    (requestId: string) => {
+      emit(FRIEND_REQUEST_EVENTS.REJECT, { requestId }, ((response) => {
+        if (response.error) {
+          toast.error("Failed to reject friend request", {
+            description: response.error,
+          });
+        } else {
+          toast.success("Friend request rejected");
+          removeRequestById(requestId);
+        }
+      }) as RejectFriendRequestCallback);
     },
-    [emit]
+    [emit, removeRequestById]
   );
 
   const cancelFriendRequest = useCallback(
-    (requestId: string, callback: CancelFriendRequestCallback) => {
-      emit(FRIEND_REQUEST_EVENTS.CANCEL, { requestId }, callback);
+    (requestId: string) => {
+      emit(FRIEND_REQUEST_EVENTS.CANCEL, { requestId }, ((response) => {
+        if (response.error) {
+          toast.error("Failed to cancel friend request", {
+            description: response.error,
+          });
+        } else {
+          toast.success("Friend request canceled");
+          removeRequestById(requestId);
+        }
+      }) as CancelFriendRequestCallback);
     },
-    [emit]
+    [emit, removeRequestById]
   );
 
   const removeFriend = useCallback(
-    (friendId: string, callback: RemoveFriendCallback) => {
-      emit(FRIEND_EVENTS.REMOVE, { friendId }, callback);
+    (friendId: string) => {
+      emit(FRIEND_EVENTS.REMOVE, { friendId }, ((response) => {
+        if (response.error || !response.success) {
+          const errorMessage = response.error || "Failed to remove friend";
+          toast.error(errorMessage);
+        } else {
+          toast.success("Friend removed");
+          removeFriendById(friendId);
+        }
+      }) as RemoveFriendCallback);
     },
-    [emit]
+    [emit, removeFriendById]
   );
 
   return {
