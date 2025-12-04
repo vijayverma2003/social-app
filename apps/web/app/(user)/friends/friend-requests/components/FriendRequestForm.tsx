@@ -3,18 +3,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Input } from "@/components/ui/input";
-import { FriendRequestResponse, SocketResponse } from "@shared/types";
+import { SocketResponse } from "@shared/types";
 import {
   SendFriendRequestInputSchema,
   type SendFriendRequestInput,
 } from "@shared/schemas/friends";
-import { FriendRequest } from "@database/postgres/generated/prisma/client";
+import { FriendRequestsListResponse } from "@shared/types/responses";
 
 interface FriendRequestFormProps {
   sendFriendRequest: (
     receiverTag: string
-  ) => Promise<SocketResponse<FriendRequestResponse>>;
-  onFriendRequestSent: (newRequest: FriendRequest) => void;
+  ) => Promise<SocketResponse<FriendRequestsListResponse>>;
+  onFriendRequestSent: (newRequest: FriendRequestsListResponse) => void;
 }
 
 const FriendRequestForm = ({

@@ -4,7 +4,7 @@ import { FRIEND_REQUEST_EVENTS, FRIEND_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/contexts/SocketContext";
 import { FriendRequest } from "@database/postgres/generated/prisma/client";
 import { useCallback } from "react";
-import { FriendRequestResponse, SocketResponse } from "@shared/types";
+import { FriendRequestsListResponse, SocketResponse } from "@shared/types";
 
 export interface FriendRequestSocketResponse {
   success?: boolean;
@@ -20,7 +20,7 @@ export const useFriendActions = () => {
     (receiverTag: string) =>
       emit(FRIEND_REQUEST_EVENTS.SEND, {
         receiverTag,
-      }) as Promise<SocketResponse<FriendRequestResponse>>,
+      }) as Promise<SocketResponse<FriendRequestsListResponse>>,
     [emit]
   );
 
@@ -28,7 +28,7 @@ export const useFriendActions = () => {
     (requestId: string) =>
       emit(FRIEND_REQUEST_EVENTS.ACCEPT, {
         requestId,
-      }) as Promise<SocketResponse<FriendRequestResponse>>,
+      }) as Promise<SocketResponse<{ requestId: string }>>,
     [emit]
   );
 
@@ -36,7 +36,7 @@ export const useFriendActions = () => {
     (requestId: string) =>
       emit(FRIEND_REQUEST_EVENTS.REJECT, {
         requestId,
-      }) as Promise<SocketResponse<FriendRequestResponse>>,
+      }) as Promise<SocketResponse<{ requestId: string }>>,
     [emit]
   );
 
