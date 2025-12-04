@@ -2,16 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
-import { cn } from "@/lib/utils";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
-import {
-  Home,
-  MessageCircle,
-  UserPlus,
-  Mail,
-  LucideIcon,
-  Users,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Home, LucideIcon, Mail, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
