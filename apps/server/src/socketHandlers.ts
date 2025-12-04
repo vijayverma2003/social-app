@@ -1,8 +1,8 @@
 import { Server, Socket } from "socket.io";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
-import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
-import { FriendsHandlers } from "./socketHandlers/friendsHandlers";
+import { FriendRequestHandlers } from "./features/friends/socketHandlers/FriendRequestHandlers";
+import { FriendsHandlers } from "./features/friends/socketHandlers/FriendsHandlers";
 import { DMHandlers } from "./socketHandlers/dmHandlers";
 import prisma from "@database/postgres";
 import {
@@ -81,9 +81,5 @@ export class SocketHandlers {
         console.log(`User disconnected: ${socket.id}`);
       });
     });
-  }
-
-  public get friendRequests(): FriendRequestHandlers {
-    return this.friendRequestHandlers;
   }
 }

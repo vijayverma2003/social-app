@@ -6,12 +6,12 @@ import {
   SendFriendRequestPayloadSchema,
 } from "@shared/schemas/friends";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
-import { Server } from "socket.io";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
 } from "@shared/types/socket";
-import { AuthenticatedSocket } from "../socketHandlers";
+import { Server } from "socket.io";
+import { AuthenticatedSocket } from "../../../socketHandlers";
 
 // Extract types from ClientToServerEvents for type safety
 type SendFriendRequestData = Parameters<

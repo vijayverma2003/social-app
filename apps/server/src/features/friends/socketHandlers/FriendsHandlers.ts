@@ -6,7 +6,7 @@ import {
   ClientToServerEvents,
   ServerToClientEvents,
 } from "@shared/types/socket";
-import { AuthenticatedSocket } from "../socketHandlers";
+import { AuthenticatedSocket } from "../../../socketHandlers";
 
 // Extract types from ClientToServerEvents for type safety
 type RemoveFriendData = Parameters<

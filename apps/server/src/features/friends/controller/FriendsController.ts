@@ -1,12 +1,12 @@
 import { getAuth } from "@clerk/express";
 import prisma from "@database/postgres";
 import {
-  FriendsList,
-  IncomingAndOutgoingFriendRequests,
+    FriendsList,
+    IncomingAndOutgoingFriendRequests,
 } from "@shared/types/responses";
 import { NextFunction, Request, Response } from "express";
-import { NotFoundError, UnauthorizedError } from "../errors";
-import STATUS_CODES from "../services/status";
+import { NotFoundError, UnauthorizedError } from "../../../errors";
+import STATUS_CODES from "../../../services/status";
 
 export class FriendsController {
   static async getFriends(

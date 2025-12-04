@@ -1,6 +1,6 @@
 import { Router } from "express";
 import usersRouter from "./users";
-import friendsRouter from "./friends";
+import friendsRouter from "../features/friends/routes";
 
 const router = Router();
 
