@@ -9,9 +9,9 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { NotificationBadge } from "@/components/ui/notification-badge";
 import FriendsList from "./components/FriendsList";
-import ReceivedRequests from "./friend-requests/components/ReceivedRequests";
-import PendingRequests from "./friend-requests/components/PendingRequests";
-import FriendRequestForm from "./friend-requests/components/FriendRequestForm";
+import ReceivedRequests from "./components/ReceivedRequests";
+import PendingRequests from "./components/PendingRequests";
+import FriendRequestForm from "./components/FriendRequestForm";
 
 const FriendsPage = () => {
   const { getToken } = useAuth();
