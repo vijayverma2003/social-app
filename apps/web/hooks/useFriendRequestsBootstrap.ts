@@ -66,14 +66,20 @@ export const useFriendRequestsBootstrap = () => {
       removeRequestById(request.requestId);
     };
 
+    const handleCanceled = (request: { requestId: string }) => {
+      removeRequestById(request.requestId);
+    };
+
     socket.on(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);
     socket.on(FRIEND_REQUEST_EVENTS.ACCEPTED, handleAccepted);
     socket.on(FRIEND_REQUEST_EVENTS.REJECTED, handleRejected);
+    socket.on(FRIEND_REQUEST_EVENTS.CANCELED, handleCanceled);
 
     return () => {
       socket.off(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);
       socket.off(FRIEND_REQUEST_EVENTS.ACCEPTED, handleAccepted);
       socket.off(FRIEND_REQUEST_EVENTS.REJECTED, handleRejected);
+      socket.off(FRIEND_REQUEST_EVENTS.CANCELED, handleCanceled);
     };
   }, [socket, addReceivedRequest, removeRequestById]);
 };

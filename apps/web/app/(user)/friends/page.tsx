@@ -21,8 +21,12 @@ const FriendsPage = () => {
   const { friends, setFriends } = useFriendsStore();
   const { received, sent, addSentRequest, removeRequestById } =
     useFriendRequestsStore();
-  const { sendFriendRequest, acceptFriendRequest, rejectFriendRequest } =
-    useFriendActions();
+  const {
+    sendFriendRequest,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    cancelFriendRequest,
+  } = useFriendActions();
 
   useEffect(() => {
     const loadFriends = async () => {
@@ -54,6 +58,16 @@ const FriendsPage = () => {
 
   const handleReject = async (requestId: string) => {
     const response = await rejectFriendRequest(requestId);
+    if (response.error) {
+      setMessage(`Error: ${response.error}`);
+      setTimeout(() => setMessage(""), 3000);
+    } else {
+      removeRequestById(requestId);
+    }
+  };
+
+  const handleCancel = async (requestId: string) => {
+    const response = await cancelFriendRequest(requestId);
     if (response.error) {
       setMessage(`Error: ${response.error}`);
       setTimeout(() => setMessage(""), 3000);
@@ -140,7 +154,7 @@ const FriendsPage = () => {
           </div>
           {sent.length > 0 && (
             <div>
-              <PendingRequests sentRequests={sent} />
+              <PendingRequests sentRequests={sent} onCancel={handleCancel} />
             </div>
           )}
         </TabsContent>

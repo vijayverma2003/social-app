@@ -40,6 +40,14 @@ export const useFriendActions = () => {
     [emit]
   );
 
+  const cancelFriendRequest = useCallback(
+    (requestId: string) =>
+      emit(FRIEND_REQUEST_EVENTS.CANCEL, {
+        requestId,
+      }) as Promise<SocketResponse<{ requestId: string }>>,
+    [emit]
+  );
+
   const removeFriend = useCallback(
     (friendId: string) =>
       emit(FRIEND_EVENTS.REMOVE, {
@@ -52,6 +60,7 @@ export const useFriendActions = () => {
     sendFriendRequest,
     acceptFriendRequest,
     rejectFriendRequest,
+    cancelFriendRequest,
     removeFriend,
   };
 };

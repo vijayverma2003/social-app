@@ -1,11 +1,29 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { FriendRequestsListResponse } from "@shared/types";
+import { X } from "lucide-react";
+import { useState } from "react";
 
 interface PendingRequestsProps {
   sentRequests: FriendRequestsListResponse[];
+  onCancel: (requestId: string) => Promise<void>;
 }
 
-const PendingRequests = ({ sentRequests }: PendingRequestsProps) => {
+const PendingRequests = ({ sentRequests, onCancel }: PendingRequestsProps) => {
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
+
+  const handleCancel = async (requestId: string) => {
+    if (cancelingId === requestId) return;
+    setCancelingId(requestId);
+    try {
+      await onCancel(requestId);
+    } finally {
+      setCancelingId(null);
+    }
+  };
+
   return (
     <>
       {sentRequests.length > 0 && (
@@ -16,7 +34,7 @@ const PendingRequests = ({ sentRequests }: PendingRequestsProps) => {
           {sentRequests.map((request) => (
             <div
               key={request.id}
-              className="group relative flex items-center justify-between gap-4 rounded-xl border bg-background/50 p-4 opacity-60"
+              className="group relative flex items-center justify-between gap-4 rounded-xl border bg-background/50 p-4"
             >
               <div className="flex items-center gap-3">
                 <Avatar>
@@ -36,9 +54,22 @@ const PendingRequests = ({ sentRequests }: PendingRequestsProps) => {
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="flex h-9 items-center justify-center rounded-full bg-muted/50 px-3 text-xs text-muted-foreground">
-                  Cancel
-                </div>
+                <Button
+                  onClick={() => handleCancel(request.id)}
+                  variant="outline"
+                  size="sm"
+                  disabled={cancelingId === request.id}
+                  className="h-9"
+                >
+                  {cancelingId === request.id ? (
+                    "Canceling..."
+                  ) : (
+                    <>
+                      <X className="h-4 w-4 mr-1" />
+                      Cancel
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           ))}

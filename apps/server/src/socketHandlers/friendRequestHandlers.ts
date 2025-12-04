@@ -32,6 +32,10 @@ export class FriendRequestHandlers {
     socket.on(FRIEND_REQUEST_EVENTS.REJECT, (data, callback) =>
       this.rejectFriendRequest(socket, data, callback)
     );
+
+    socket.on(FRIEND_REQUEST_EVENTS.CANCEL, (data, callback) =>
+      this.cancelFriendRequest(socket, data, callback)
+    );
   }
 
   private async sendFriendRequest(
@@ -316,6 +320,51 @@ export class FriendRequestHandlers {
     } catch (error) {
       console.error("Error rejecting friend request:", error);
       cb({ error: "Failed to reject friend request" });
+    }
+  }
+
+  private async cancelFriendRequest(
+    socket: AuthenticatedSocket,
+    data: any,
+    cb: (response: SocketResponse<{ requestId: string }>) => void
+  ) {
+    try {
+      if (!socket.userId) return cb({ error: "Unauthorized" });
+
+      const validationResult = FriendRequestActionInputSchema.safeParse(data);
+      if (!validationResult.success)
+        return cb({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
+
+      const { requestId } = validationResult.data;
+
+      const friendRequest = await prisma.friendRequest.findUnique({
+        where: { id: requestId },
+      });
+
+      if (!friendRequest) return cb({ error: "Friend request not found" });
+
+      if (friendRequest.senderId !== socket.userId)
+        return cb({
+          error: "You can only cancel friend requests you sent",
+        });
+
+      await prisma.friendRequest.delete({
+        where: { id: requestId },
+      });
+
+      this.io
+        .to(`user:${friendRequest.receiverId}`)
+        .emit(FRIEND_REQUEST_EVENTS.CANCELED, { requestId });
+
+      cb({
+        success: true,
+        data: { requestId },
+      });
+    } catch (error) {
+      console.error("Error canceling friend request:", error);
+      cb({ error: "Failed to cancel friend request" });
     }
   }
 }
