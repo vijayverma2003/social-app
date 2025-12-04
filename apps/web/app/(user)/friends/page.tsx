@@ -46,34 +46,37 @@ const FriendsPage = () => {
     loadFriends();
   }, [getToken, setFriends]);
 
-  const handleAccept = async (requestId: string) => {
-    const response = await acceptFriendRequest(requestId);
-    if (response.error) {
-      setMessage(`Error: ${response.error}`);
-      setTimeout(() => setMessage(""), 3000);
-    } else {
-      removeRequestById(requestId);
-    }
+  const handleAccept = (requestId: string) => {
+    acceptFriendRequest(requestId, (response) => {
+      if (response.error) {
+        setMessage(`Error: ${response.error}`);
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        removeRequestById(requestId);
+      }
+    });
   };
 
-  const handleReject = async (requestId: string) => {
-    const response = await rejectFriendRequest(requestId);
-    if (response.error) {
-      setMessage(`Error: ${response.error}`);
-      setTimeout(() => setMessage(""), 3000);
-    } else {
-      removeRequestById(requestId);
-    }
+  const handleReject = (requestId: string) => {
+    rejectFriendRequest(requestId, (response) => {
+      if (response.error) {
+        setMessage(`Error: ${response.error}`);
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        removeRequestById(requestId);
+      }
+    });
   };
 
-  const handleCancel = async (requestId: string) => {
-    const response = await cancelFriendRequest(requestId);
-    if (response.error) {
-      setMessage(`Error: ${response.error}`);
-      setTimeout(() => setMessage(""), 3000);
-    } else {
-      removeRequestById(requestId);
-    }
+  const handleCancel = (requestId: string) => {
+    cancelFriendRequest(requestId, (response) => {
+      if (response.error) {
+        setMessage(`Error: ${response.error}`);
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        removeRequestById(requestId);
+      }
+    });
   };
 
   if (isLoading) {

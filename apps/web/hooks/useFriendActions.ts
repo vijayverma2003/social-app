@@ -2,57 +2,63 @@
 
 import { FRIEND_REQUEST_EVENTS, FRIEND_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/contexts/SocketContext";
-import { FriendRequest } from "@database/postgres/generated/prisma/client";
 import { useCallback } from "react";
-import { FriendRequestsListResponse, SocketResponse } from "@shared/types";
+import { ClientToServerEvents } from "@shared/types/socket";
+import { SocketResponse } from "@shared/types";
+import { FriendRequests } from "@shared/types/responses";
 
-export interface FriendRequestSocketResponse {
-  success?: boolean;
-  data?: FriendRequest;
-  message?: string;
-  error?: string;
-}
+// Extract callback types from ClientToServerEvents
+type SendFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.SEND]
+>[1];
+type AcceptFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.ACCEPT]
+>[1];
+type RejectFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.REJECT]
+>[1];
+type CancelFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.CANCEL]
+>[1];
+type RemoveFriendCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_EVENTS.REMOVE]
+>[1];
 
 export const useFriendActions = () => {
   const { emit } = useSocket();
 
   const sendFriendRequest = useCallback(
-    (receiverTag: string) =>
-      emit(FRIEND_REQUEST_EVENTS.SEND, {
-        receiverTag,
-      }) as Promise<SocketResponse<FriendRequestsListResponse>>,
+    (receiverTag: string, callback: SendFriendRequestCallback) => {
+      emit(FRIEND_REQUEST_EVENTS.SEND, { receiverTag }, callback);
+    },
     [emit]
   );
 
   const acceptFriendRequest = useCallback(
-    (requestId: string) =>
-      emit(FRIEND_REQUEST_EVENTS.ACCEPT, {
-        requestId,
-      }) as Promise<SocketResponse<{ requestId: string }>>,
+    (requestId: string, callback: AcceptFriendRequestCallback) => {
+      emit(FRIEND_REQUEST_EVENTS.ACCEPT, { requestId }, callback);
+    },
     [emit]
   );
 
   const rejectFriendRequest = useCallback(
-    (requestId: string) =>
-      emit(FRIEND_REQUEST_EVENTS.REJECT, {
-        requestId,
-      }) as Promise<SocketResponse<{ requestId: string }>>,
+    (requestId: string, callback: RejectFriendRequestCallback) => {
+      emit(FRIEND_REQUEST_EVENTS.REJECT, { requestId }, callback);
+    },
     [emit]
   );
 
   const cancelFriendRequest = useCallback(
-    (requestId: string) =>
-      emit(FRIEND_REQUEST_EVENTS.CANCEL, {
-        requestId,
-      }) as Promise<SocketResponse<{ requestId: string }>>,
+    (requestId: string, callback: CancelFriendRequestCallback) => {
+      emit(FRIEND_REQUEST_EVENTS.CANCEL, { requestId }, callback);
+    },
     [emit]
   );
 
   const removeFriend = useCallback(
-    (friendId: string) =>
-      emit(FRIEND_EVENTS.REMOVE, {
-        friendId,
-      }) as Promise<SocketResponse<{ friendId: string }>>,
+    (friendId: string, callback: RemoveFriendCallback) => {
+      emit(FRIEND_EVENTS.REMOVE, { friendId }, callback);
+    },
     [emit]
   );
 

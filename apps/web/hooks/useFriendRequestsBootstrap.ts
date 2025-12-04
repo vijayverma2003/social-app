@@ -6,7 +6,7 @@ import { getFriendRequests } from "@/services/friends";
 import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 import { useSocket } from "@/contexts/SocketContext";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
-import { FriendRequestsListResponse } from "@shared/types";
+import { ServerToClientEvents } from "@shared/types/socket";
 
 export const useFriendRequestsBootstrap = () => {
   const { getToken, isSignedIn, isLoaded } = useAuth();
@@ -54,21 +54,25 @@ export const useFriendRequestsBootstrap = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceived = (request: FriendRequestsListResponse) => {
-      addReceivedRequest(request);
-    };
+    const handleReceived: ServerToClientEvents[typeof FRIEND_REQUEST_EVENTS.RECEIVED] =
+      (request) => {
+        addReceivedRequest(request);
+      };
 
-    const handleAccepted = (request: { requestId: string }) => {
-      removeRequestById(request.requestId);
-    };
+    const handleAccepted: ServerToClientEvents[typeof FRIEND_REQUEST_EVENTS.ACCEPTED] =
+      (request) => {
+        removeRequestById(request.requestId);
+      };
 
-    const handleRejected = (request: { requestId: string }) => {
-      removeRequestById(request.requestId);
-    };
+    const handleRejected: ServerToClientEvents[typeof FRIEND_REQUEST_EVENTS.REJECTED] =
+      (request) => {
+        removeRequestById(request.requestId);
+      };
 
-    const handleCanceled = (request: { requestId: string }) => {
-      removeRequestById(request.requestId);
-    };
+    const handleCanceled: ServerToClientEvents[typeof FRIEND_REQUEST_EVENTS.CANCELED] =
+      (request) => {
+        removeRequestById(request.requestId);
+      };
 
     socket.on(FRIEND_REQUEST_EVENTS.RECEIVED, handleReceived);
     socket.on(FRIEND_REQUEST_EVENTS.ACCEPTED, handleAccepted);

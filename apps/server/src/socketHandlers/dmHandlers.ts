@@ -1,16 +1,24 @@
 import prisma from "@database/postgres";
 import { DM_EVENTS } from "@shared/socketEvents";
-import {
-  DMChannelsListResponse,
-  SocketResponse,
-} from "@shared/types/responses";
 import { Server } from "socket.io";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/types/socket";
 import { AuthenticatedSocket } from "../socketHandlers";
 
-export class DMHandlers {
-  private io: Server;
+// Extract types from ClientToServerEvents for type safety
+type GetDMChannelsListData = Parameters<
+  ClientToServerEvents[typeof DM_EVENTS.GET_LIST]
+>[0];
+type GetDMChannelsListCallback = Parameters<
+  ClientToServerEvents[typeof DM_EVENTS.GET_LIST]
+>[1];
 
-  constructor(io: Server) {
+export class DMHandlers {
+  private io: Server<ClientToServerEvents, ServerToClientEvents>;
+
+  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
     this.io = io;
   }
 
@@ -22,8 +30,8 @@ export class DMHandlers {
 
   private async getDMChannelsList(
     socket: AuthenticatedSocket,
-    data: any,
-    cb: (response: SocketResponse<DMChannelsListResponse>) => void
+    data: GetDMChannelsListData,
+    cb: GetDMChannelsListCallback
   ) {
     try {
       if (!socket.userId) return cb({ error: "Unauthorized" });

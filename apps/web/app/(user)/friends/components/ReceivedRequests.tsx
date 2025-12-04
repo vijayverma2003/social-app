@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FriendRequestsListResponse } from "@shared/types";
+import { FriendRequests } from "@shared/types";
 import { Check, X } from "lucide-react";
 
 interface ReceivedRequestsProps {
-  receivedRequests: FriendRequestsListResponse[];
+  receivedRequests: FriendRequests[];
   onAccept: (requestId: string) => void;
   onReject: (requestId: string) => void;
 }

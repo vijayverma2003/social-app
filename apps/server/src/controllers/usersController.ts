@@ -5,11 +5,7 @@ import {
   updateUserProfileSchema,
   updateUserSchema,
 } from "@shared/schemas/user";
-import {
-  ProfileResponse,
-  UserResponse,
-  UserWithProfileResponse,
-} from "@shared/types/responses";
+import { Profile, User, UserWithProfile } from "@shared/types/responses";
 import { NextFunction, Request, Response } from "express";
 import z from "zod";
 import {
@@ -24,7 +20,7 @@ import { generateDiscriminator } from "../services/utils";
 export class UsersController {
   static async createUser(
     req: Request,
-    res: Response<UserWithProfileResponse>,
+    res: Response<UserWithProfile>,
     next: NextFunction
   ) {
     try {
@@ -78,7 +74,7 @@ export class UsersController {
 
   static async getCurrentUser(
     req: Request,
-    res: Response<UserWithProfileResponse>,
+    res: Response<UserWithProfile>,
     next: NextFunction
   ) {
     try {
@@ -101,7 +97,7 @@ export class UsersController {
 
   static async updateCurrentUser(
     req: Request,
-    res: Response<UserResponse>,
+    res: Response<User>,
     next: NextFunction
   ) {
     try {
@@ -140,7 +136,7 @@ export class UsersController {
 
   static async getProfileByUserId(
     req: Request,
-    res: Response<ProfileResponse>,
+    res: Response<Profile>,
     next: NextFunction
   ) {
     try {
@@ -161,7 +157,7 @@ export class UsersController {
 
   static async updateUserProfile(
     req: Request,
-    res: Response<UserWithProfileResponse>,
+    res: Response<UserWithProfile>,
     next: NextFunction
   ) {
     try {
@@ -170,7 +166,6 @@ export class UsersController {
 
       const existingUser = await prisma.user.findUnique({
         where: { clerkId },
-        
       });
 
       if (!existingUser) throw new NotFoundError("User not found");

@@ -5,16 +5,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { SocketResponse } from "@shared/types";
 import {
-  SendFriendRequestInputSchema,
-  type SendFriendRequestInput,
+  SendFriendRequestPayloadSchema,
+  type SendFriendRequestPayload,
 } from "@shared/schemas/friends";
-import { FriendRequestsListResponse } from "@shared/types/responses";
+import { FriendRequests } from "@shared/types/responses";
 
 interface FriendRequestFormProps {
   sendFriendRequest: (
-    receiverTag: string
-  ) => Promise<SocketResponse<FriendRequestsListResponse>>;
-  onFriendRequestSent: (newRequest: FriendRequestsListResponse) => void;
+    receiverTag: string,
+    callback: (response: SocketResponse<FriendRequests>) => void
+  ) => void;
+  onFriendRequestSent: (newRequest: FriendRequests) => void;
 }
 
 const FriendRequestForm = ({
@@ -28,27 +29,30 @@ const FriendRequestForm = ({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<SendFriendRequestInput>({
-    resolver: zodResolver(SendFriendRequestInputSchema),
+  } = useForm<SendFriendRequestPayload>({
+    resolver: zodResolver(SendFriendRequestPayloadSchema),
     defaultValues: {
       receiverTag: "",
     },
   });
 
-  const handleSendRequest = async (data: SendFriendRequestInput) => {
+  const handleSendRequest = async (data: SendFriendRequestPayload) => {
     if (isSubmitting) return;
 
-    const response = await sendFriendRequest(data.receiverTag.trim());
-
-    if (response.error) {
-      setMessage(`Error: ${response.error}`);
-      setTimeout(() => setMessage(""), 3000);
-    } else if (response.success && response.data) {
-      setMessage("Friend request sent successfully!");
-      setTimeout(() => setMessage(""), 3000);
-      reset({ receiverTag: "" });
-      onFriendRequestSent(response.data);
-    }
+    sendFriendRequest(
+      data.receiverTag.trim(),
+      (response: SocketResponse<FriendRequests>) => {
+        if (response.error) {
+          setMessage(`Error: ${response.error}`);
+          setTimeout(() => setMessage(""), 3000);
+        } else if (response.success && response.data) {
+          setMessage("Friend request sent successfully!");
+          setTimeout(() => setMessage(""), 3000);
+          reset({ receiverTag: "" });
+          onFriendRequestSent(response.data);
+        }
+      }
+    );
   };
 
   return (

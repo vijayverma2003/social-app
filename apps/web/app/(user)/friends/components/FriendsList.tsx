@@ -10,14 +10,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useFriendActions } from "@/hooks/useFriendActions";
 import { useFriendsStore } from "@/store/friendsStore";
-import { FriendsListResponse } from "@shared/types/responses";
+import { type FriendsList } from "@shared/types/responses";
 import { MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface FriendsListProps {
-  friends: FriendsListResponse[];
+  friends: FriendsList[];
 }
 
 const FriendsList = ({ friends }: FriendsListProps) => {
@@ -26,14 +26,14 @@ const FriendsList = ({ friends }: FriendsListProps) => {
   const { removeFriend } = useFriendActions();
   const { removeFriendById } = useFriendsStore();
 
-  const handleViewProfile = (friend: FriendsListResponse) => {
+  const handleViewProfile = (friend: FriendsList) => {
     // TODO: Update this route based on your profile routing structure
     // Using username+discriminator as identifier for now
     const userTag = `${friend.username}#${friend.discriminator}`;
     router.push(`/profile/${encodeURIComponent(userTag)}`);
   };
 
-  const handleSendMessage = (friend: FriendsListResponse) => {
+  const handleSendMessage = (friend: FriendsList) => {
     // TODO: Update this route based on your DM routing structure
     if (friend.dmChannelId) {
       router.push(`/connections/dm/${friend.dmChannelId}`);
@@ -43,27 +43,23 @@ const FriendsList = ({ friends }: FriendsListProps) => {
     }
   };
 
-  const handleRemoveFriend = async (friend: FriendsListResponse) => {
+  const handleRemoveFriend = (friend: FriendsList) => {
     if (removingFriendId === friend.id) return;
 
     setRemovingFriendId(friend.id);
-    try {
-      const response = await removeFriend(friend.id);
-
+    removeFriend(friend.id, (response) => {
       // Check if the server returned an error
       if (response.error || !response.success) {
         const errorMessage = response.error || "Failed to remove friend";
         toast.error(errorMessage);
+        setRemovingFriendId(null);
         return;
       }
 
       // Only remove from store if the operation was successful
       removeFriendById(friend.id);
-    } catch (error) {
-      console.error("Error removing friend:", error);
-    } finally {
       setRemovingFriendId(null);
-    }
+    });
   };
 
   return (

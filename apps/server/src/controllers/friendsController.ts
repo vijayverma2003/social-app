@@ -1,8 +1,8 @@
 import { getAuth } from "@clerk/express";
 import prisma from "@database/postgres";
 import {
-  FriendsListResponse,
-  IncomingAndOutgoingFriendRequestsResponse,
+  FriendsList,
+  IncomingAndOutgoingFriendRequests,
 } from "@shared/types/responses";
 import { NextFunction, Request, Response } from "express";
 import { NotFoundError, UnauthorizedError } from "../errors";
@@ -11,7 +11,7 @@ import STATUS_CODES from "../services/status";
 export class FriendsController {
   static async getFriends(
     req: Request,
-    res: Response<FriendsListResponse[]>,
+    res: Response<FriendsList[]>,
     next: NextFunction
   ) {
     try {
@@ -39,7 +39,7 @@ export class FriendsController {
         },
       });
 
-      const friends = friendsData.map((friend: any) => ({
+      const friends = friendsData.map((friend) => ({
         id: friend.id,
         username: friend.friend.username,
         discriminator: friend.friend.discriminator,
@@ -47,9 +47,7 @@ export class FriendsController {
         profile: friend.friend.profile,
       }));
 
-      return res
-        .status(STATUS_CODES.SUCCESS)
-        .json(friends as FriendsListResponse[]);
+      return res.status(STATUS_CODES.SUCCESS).json(friends as FriendsList[]);
     } catch (error) {
       next(error);
     }
@@ -57,7 +55,7 @@ export class FriendsController {
 
   static async getFriendRequests(
     req: Request,
-    res: Response<IncomingAndOutgoingFriendRequestsResponse>,
+    res: Response<IncomingAndOutgoingFriendRequests>,
     next: NextFunction
   ) {
     try {
@@ -116,7 +114,7 @@ export class FriendsController {
       return res.status(STATUS_CODES.SUCCESS).json({
         incomingRequests,
         outgoingRequests,
-      } as IncomingAndOutgoingFriendRequestsResponse);
+      } as IncomingAndOutgoingFriendRequests);
     } catch (error) {
       next(error);
     }

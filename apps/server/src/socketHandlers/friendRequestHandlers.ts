@@ -1,22 +1,51 @@
 import prisma from "@database/postgres";
 import {
-  FriendRequestActionInputSchema,
-  SendFriendRequestInput,
-  SendFriendRequestInputSchema,
+  AcceptFriendRequestPayloadSchema,
+  CancelFriendRequestPayloadSchema,
+  RejectFriendRequestPayloadSchema,
+  SendFriendRequestPayloadSchema,
 } from "@shared/schemas/friends";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
-import {
-  FriendRequestResponse,
-  FriendRequestsListResponse,
-  SocketResponse,
-} from "@shared/types/responses";
 import { Server } from "socket.io";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/types/socket";
 import { AuthenticatedSocket } from "../socketHandlers";
 
-export class FriendRequestHandlers {
-  private io: Server;
+// Extract types from ClientToServerEvents for type safety
+type SendFriendRequestData = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.SEND]
+>[0];
+type SendFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.SEND]
+>[1];
 
-  constructor(io: Server) {
+type AcceptFriendRequestData = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.ACCEPT]
+>[0];
+type AcceptFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.ACCEPT]
+>[1];
+
+type RejectFriendRequestData = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.REJECT]
+>[0];
+type RejectFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.REJECT]
+>[1];
+
+type CancelFriendRequestData = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.CANCEL]
+>[0];
+type CancelFriendRequestCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.CANCEL]
+>[1];
+
+export class FriendRequestHandlers {
+  private io: Server<ClientToServerEvents, ServerToClientEvents>;
+
+  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
     this.io = io;
   }
 
@@ -40,21 +69,23 @@ export class FriendRequestHandlers {
 
   private async sendFriendRequest(
     socket: AuthenticatedSocket,
-    data: SendFriendRequestInput,
-    cb: (response: SocketResponse<FriendRequestsListResponse>) => void
+    data: SendFriendRequestData,
+    cb: SendFriendRequestCallback
   ) {
     try {
       if (!socket.userId) return cb({ error: "Unauthorized" });
 
-      const validationResult = SendFriendRequestInputSchema.safeParse(data);
+      const validationResult = SendFriendRequestPayloadSchema.safeParse(data);
       if (!validationResult.success)
-        return cb({ error: validationResult.error.message });
+        return cb({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
 
       const { receiverTag } = validationResult.data;
       const [username, discriminator] = receiverTag.split("#");
 
       if (!username || !discriminator)
-        return cb({ error: "Invalid friend tag format" });
+        return cb({ error: "Invalid receiver tag format" });
 
       console.log(username, discriminator);
 
@@ -135,7 +166,7 @@ export class FriendRequestHandlers {
         discriminator: sender?.discriminator || "",
         profile: sender?.profile || null,
         createdAt: friendRequest.createdAt,
-      } as FriendRequestsListResponse);
+      });
 
       cb({
         success: true,
@@ -145,7 +176,7 @@ export class FriendRequestHandlers {
           discriminator: receiver?.discriminator || "",
           profile: receiver?.profile || null,
           createdAt: friendRequest.createdAt,
-        } as FriendRequestsListResponse,
+        },
       });
     } catch (error) {
       console.error("Error sending friend request:", error);
@@ -155,15 +186,15 @@ export class FriendRequestHandlers {
 
   private async acceptFriendRequest(
     socket: AuthenticatedSocket,
-    data: any,
-    callback: (response: SocketResponse<{ requestId: string }>) => void
+    data: AcceptFriendRequestData,
+    callback: AcceptFriendRequestCallback
   ) {
     try {
       if (!socket.userId) {
         return callback({ error: "Unauthorized" });
       }
 
-      const validationResult = FriendRequestActionInputSchema.safeParse(data);
+      const validationResult = AcceptFriendRequestPayloadSchema.safeParse(data);
       if (!validationResult.success)
         return callback({
           error: validationResult.error.issues[0]?.message || "Invalid input",
@@ -280,17 +311,22 @@ export class FriendRequestHandlers {
 
   private async rejectFriendRequest(
     socket: AuthenticatedSocket,
-    data: any,
-    cb: (response: SocketResponse<{ requestId: string }>) => void
+    data: RejectFriendRequestData,
+    cb: RejectFriendRequestCallback
   ) {
     try {
-      if (!socket.userId) return cb({ error: "Unauthorized" });
+      if (!socket.userId) {
+        cb({ error: "Unauthorized" });
+        return;
+      }
 
-      const validationResult = FriendRequestActionInputSchema.safeParse(data);
-      if (!validationResult.success)
-        return cb({
+      const validationResult = RejectFriendRequestPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        cb({
           error: validationResult.error.issues[0]?.message || "Invalid input",
         });
+        return;
+      }
 
       const { requestId } = validationResult.data;
 
@@ -298,12 +334,17 @@ export class FriendRequestHandlers {
         where: { id: requestId },
       });
 
-      if (!friendRequest) return cb({ error: "Friend request not found" });
+      if (!friendRequest) {
+        cb({ error: "Friend request not found" });
+        return;
+      }
 
-      if (friendRequest.receiverId !== socket.userId)
-        return cb({
+      if (friendRequest.receiverId !== socket.userId) {
+        cb({
           error: "You can only reject friend requests sent to you",
         });
+        return;
+      }
 
       await prisma.friendRequest.delete({
         where: { id: requestId },
@@ -325,17 +366,22 @@ export class FriendRequestHandlers {
 
   private async cancelFriendRequest(
     socket: AuthenticatedSocket,
-    data: any,
-    cb: (response: SocketResponse<{ requestId: string }>) => void
+    data: CancelFriendRequestData,
+    cb: CancelFriendRequestCallback
   ) {
     try {
-      if (!socket.userId) return cb({ error: "Unauthorized" });
+      if (!socket.userId) {
+        cb({ error: "Unauthorized" });
+        return;
+      }
 
-      const validationResult = FriendRequestActionInputSchema.safeParse(data);
-      if (!validationResult.success)
-        return cb({
+      const validationResult = CancelFriendRequestPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        cb({
           error: validationResult.error.issues[0]?.message || "Invalid input",
         });
+        return;
+      }
 
       const { requestId } = validationResult.data;
 
@@ -343,12 +389,17 @@ export class FriendRequestHandlers {
         where: { id: requestId },
       });
 
-      if (!friendRequest) return cb({ error: "Friend request not found" });
+      if (!friendRequest) {
+        cb({ error: "Friend request not found" });
+        return;
+      }
 
-      if (friendRequest.senderId !== socket.userId)
-        return cb({
+      if (friendRequest.senderId !== socket.userId) {
+        cb({
           error: "You can only cancel friend requests you sent",
         });
+        return;
+      }
 
       await prisma.friendRequest.delete({
         where: { id: requestId },

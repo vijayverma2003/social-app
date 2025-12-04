@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useSocket } from "@/contexts/SocketContext";
 import { useFriendsStore } from "@/store/friendsStore";
 import { FRIEND_EVENTS } from "@shared/socketEvents";
+import { ServerToClientEvents } from "@shared/types/socket";
 
 export const useFriendsBootstrap = () => {
   const { socket } = useSocket();
@@ -12,7 +13,9 @@ export const useFriendsBootstrap = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleRemoved = (data: { friendId: string; userId: string }) => {
+    const handleRemoved: ServerToClientEvents[typeof FRIEND_EVENTS.REMOVED] = (
+      data
+    ) => {
       removeFriendById(data.friendId);
     };
 

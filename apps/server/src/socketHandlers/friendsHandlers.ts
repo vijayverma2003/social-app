@@ -1,14 +1,25 @@
 import prisma from "@database/postgres";
-import { RemoveFriendInputSchema } from "@shared/schemas/friends";
+import { RemoveFriendPayloadSchema } from "@shared/schemas/friends";
 import { FRIEND_EVENTS } from "@shared/socketEvents";
-import { SocketResponse } from "@shared/types/responses";
 import { Server } from "socket.io";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/types/socket";
 import { AuthenticatedSocket } from "../socketHandlers";
 
-export class FriendsHandlers {
-  private io: Server;
+// Extract types from ClientToServerEvents for type safety
+type RemoveFriendData = Parameters<
+  ClientToServerEvents[typeof FRIEND_EVENTS.REMOVE]
+>[0];
+type RemoveFriendCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_EVENTS.REMOVE]
+>[1];
 
-  constructor(io: Server) {
+export class FriendsHandlers {
+  private io: Server<ClientToServerEvents, ServerToClientEvents>;
+
+  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
     this.io = io;
   }
 
@@ -20,17 +31,22 @@ export class FriendsHandlers {
 
   private async removeFriend(
     socket: AuthenticatedSocket,
-    data: any,
-    cb: (response: SocketResponse<{ friendId: string }>) => void
+    data: RemoveFriendData,
+    cb: RemoveFriendCallback
   ) {
     try {
-      if (!socket.userId) return cb({ error: "Unauthorized" });
+      if (!socket.userId) {
+        cb({ error: "Unauthorized" });
+        return;
+      }
 
-      const validationResult = RemoveFriendInputSchema.safeParse(data);
-      if (!validationResult.success)
-        return cb({
+      const validationResult = RemoveFriendPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        cb({
           error: validationResult.error.issues[0]?.message || "Invalid input",
         });
+        return;
+      }
 
       const { friendId } = validationResult.data;
 
@@ -39,14 +55,18 @@ export class FriendsHandlers {
         where: { id: friendId },
       });
 
-      if (!friendRelationship)
-        return cb({ error: "Friend relationship not found" });
+      if (!friendRelationship) {
+        cb({ error: "Friend relationship not found" });
+        return;
+      }
 
       // Verify the user owns this friend relationship
-      if (friendRelationship.userId !== socket.userId)
-        return cb({
+      if (friendRelationship.userId !== socket.userId) {
+        cb({
           error: "You can only remove your own friends",
         });
+        return;
+      }
 
       const otherUserId = friendRelationship.friendId;
 
@@ -75,7 +95,6 @@ export class FriendsHandlers {
 
       this.io.to(`user:${otherUserId}`).emit(FRIEND_EVENTS.REMOVED, {
         friendId: reverseFriendRelationship?.id || friendId,
-        userId: socket.userId,
       });
 
       cb({

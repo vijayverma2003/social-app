@@ -1,6 +1,10 @@
 import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { SocketHandlers } from "./socketHandlers";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/types/socket";
 
 class SocketIOProvider {
   private static _instance: Server | null = null;
@@ -11,12 +15,15 @@ class SocketIOProvider {
       return this._instance;
     }
 
-    this._instance = new Server(httpServer, {
-      cors: {
-        origin: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
-        credentials: true,
-      },
-    });
+    this._instance = new Server<ClientToServerEvents, ServerToClientEvents>(
+      httpServer,
+      {
+        cors: {
+          origin: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
+          credentials: true,
+        },
+      }
+    );
 
     this._handlers = new SocketHandlers(this._instance);
     this._handlers.initialize();

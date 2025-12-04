@@ -38,6 +38,8 @@ model User {
 model Profile {
   userId               String   @id
   user                 User     @relation(fields: [userId], references: [id])
+  username             String?  @db.VarChar(50)
+  discriminator        String?  @db.VarChar(4)
   displayName          String?  @db.VarChar(100)
   avatarURL            String?
   bannerURL            String?

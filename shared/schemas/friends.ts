@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const SendFriendRequestInputSchema = z
+export const SendFriendRequestPayloadSchema = z
   .object({
     receiverTag: z
       .string()
@@ -13,22 +13,40 @@ export const SendFriendRequestInputSchema = z
   })
   .strict();
 
-export const FriendRequestActionInputSchema = z
+export const AcceptFriendRequestPayloadSchema = z
   .object({
     requestId: z.string().trim().min(1, "Request ID is required"),
   })
   .strict();
 
-export const RemoveFriendInputSchema = z
+export const RejectFriendRequestPayloadSchema = z
+  .object({
+    requestId: z.string().trim().min(1, "Request ID is required"),
+  })
+  .strict();
+
+export const CancelFriendRequestPayloadSchema = z
+  .object({
+    requestId: z.string().trim().min(1, "Request ID is required"),
+  })
+  .strict();
+
+export const RemoveFriendPayloadSchema = z
   .object({
     friendId: z.string().trim().min(1, "Friend ID is required"),
   })
   .strict();
 
-export type SendFriendRequestInput = z.infer<
-  typeof SendFriendRequestInputSchema
+export type SendFriendRequestPayload = z.infer<
+  typeof SendFriendRequestPayloadSchema
 >;
-export type FriendRequestActionInput = z.infer<
-  typeof FriendRequestActionInputSchema
+export type AcceptFriendRequestPayload = z.infer<
+  typeof AcceptFriendRequestPayloadSchema
 >;
-export type RemoveFriendInput = z.infer<typeof RemoveFriendInputSchema>;
+export type RejectFriendRequestPayload = z.infer<
+  typeof RejectFriendRequestPayloadSchema
+>;
+export type CancelFriendRequestPayload = z.infer<
+  typeof CancelFriendRequestPayloadSchema
+>;
+export type RemoveFriendPayload = z.infer<typeof RemoveFriendPayloadSchema>;

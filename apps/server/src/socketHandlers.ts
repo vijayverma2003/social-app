@@ -5,18 +5,29 @@ import { FriendRequestHandlers } from "./socketHandlers/friendRequestHandlers";
 import { FriendsHandlers } from "./socketHandlers/friendsHandlers";
 import { DMHandlers } from "./socketHandlers/dmHandlers";
 import prisma from "@database/postgres";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  SocketData,
+} from "@shared/types/socket";
 
-export interface AuthenticatedSocket extends Socket {
+export interface AuthenticatedSocket
+  extends Socket<
+    ClientToServerEvents,
+    ServerToClientEvents,
+    Record<string, never>,
+    SocketData
+  > {
   userId?: string;
 }
 
 export class SocketHandlers {
-  private io: Server;
+  private io: Server<ClientToServerEvents, ServerToClientEvents>;
   private friendRequestHandlers: FriendRequestHandlers;
   private friendsHandlers: FriendsHandlers;
   private dmHandlers: DMHandlers;
 
-  constructor(io: Server) {
+  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
     this.io = io;
     this.friendRequestHandlers = new FriendRequestHandlers(io);
     this.friendsHandlers = new FriendsHandlers(io);

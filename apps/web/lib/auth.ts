@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AxiosError } from "axios";
 import { getCurrentUser } from "@/services/users";
-import { UserWithProfileResponse } from "@shared/types";
+import { UserWithProfile } from "@shared/types";
 
 /**
  * Gets the authenticated user for server components.
@@ -13,7 +13,7 @@ import { UserWithProfileResponse } from "@shared/types";
  * @throws Redirects to "/onboarding" if user doesn't exist in database
  * @throws Redirects to "/" if there's a server error (to prevent infinite loops)
  */
-export async function getAuthenticatedUser(): Promise<UserWithProfileResponse> {
+export async function getAuthenticatedUser(): Promise<UserWithProfile> {
   const { userId, getToken, isAuthenticated } = await auth();
 
   if (!isAuthenticated || !userId) redirect("/");

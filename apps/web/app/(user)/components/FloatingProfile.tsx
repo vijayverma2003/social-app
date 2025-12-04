@@ -1,9 +1,9 @@
 import Image from "next/image";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserWithProfileResponse } from "@shared/types";
+import { UserWithProfile } from "@shared/types";
 
-const FloatingProfile = ({ user }: { user: UserWithProfileResponse }) => {
+const FloatingProfile = ({ user }: { user: UserWithProfile }) => {
   const profile = user.profile;
   if (!profile) return null;
 

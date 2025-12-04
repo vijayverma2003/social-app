@@ -2,13 +2,13 @@ import {
   CreateUserSchema,
   UpdateUserProfileSchema,
 } from "@shared/schemas/user";
-import { UserWithProfileResponse } from "@shared/types";
+import { UserWithProfile } from "@shared/types";
 import { AxiosError, AxiosResponse } from "axios";
 import api from "./api";
 
 export async function getCurrentUser(
   token?: string
-): Promise<AxiosResponse<UserWithProfileResponse>> {
+): Promise<AxiosResponse<UserWithProfile>> {
   return api.get("/users/me", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -17,7 +17,7 @@ export async function getCurrentUser(
 export async function createUser(
   data: CreateUserSchema,
   token?: string
-): Promise<AxiosResponse<UserWithProfileResponse>> {
+): Promise<AxiosResponse<UserWithProfile>> {
   return api.post("/users/create", data, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -26,7 +26,7 @@ export async function createUser(
 export async function updateUser(
   data: UpdateUserProfileSchema,
   token?: string
-): Promise<AxiosResponse<UserWithProfileResponse>> {
+): Promise<AxiosResponse<UserWithProfile>> {
   return api.put("/users/me", data, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -35,7 +35,7 @@ export async function updateUser(
 export async function updateUserProfile(
   data: UpdateUserProfileSchema,
   token?: string
-): Promise<AxiosResponse<UserWithProfileResponse>> {
+): Promise<AxiosResponse<UserWithProfile>> {
   return api.put("/users/me/profile", data, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });

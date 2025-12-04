@@ -1,20 +1,18 @@
 import { FriendRequest } from "@database/postgres/generated/prisma/client";
 import {
-  FriendRequestsListResponse,
-  IncomingAndOutgoingFriendRequestsResponse,
+  FriendRequests,
+  IncomingAndOutgoingFriendRequests,
 } from "@shared/types";
 import { create } from "zustand";
 
 interface FriendRequestsState {
-  received: FriendRequestsListResponse[];
-  sent: FriendRequestsListResponse[];
+  received: FriendRequests[];
+  sent: FriendRequests[];
   isLoading: boolean;
   error: string | null;
-  setInitialRequests: (
-    requests: IncomingAndOutgoingFriendRequestsResponse
-  ) => void;
-  addReceivedRequest: (request: FriendRequestsListResponse) => void;
-  addSentRequest: (request: FriendRequestsListResponse) => void;
+  setInitialRequests: (requests: IncomingAndOutgoingFriendRequests) => void;
+  addReceivedRequest: (request: FriendRequests) => void;
+  addSentRequest: (request: FriendRequests) => void;
   removeRequestById: (requestId: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
@@ -34,12 +32,12 @@ export const useFriendRequestsStore = create<FriendRequestsState>((set) => ({
       error: null,
     }),
 
-  addReceivedRequest: (request: FriendRequestsListResponse) =>
+  addReceivedRequest: (request: FriendRequests) =>
     set((state) => ({
       received: [...state.received, request],
     })),
 
-  addSentRequest: (request: FriendRequestsListResponse) =>
+  addSentRequest: (request: FriendRequests) =>
     set((state) => ({
       sent: [...state.sent, request],
     })),

@@ -1,12 +1,12 @@
-import { FriendsListResponse } from "@shared/types/responses";
+import { type FriendsList } from "@shared/types/responses";
 import { create } from "zustand";
 
 interface FriendsState {
-  friends: FriendsListResponse[];
+  friends: FriendsList[];
   isLoading: boolean;
   error: string | null;
-  setFriends: (friends: FriendsListResponse[]) => void;
-  addFriend: (friend: FriendsListResponse) => void;
+  setFriends: (friends: FriendsList[]) => void;
+  addFriend: (friend: FriendsList) => void;
   removeFriendById: (friendId: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;

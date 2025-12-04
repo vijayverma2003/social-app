@@ -2,23 +2,33 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { FriendRequestsListResponse } from "@shared/types";
+import { FriendRequests, SocketResponse } from "@shared/types";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { useFriendRequestsStore } from "@/store/friendRequestsStore";
 
 interface PendingRequestsProps {
-  sentRequests: FriendRequestsListResponse[];
-  onCancel: (requestId: string) => Promise<void>;
+  sentRequests: FriendRequests[];
+  onCancel: (
+    requestId: string,
+    callback: (response: SocketResponse<{ requestId: string }>) => void
+  ) => void;
 }
 
 const PendingRequests = ({ sentRequests, onCancel }: PendingRequestsProps) => {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
-
+  const { removeRequestById } = useFriendRequestsStore();
   const handleCancel = async (requestId: string) => {
     if (cancelingId === requestId) return;
     setCancelingId(requestId);
     try {
-      await onCancel(requestId);
+      onCancel(requestId, (response: SocketResponse<{ requestId: string }>) => {
+        if (response.error) {
+          console.log(response.error);
+        } else {
+          removeRequestById(requestId);
+        }
+      });
     } finally {
       setCancelingId(null);
     }

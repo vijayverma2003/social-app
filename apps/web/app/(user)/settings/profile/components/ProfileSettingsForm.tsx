@@ -10,14 +10,14 @@ import {
   updateUserProfileSchema,
   type UpdateUserProfileSchema,
 } from "@shared/schemas/user";
-import { UserWithProfileResponse } from "@shared/types";
+import { UserWithProfile } from "@shared/types";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface ProfileSettingsFormProps {
-  user: UserWithProfileResponse;
+  user: UserWithProfile;
 }
 
 const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {

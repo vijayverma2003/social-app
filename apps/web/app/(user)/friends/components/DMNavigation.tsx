@@ -6,7 +6,7 @@ import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
 import { useDMChannelsStore } from "@/store/dmChannelsStore";
 import { useAuth } from "@clerk/nextjs";
-import { DMChannelResponse } from "@shared/types/responses";
+import { DMChannel } from "@shared/types/responses";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -43,7 +43,7 @@ const DMNavigation = () => {
     loadCurrentUser();
   }, [getToken]);
 
-  const getOtherUser = (channel: DMChannelResponse) => {
+  const getOtherUser = (channel: DMChannel) => {
     // Find the user that is not the current user
     // Only proceed if currentUserId is loaded
     if (!currentUserId) return null;
@@ -52,7 +52,7 @@ const DMNavigation = () => {
     );
   };
 
-  const getUnreadCount = (channel: DMChannelResponse) => {
+  const getUnreadCount = (channel: DMChannel) => {
     if (!currentUserId) return 0;
     const channelUser = channel.users.find((u) => u.userId === currentUserId);
     return channelUser?.totalUnreadMessages || 0;
