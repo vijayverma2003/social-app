@@ -38,7 +38,6 @@ export const useFriendActions = () => {
             description: response.error,
           });
         } else if (response.success && response.data) {
-          toast.success("Friend request sent successfully!");
           addSentRequest(response.data);
           onSuccess();
         }
@@ -54,10 +53,7 @@ export const useFriendActions = () => {
           toast.error("Failed to accept friend request", {
             description: response.error,
           });
-        } else {
-          toast.success("Friend request accepted");
-          removeRequestById(requestId);
-        }
+        } else removeRequestById(requestId);
       }) as AcceptFriendRequestCallback);
     },
     [emit, removeRequestById]
@@ -70,10 +66,7 @@ export const useFriendActions = () => {
           toast.error("Failed to reject friend request", {
             description: response.error,
           });
-        } else {
-          toast.success("Friend request rejected");
-          removeRequestById(requestId);
-        }
+        } else removeRequestById(requestId);
       }) as RejectFriendRequestCallback);
     },
     [emit, removeRequestById]
@@ -86,10 +79,7 @@ export const useFriendActions = () => {
           toast.error("Failed to cancel friend request", {
             description: response.error,
           });
-        } else {
-          toast.success("Friend request canceled");
-          removeRequestById(requestId);
-        }
+        } else removeRequestById(requestId);
       }) as CancelFriendRequestCallback);
     },
     [emit, removeRequestById]
@@ -101,10 +91,7 @@ export const useFriendActions = () => {
         if (response.error || !response.success) {
           const errorMessage = response.error || "Failed to remove friend";
           toast.error(errorMessage);
-        } else {
-          toast.success("Friend removed");
-          removeFriendById(friendId);
-        }
+        } else removeFriendById(friendId);
       }) as RemoveFriendCallback);
     },
     [emit, removeFriendById]

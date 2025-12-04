@@ -11,10 +11,12 @@ import { toast } from "sonner";
 
 export const useFriendsBootstrap = () => {
   const { socket } = useSocket();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const { removeFriendById, setFriends, setLoading } = useFriendsStore();
 
   const fetchFriends = async () => {
+    if (!isSignedIn) return;
+
     try {
       setLoading(true);
       const token = await getToken();
@@ -29,7 +31,7 @@ export const useFriendsBootstrap = () => {
 
   useEffect(() => {
     fetchFriends();
-  }, []);
+  }, [isSignedIn]);
 
   useEffect(() => {
     if (!socket) return;

@@ -10,7 +10,7 @@ import { ServerToClientEvents } from "@shared/types/socket";
 import { toast } from "sonner";
 
 export const useFriendRequestsBootstrap = () => {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const {
     setInitialRequests,
     setLoading,
@@ -20,6 +20,8 @@ export const useFriendRequestsBootstrap = () => {
   const { socket } = useSocket();
 
   const loadFriendRequests = async () => {
+    if (!isSignedIn) return;
+
     try {
       setLoading(true);
       const token = await getToken();
@@ -34,7 +36,7 @@ export const useFriendRequestsBootstrap = () => {
 
   useEffect(() => {
     loadFriendRequests();
-  }, []);
+  }, [isSignedIn]);
 
   useEffect(() => {
     if (!socket) return;
