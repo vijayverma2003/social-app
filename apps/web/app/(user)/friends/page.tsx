@@ -107,12 +107,12 @@ const FriendsPage = () => {
         <TabsList>
           <TabsTrigger value="friends">Friends</TabsTrigger>
           <TabsTrigger value="received" className="relative">
-            Received Requests
+            Friend Requests
             {received.length > 0 && (
               <NotificationBadge count={received.length} className="ml-2" />
             )}
           </TabsTrigger>
-          <TabsTrigger value="outgoing">Outgoing Requests</TabsTrigger>
+          <TabsTrigger value="outgoing">Add Friend</TabsTrigger>
         </TabsList>
 
         <TabsContent value="friends" className="mt-4">
