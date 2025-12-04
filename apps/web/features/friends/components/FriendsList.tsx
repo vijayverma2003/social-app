@@ -8,8 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useFriendActions } from "@/hooks/useFriendActions";
-import { useFriendsStore } from "@/store/friendsStore";
+import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { type FriendsList } from "@shared/types/responses";
 import { MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -3,8 +3,8 @@
 import { PropsWithChildren } from "react";
 import MainHeader from "./components/MainHeader";
 import Navbar from "./components/Navbar";
-import { useFriendRequestsBootstrap } from "@/hooks/useFriendRequestsBootstrap";
-import { useFriendsBootstrap } from "@/hooks/useFriendsBootstrap";
+import { useFriendRequestsBootstrap } from "@/features/friends/hooks/useFriendRequestsBootstrap";
+import { useFriendsBootstrap } from "@/features/friends/hooks/useFriendsBootstrap";
 import { useDMChannelsBootstrap } from "@/hooks/useDMChannelsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {

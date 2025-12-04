@@ -2,53 +2,37 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { getFriendRequests } from "@/services/friends";
-import { useFriendRequestsStore } from "@/store/friendRequestsStore";
-import { useSocket } from "@/contexts/SocketContext";
+import { getFriendRequests } from "@/features/friends/services/friends";
+import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
+import { useSocket } from "@/providers/SocketContextProvider";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 
 export const useFriendRequestsBootstrap = () => {
-  const { getToken, isSignedIn, isLoaded } = useAuth();
+  const { getToken } = useAuth();
   const {
     setInitialRequests,
     setLoading,
-    setError,
     addReceivedRequest,
     removeRequestById,
   } = useFriendRequestsStore();
   const { socket } = useSocket();
 
   useEffect(() => {
-    let cancelled = false;
-
     const loadFriendRequests = async () => {
       try {
         setLoading(true);
-        const token = await getToken();
-        if (cancelled) return;
 
+        const token = await getToken();
         const response = await getFriendRequests(token || undefined);
-        if (cancelled) return;
 
         setInitialRequests(response.data);
       } catch (error) {
         console.error("Failed to load friend requests:", error);
-        if (!cancelled) {
-          setError("Failed to load friend requests");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
       }
     };
 
     loadFriendRequests();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   useEffect(() => {

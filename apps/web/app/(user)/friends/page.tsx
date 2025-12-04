@@ -1,50 +1,23 @@
 "use client";
 
-import { getFriends } from "@/services/friends";
-import { useFriendsStore } from "@/store/friendsStore";
-import { useFriendRequestsStore } from "@/store/friendRequestsStore";
-import { useFriendActions } from "@/hooks/useFriendActions";
-import { useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { NotificationBadge } from "@/components/ui/notification-badge";
-import FriendsList from "./components/FriendsList";
-import ReceivedRequests from "./components/ReceivedRequests";
-import PendingRequests from "./components/PendingRequests";
-import FriendRequestForm from "./components/FriendRequestForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import FriendRequestForm from "@/features/friends/components/FriendRequestForm";
+import FriendsList from "@/features/friends/components/FriendsList";
+import PendingRequests from "@/features/friends/components/PendingRequests";
+import ReceivedRequests from "@/features/friends/components/ReceivedRequests";
+import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
+import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
+import { useState } from "react";
 
 const FriendsPage = () => {
-  const { getToken } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const { friends, setFriends } = useFriendsStore();
+  const { friends } = useFriendsStore();
   const { received, sent, addSentRequest, removeRequestById } =
     useFriendRequestsStore();
-  const {
-    sendFriendRequest,
-    acceptFriendRequest,
-    rejectFriendRequest,
-    cancelFriendRequest,
-  } = useFriendActions();
-
-  useEffect(() => {
-    const loadFriends = async () => {
-      try {
-        setIsLoading(true);
-        const token = await getToken();
-        const response = await getFriends(token || undefined);
-        setFriends(response.data ?? []);
-      } catch (err) {
-        console.error("Failed to load friends:", err);
-        setError("Failed to load friends");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFriends();
-  }, [getToken, setFriends]);
+  const { acceptFriendRequest, rejectFriendRequest, cancelFriendRequest } =
+    useFriendActions();
 
   const handleAccept = (requestId: string) => {
     acceptFriendRequest(requestId, (response) => {
@@ -78,25 +51,6 @@ const FriendsPage = () => {
       }
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-2xl flex items-center justify-center py-16">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading friends...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="mx-auto max-w-2xl py-8">
-        <p className="text-sm text-destructive">{error}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-2xl space-y-4 py-2">
@@ -150,10 +104,7 @@ const FriendsPage = () => {
             <h2 className="text-sm text-muted-foreground font-bold mb-4">
               Send Friend Request
             </h2>
-            <FriendRequestForm
-              sendFriendRequest={sendFriendRequest}
-              onFriendRequestSent={addSentRequest}
-            />
+            <FriendRequestForm onFriendRequestSent={addSentRequest} />
           </div>
           {sent.length > 0 && (
             <div>

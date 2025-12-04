@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSocket } from "@/contexts/SocketContext";
+import { useSocket } from "@/providers/SocketContextProvider";
 import { useDMChannelsStore } from "@/store/dmChannelsStore";
 import { useDMActions } from "@/hooks/useDMActions";
 
@@ -11,42 +11,21 @@ export const useDMChannelsBootstrap = () => {
   const { getDMChannelsList } = useDMActions();
 
   useEffect(() => {
-    let cancelled = false;
+    if (!socket || !isConnected) return;
 
-    const loadDMChannels = async () => {
-      if (!socket || !isConnected) return;
-
-      try {
-        setLoading(true);
-        const response = await getDMChannelsList();
-
-        if (cancelled) return;
-
-        if (response.error || !response.success) {
-          setError(response.error || "Failed to load DM channels");
-          return;
-        }
-
-        if (response.data) {
-          setChannels(response.data);
-        }
-      } catch (error) {
-        console.error("Failed to load DM channels:", error);
-        if (!cancelled) {
-          setError("Failed to load DM channels");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+    setLoading(true);
+    getDMChannelsList((response) => {
+      if (response.error || !response.success) {
+        setError(response.error || "Failed to load DM channels");
+        setLoading(false);
+        return;
       }
-    };
 
-    loadDMChannels();
-
-    return () => {
-      cancelled = true;
-    };
+      if (response.data) {
+        setChannels(response.data);
+      }
+      setLoading(false);
+    });
   }, [
     socket,
     isConnected,

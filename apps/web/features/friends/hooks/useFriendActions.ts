@@ -1,11 +1,9 @@
 "use client";
 
 import { FRIEND_REQUEST_EVENTS, FRIEND_EVENTS } from "@shared/socketEvents";
-import { useSocket } from "@/contexts/SocketContext";
+import { useSocket } from "@/providers/SocketContextProvider";
 import { useCallback } from "react";
 import { ClientToServerEvents } from "@shared/types/socket";
-import { SocketResponse } from "@shared/types";
-import { FriendRequests } from "@shared/types/responses";
 
 // Extract callback types from ClientToServerEvents
 type SendFriendRequestCallback = Parameters<

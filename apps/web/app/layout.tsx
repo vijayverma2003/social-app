@@ -2,7 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
-import { SocketProvider } from "@/contexts/SocketContext";
+import { SocketContextProvider } from "@/providers/SocketContextProvider";
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
@@ -25,7 +25,7 @@ export default function RootLayout({
         <body
           className={`${quicksand.variable} antialiased h-screen overflow-hidden`}
         >
-          <SocketProvider>{children}</SocketProvider>
+          <SocketContextProvider>{children}</SocketContextProvider>
         </body>
       </html>
     </ClerkProvider>

@@ -34,7 +34,10 @@ export class DMHandlers {
     cb: GetDMChannelsListCallback
   ) {
     try {
-      if (!socket.userId) return cb({ error: "Unauthorized" });
+      if (!socket.userId) {
+        cb({ error: "Unauthorized" });
+        return;
+      }
 
       // Get all DM channels where the user is a member
       const dmChannels = await prisma.dMChannel.findMany({

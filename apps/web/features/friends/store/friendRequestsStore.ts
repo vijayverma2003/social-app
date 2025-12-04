@@ -1,4 +1,3 @@
-import { FriendRequest } from "@database/postgres/generated/prisma/client";
 import {
   FriendRequests,
   IncomingAndOutgoingFriendRequests,

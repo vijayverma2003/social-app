@@ -6,7 +6,6 @@ import { useAuth } from "@clerk/nextjs";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
-  SocketData,
 } from "@shared/types/socket";
 
 interface SocketContextType {
@@ -37,7 +36,9 @@ interface SocketProviderProps {
   children: React.ReactNode;
 }
 
-export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
+export const SocketContextProvider: React.FC<SocketProviderProps> = ({
+  children,
+}) => {
   const [socket, setSocket] = useState<Socket<
     ServerToClientEvents,
     ClientToServerEvents
@@ -113,7 +114,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     callback: Parameters<ClientToServerEvents[K]>[1]
   ): void => {
     if (!socket || !isConnected) {
-      callback({ error: "Socket not connected" } as any);
+      callback({ error: "Socket not connected" });
       return;
     }
 

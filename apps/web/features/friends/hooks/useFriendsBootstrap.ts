@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSocket } from "@/contexts/SocketContext";
-import { useFriendsStore } from "@/store/friendsStore";
+import { useSocket } from "@/providers/SocketContextProvider";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { FRIEND_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 

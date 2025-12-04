@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
-import { useFriendRequestsStore } from "@/store/friendRequestsStore";
+import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
 import {
   Home,
   MessageCircle,
@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
-import DMNavigation from "../friends/components/DMNavigation";
+import DMNavigation from "./DMNavigation";
 
 interface NavItem {
   href: string;

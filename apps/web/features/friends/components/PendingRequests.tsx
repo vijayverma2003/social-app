@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FriendRequests, SocketResponse } from "@shared/types";
 import { X } from "lucide-react";
 import { useState } from "react";
-import { useFriendRequestsStore } from "@/store/friendRequestsStore";
+import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
 
 interface PendingRequestsProps {
   sentRequests: FriendRequests[];
