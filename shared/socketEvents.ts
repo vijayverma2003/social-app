@@ -20,6 +20,12 @@ export const FRIEND_EVENTS = {
 export const DM_EVENTS = {
   // Client -> Server events (actions)
   GET_LIST: "dm:get_list",
+  JOIN: "dm:join",
+  LEAVE: "dm:leave",
+
+  // Server -> Client events (notifications)
+  JOINED: "dm:joined",
+  LEFT: "dm:left",
 } as const;
 
 export type FriendRequestEvent =

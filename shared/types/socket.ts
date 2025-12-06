@@ -15,6 +15,7 @@ import {
   CancelFriendRequestPayload,
   AcceptFriendRequestPayload,
 } from "../schemas/friends";
+import { JoinDMChannelPayload, LeaveDMChannelPayload } from "../schemas/dm";
 
 /**
  * Socket Data Interface
@@ -99,11 +100,35 @@ export interface ClientToServerEvents {
   /**
    * GET_LIST: Get list of DM channels for the authenticated user
    * @param data - {} - No payload required
-   * @param callback - SocketResponse<DMChannelsListResponse>
+   * @param callback - SocketResponse<DMChannelWithUsers[]>
    */
   [DM_EVENTS.GET_LIST]: (
     data: {},
     callback: (response: SocketResponse<DMChannelWithUsers[]>) => void
+  ) => void;
+
+  /**
+   * JOIN: Join a DM channel socket room for receiving broadcasts
+   * @param data - { channelId: string }
+   * @param callback - SocketResponse<JoinDMChannelPayload>
+   * @requires User must be a member of the channel (DMChannelUser record exists)
+   * @broadcasts JOINED to channel room
+   */
+  [DM_EVENTS.JOIN]: (
+    data: JoinDMChannelPayload,
+    callback: (response: SocketResponse<{ channelId: string }>) => void
+  ) => void;
+
+  /**
+   * LEAVE: Leave a DM channel socket room (stops receiving broadcasts)
+   * @param data - { channelId: string }
+   * @param callback - SocketResponse<LeaveDMChannelPayload>
+   * @note This does not remove the user from the channel (DMChannelUser record remains)
+   * @broadcasts LEFT to channel room
+   */
+  [DM_EVENTS.LEAVE]: (
+    data: LeaveDMChannelPayload,
+    callback: (response: SocketResponse<LeaveDMChannelPayload>) => void
   ) => void;
 }
 
@@ -154,4 +179,23 @@ export interface ServerToClientEvents {
    * @param data - { friendId: string } - The friend relationship ID
    */
   [FRIEND_EVENTS.REMOVED]: (data: { friendId: string }) => void;
+
+  // ============================================================================
+  // DM EVENTS
+  // ============================================================================
+
+  /**
+   * JOINED: A user joined a DM channel socket room (for receiving broadcasts)
+   * @emitted_to All users in the channel socket room (via channel:channelId room)
+   * @param data - { channelId: string, userId: string }
+   */
+  [DM_EVENTS.JOINED]: (data: { channelId: string }) => void;
+
+  /**
+   * LEFT: A user left a DM channel socket room (stopped receiving broadcasts)
+   * @emitted_to All users in the channel socket room (via channel:channelId room)
+   * @param data - { channelId: string, userId: string }
+   * @note This does not mean the user left the channel (DMChannelUser record may still exist)
+   */
+  [DM_EVENTS.LEFT]: (data: { channelId: string }) => void;
 }
