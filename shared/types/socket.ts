@@ -2,6 +2,7 @@ import {
   FRIEND_REQUEST_EVENTS,
   FRIEND_EVENTS,
   DM_EVENTS,
+  MESSAGE_EVENTS,
 } from "../socketEvents";
 import {
   SocketResponse,
@@ -16,6 +17,11 @@ import {
   AcceptFriendRequestPayload,
 } from "../schemas/friends";
 import { JoinDMChannelPayload, LeaveDMChannelPayload } from "../schemas/dm";
+import {
+  CreateMessagePayload,
+  GetMessagesPayload,
+  MessageData,
+} from "../schemas/messages";
 
 /**
  * Socket Data Interface
@@ -130,6 +136,33 @@ export interface ClientToServerEvents {
     data: LeaveDMChannelPayload,
     callback: (response: SocketResponse<LeaveDMChannelPayload>) => void
   ) => void;
+
+  // ============================================================================
+  // MESSAGE EVENTS
+  // ============================================================================
+
+  /**
+   * CREATE: Create a new message in a channel
+   * @param data - { channelId: string, channelType: "dm" | "post", content: string }
+   * @param callback - SocketResponse<MessageData> - Returns the created message
+   * @requires User must be a member of the channel
+   * @broadcasts CREATED to channel room
+   */
+  [MESSAGE_EVENTS.CREATE]: (
+    data: CreateMessagePayload,
+    callback: (response: SocketResponse<MessageData>) => void
+  ) => void;
+
+  /**
+   * GET: Get messages from a channel with pagination
+   * @param data - { channelId: string, channelType: "dm" | "post", limit?: number, before?: string }
+   * @param callback - SocketResponse<MessageData[]> - Returns array of messages
+   * @requires User must be a member of the channel
+   */
+  [MESSAGE_EVENTS.GET]: (
+    data: GetMessagesPayload,
+    callback: (response: SocketResponse<MessageData[]>) => void
+  ) => void;
 }
 
 /**
@@ -198,4 +231,15 @@ export interface ServerToClientEvents {
    * @note This does not mean the user left the channel (DMChannelUser record may still exist)
    */
   [DM_EVENTS.LEFT]: (data: { channelId: string }) => void;
+
+  // ============================================================================
+  // MESSAGE EVENTS
+  // ============================================================================
+
+  /**
+   * CREATED: A new message was created in a channel
+   * @emitted_to All users in the channel socket room (via channel:channelId room)
+   * @param data - MessageData - The created message
+   */
+  [MESSAGE_EVENTS.CREATED]: (data: MessageData) => void;
 }

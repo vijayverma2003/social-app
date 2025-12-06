@@ -1,6 +1,8 @@
 "use client";
 
 import { useDMChannelActions } from "@/features/dms/hooks/useDMChannelActions";
+import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
+import { useMessagesStore } from "@/features/messages/store/messagesStore";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
@@ -17,6 +19,8 @@ const DMChannelPage = () => {
       leaveChannel(channelId);
     };
   }, [channelId, joinChannel, leaveChannel]);
+
+  useMessagesBootstrap();
 
   return (
     <div>

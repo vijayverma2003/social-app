@@ -1,0 +1,186 @@
+import { Message } from "@database/mongodb";
+import { MESSAGE_EVENTS } from "@shared/socketEvents";
+import { Server } from "socket.io";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/types/socket";
+import { AuthenticatedSocket } from "../../../socketHandlers";
+import {
+  CreateMessagePayloadSchema,
+  GetMessagesPayloadSchema,
+} from "@shared/schemas/messages";
+import prisma from "@database/postgres";
+
+// Extract types from ClientToServerEvents for type safety
+type CreateMessageData = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.CREATE]
+>[0];
+type CreateMessageCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.CREATE]
+>[1];
+
+type GetMessagesData = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.GET]
+>[0];
+type GetMessagesCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.GET]
+>[1];
+
+export class MessageHandlers {
+  private io: Server<ClientToServerEvents, ServerToClientEvents>;
+
+  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
+    this.io = io;
+  }
+
+  public setupHandlers(socket: AuthenticatedSocket) {
+    socket.on(MESSAGE_EVENTS.CREATE, (data, callback) =>
+      this.createMessage(socket, data, callback)
+    );
+
+    socket.on(MESSAGE_EVENTS.GET, (data, callback) =>
+      this.getMessages(socket, data, callback)
+    );
+  }
+
+  private async createMessage(
+    socket: AuthenticatedSocket,
+    data: CreateMessageData,
+    callback: CreateMessageCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = CreateMessagePayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { channelId, channelType, content } = validation.data;
+
+      // Verify user is a member of the channel
+      if (channelType === "dm") {
+        const channelUser = await prisma.dMChannelUser.findUnique({
+          where: {
+            channelId_userId: {
+              channelId,
+              userId: socket.userId,
+            },
+          },
+        });
+
+        if (!channelUser) {
+          return callback({
+            error: "You are not a member of this channel",
+          });
+        }
+      }
+
+      // Create message
+      const message = await Message.create({
+        channelId,
+        channelType,
+        content,
+        authorId: socket.userId,
+      });
+
+      // Convert MongoDB ObjectId to string
+      const messageData = {
+        ...message,
+        _id: message._id.toString(),
+        createdAt: message.createdAt,
+        updatedAt: message.updatedAt,
+      };
+
+      // Broadcast to channel room based on channel type
+      const roomName =
+        channelType === "dm"
+          ? `dm_channel:${channelId}`
+          : `channel:${channelId}`;
+      this.io.to(roomName).emit(MESSAGE_EVENTS.CREATED, messageData);
+
+      callback({
+        success: true,
+        data: messageData,
+      });
+    } catch (error) {
+      console.error("Error creating message:", error);
+      callback({
+        error:
+          error instanceof Error ? error.message : "Failed to create message",
+      });
+    }
+  }
+
+  private async getMessages(
+    socket: AuthenticatedSocket,
+    data: GetMessagesData,
+    callback: GetMessagesCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = GetMessagesPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { channelId, channelType, limit, before } = validation.data;
+
+      // Verify user is a member of the channel
+      if (channelType === "dm") {
+        const channelUser = await prisma.dMChannelUser.findUnique({
+          where: {
+            channelId_userId: {
+              channelId,
+              userId: socket.userId,
+            },
+          },
+        });
+
+        if (!channelUser) {
+          return callback({
+            error: "You are not a member of this channel",
+          });
+        }
+      }
+
+      // Parse before date if provided
+      const beforeDate = before ? new Date(before) : undefined;
+
+      // Get messages
+      const messages = await Message.findByChannelIdAndType(
+        channelId,
+        channelType,
+        limit,
+        beforeDate
+      );
+
+      callback({
+        success: true,
+        data: messages,
+      });
+    } catch (error) {
+      console.error("Error getting messages:", error);
+      callback({
+        error:
+          error instanceof Error ? error.message : "Failed to get messages",
+      });
+    }
+  }
+}

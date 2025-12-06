@@ -28,9 +28,20 @@ export const DM_EVENTS = {
   LEFT: "dm:left",
 } as const;
 
+export const MESSAGE_EVENTS = {
+  // Client -> Server events (actions)
+  CREATE: "message:create",
+  GET: "message:get",
+
+  // Server -> Client events (notifications)
+  CREATED: "message:created",
+} as const;
+
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];
 
 export type FriendEvent = (typeof FRIEND_EVENTS)[keyof typeof FRIEND_EVENTS];
 
 export type DMEvent = (typeof DM_EVENTS)[keyof typeof DM_EVENTS];
+
+export type MessageEvent = (typeof MESSAGE_EVENTS)[keyof typeof MESSAGE_EVENTS];

@@ -4,6 +4,7 @@ import { Request } from "express";
 import { FriendRequestHandlers } from "./features/friends/socketHandlers/FriendRequestHandlers";
 import { FriendsHandlers } from "./features/friends/socketHandlers/FriendsHandlers";
 import { DMHandlers } from "./features/dms/socketHandlers/dmsHandlers";
+import { MessageHandlers } from "./features/messages/socketHandlers/messageHandlers";
 import prisma from "@database/postgres";
 import {
   ClientToServerEvents,
@@ -26,12 +27,14 @@ export class SocketHandlers {
   private friendRequestHandlers: FriendRequestHandlers;
   private friendsHandlers: FriendsHandlers;
   private dmHandlers: DMHandlers;
+  private messageHandlers: MessageHandlers;
 
   constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
     this.io = io;
     this.friendRequestHandlers = new FriendRequestHandlers(io);
     this.friendsHandlers = new FriendsHandlers(io);
     this.dmHandlers = new DMHandlers(io);
+    this.messageHandlers = new MessageHandlers(io);
   }
 
   public initialize() {
@@ -88,6 +91,7 @@ export class SocketHandlers {
       this.friendRequestHandlers.setupHandlers(socket);
       this.friendsHandlers.setupHandlers(socket);
       this.dmHandlers.setupHandlers(socket);
+      this.messageHandlers.setupHandlers(socket);
 
       socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.id}`);
