@@ -1,12 +1,22 @@
 "use client";
 
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useDMChannelActions } from "@/features/dms/hooks/useDMChannelActions";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
 const DMChannelPage = () => {
-  const { channelId } = useParams();
-  const { emit } = useSocket();
+  const params = useParams();
+  const channelId = params?.channelId as string;
+  const { joinChannel, leaveChannel } = useDMChannelActions();
+
+  useEffect(() => {
+    if (!channelId) return;
+    joinChannel(channelId);
+
+    return () => {
+      leaveChannel(channelId);
+    };
+  }, [channelId, joinChannel, leaveChannel]);
 
   return (
     <div>

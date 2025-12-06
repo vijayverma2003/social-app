@@ -5,7 +5,7 @@ import MainHeader from "./components/MainHeader";
 import Navbar from "./components/Navbar";
 import { useFriendRequestsBootstrap } from "@/features/friends/hooks/useFriendRequestsBootstrap";
 import { useFriendsBootstrap } from "@/features/friends/hooks/useFriendsBootstrap";
-import { useDMChannelsBootstrap } from "@/hooks/useDMChannelsBootstrap";
+import { useDMChannelsBootstrap } from "@/features/dms/hooks/useDMChannelsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
-import { useDMChannelsStore } from "@/store/dmChannelsStore";
+import { useDMChannelsStore } from "@/features/dms/store/dmChannelsStore";
 import { useAuth } from "@clerk/nextjs";
 import { DMChannelWithUsers } from "@shared/types/responses";
 import Link from "next/link";
