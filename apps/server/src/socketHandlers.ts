@@ -39,9 +39,21 @@ export class SocketHandlers {
       try {
         const request = socket.request as Request;
 
+        // Create a mock response object with methods Clerk middleware expects
+        const mockResponse = {
+          appendHeader: () => {},
+          setHeader: () => {},
+          getHeader: () => undefined,
+          removeHeader: () => {},
+          statusCode: 200,
+          status: () => mockResponse,
+          json: () => {},
+          end: () => {},
+        } as any;
+
         await new Promise<void>((resolve, reject) => {
           const middleware = clerkMiddleware();
-          middleware(request, {} as any, (err?: any) => {
+          middleware(request, mockResponse, (err?: any) => {
             if (err) reject(err);
             else resolve();
           });

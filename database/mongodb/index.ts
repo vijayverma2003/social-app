@@ -1,4 +1,5 @@
-import MongoClientProvider from "./MongoClientProvider";
+import MongoClientProvider from "./client";
+import { Message } from "./entities/Message";
 
 async function connect() {
   return MongoClientProvider.getDatabase();
@@ -12,6 +13,8 @@ async function getCollection(collectionName: string) {
   return MongoClientProvider.getCollection(collectionName);
 }
 
-async function ensureIndexes() {}
+async function ensureIndexes() {
+  await Message.ensureIndexes();
+}
 
-export { close, connect, ensureIndexes, getCollection };
+export { close, connect, ensureIndexes, getCollection, Message };

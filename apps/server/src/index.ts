@@ -2,7 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import SocketIOProvider from "./socket";
 import cors from "cors";
-import * as database from "./database";
+import * as mongodb from "@database/mongodb";
 import router from "./routes";
 import { clerkMiddleware } from "@clerk/express";
 import { PORT } from "./config/vars";
@@ -22,8 +22,10 @@ app.use("/api", router);
 app.use(errorHandler);
 
 async function main() {
-  await database.connect();
-  await database.ensureIndexes();
+  console.log("Connecting to MongoDB...");
+  await mongodb.connect();
+  console.log("Ensuring indexes...");
+  await mongodb.ensureIndexes();
 
   const server = createServer(app);
   SocketIOProvider.initialize(server);
@@ -34,7 +36,7 @@ async function main() {
 
   const shutdown = async () => {
     server.close();
-    await database.close();
+    await mongodb.close();
     process.exit(0);
   };
 

@@ -1,16 +1,17 @@
 import { ObjectId } from "mongodb";
+import { getCollection } from "..";
 import {
-  CreateDirectMessageData,
-  CreateDirectMessageSchema,
-  DirectMessageData,
-  UpdateDirectMessageData,
-  UpdateDirectMessageSchema,
+  CreateMessageData,
+  CreateMessageSchema,
+  MessageData,
+  UpdateMessageData,
+  UpdateMessageSchema,
+  ChannelType,
 } from "../../../shared/schemas/messages";
-import { getCollection } from "../database";
 
-const COLLECTION_NAME = "direct_messages";
+const COLLECTION_NAME = "messages";
 
-export class DirectMessage {
+export class Message {
   static async ensureIndexes() {
     const collection = await getCollection(COLLECTION_NAME);
     await collection.createIndexes([
@@ -29,8 +30,8 @@ export class DirectMessage {
     ]);
   }
 
-  static async create(data: CreateDirectMessageData) {
-    const validation = CreateDirectMessageSchema.safeParse(data);
+  static async create(data: CreateMessageData) {
+    const validation = CreateMessageSchema.safeParse(data);
     if (!validation.success) {
       throw new Error(validation.error.message);
     }
@@ -51,9 +52,7 @@ export class DirectMessage {
 
   static async findById(id: string) {
     const collection = await getCollection(COLLECTION_NAME);
-    const message = await collection.findOne<
-      DirectMessageData & { _id: ObjectId }
-    >({
+    const message = await collection.findOne<MessageData & { _id: ObjectId }>({
       _id: new ObjectId(id),
     });
 
@@ -65,20 +64,21 @@ export class DirectMessage {
     };
   }
 
-  static async findByChannelId(
+  static async findByChannelIdAndType(
     channelId: string,
+    channelType: ChannelType,
     limit: number = 50,
     before?: Date
   ) {
     const collection = await getCollection(COLLECTION_NAME);
-    const query: any = { channelId };
+    const query: any = { channelId, channelType };
 
     if (before) {
       query.createdAt = { $lt: before };
     }
 
     const messages = await collection
-      .find<DirectMessageData & { _id: ObjectId }>(query)
+      .find<MessageData & { _id: ObjectId }>(query)
       .sort({ createdAt: -1 })
       .limit(limit)
       .toArray();
@@ -89,18 +89,18 @@ export class DirectMessage {
     }));
   }
 
-  static async update(id: string, data: UpdateDirectMessageData) {
-    const validation = UpdateDirectMessageSchema.safeParse(data);
+  static async update(id: string, data: UpdateMessageData) {
+    const validation = UpdateMessageSchema.safeParse(data);
     if (!validation.success) {
       throw new Error(validation.error.message);
     }
 
     const collection = await getCollection(COLLECTION_NAME);
     const result = await collection.updateOne(
-      { _id: new ObjectId(id) },
+      { _id: new ObjectId(data.messageId) },
       {
         $set: {
-          ...validation.data,
+          content: validation.data.content,
           updatedAt: new Date(),
         },
       }
@@ -125,16 +125,16 @@ export class DirectMessage {
     return result.deletedCount;
   }
 
-  static validateCreate(data: CreateDirectMessageData) {
-    const validation = CreateDirectMessageSchema.safeParse(data);
+  static validateCreate(data: CreateMessageData) {
+    const validation = CreateMessageSchema.safeParse(data);
     if (!validation.success) {
       throw new Error(validation.error.message);
     }
     return validation.data;
   }
 
-  static validateUpdate(data: UpdateDirectMessageData) {
-    const validation = UpdateDirectMessageSchema.safeParse(data);
+  static validateUpdate(data: UpdateMessageData) {
+    const validation = UpdateMessageSchema.safeParse(data);
     if (!validation.success) {
       throw new Error(validation.error.message);
     }

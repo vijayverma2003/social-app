@@ -16,6 +16,7 @@
   "type": "commonjs",
   "dependencies": {
     "@clerk/express": "^1.7.43",
+    "@database/mongodb": "workspace:*",
     "@database/postgres": "workspace:*",
     "@shared": "workspace:*",
     "cors": "^2.8.5",

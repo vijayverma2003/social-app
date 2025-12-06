@@ -1,0 +1,17 @@
+{
+  "name": "@database/mongodb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Vijay <06.vijay.2003@gmail.com>",
+  "license": "ISC",
+  "packageManager": "pnpm@10.11.0",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "mongodb": "^6.21.0"
+  }
+}

@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@database": ["../../database/postgres"],
+      "@database/postgres": ["../../database/postgres"],
+      "@database/mongodb": ["../../database/mongodb"],
       "@shared/*": ["../../shared/*"]
     }
   },

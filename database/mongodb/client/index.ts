@@ -1,12 +1,12 @@
 import { MongoClient } from "mongodb";
-import { DATABASE_NAME, DATABASE_URL } from "../config/vars";
+import { MONGODB_DATABASE_NAME, MONGODB_DATABASE_URL } from "../config/vars";
 
 class MongoClientProvider {
   private static client: MongoClient | null = null;
 
   public static async getClient() {
     if (!MongoClientProvider.client) {
-      MongoClientProvider.client = new MongoClient(DATABASE_URL!);
+      MongoClientProvider.client = new MongoClient(MONGODB_DATABASE_URL!);
       await MongoClientProvider.client.connect();
     }
 
@@ -15,7 +15,7 @@ class MongoClientProvider {
 
   public static async getDatabase() {
     const client = await MongoClientProvider.getClient();
-    return client.db(DATABASE_NAME!);
+    return client.db(MONGODB_DATABASE_NAME!);
   }
 
   public static async closeClient() {

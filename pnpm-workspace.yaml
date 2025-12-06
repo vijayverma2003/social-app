@@ -1,8 +1,7 @@
 packages:
-  - apps/web
-  - apps/server
+  - apps/*
   - shared
-  - database/postgres
+  - database/*
 onlyBuiltDependencies:
   - '@clerk/shared'
   - '@prisma/engines'

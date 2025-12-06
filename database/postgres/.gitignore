@@ -5,3 +5,7 @@ node_modules
 /generated/prisma
 
 /src/generated/prisma
+
+# pnpm workspace symlinks (broken artifacts)
+mongodb
+postgres
