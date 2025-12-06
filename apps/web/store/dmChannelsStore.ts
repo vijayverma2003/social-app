@@ -1,13 +1,16 @@
-import { DMChannel } from "@shared/types/responses";
+import { DMChannelWithUsers } from "@shared/types/responses";
 import { create } from "zustand";
 
 interface DMChannelsState {
-  channels: DMChannel[];
+  channels: DMChannelWithUsers[];
   isLoading: boolean;
   error: string | null;
-  setChannels: (channels: DMChannel[]) => void;
-  addChannel: (channel: DMChannel) => void;
-  updateChannel: (channelId: string, updates: Partial<DMChannel>) => void;
+  setChannels: (channels: DMChannelWithUsers[]) => void;
+  addChannel: (channel: DMChannelWithUsers) => void;
+  updateChannel: (
+    channelId: string,
+    updates: Partial<DMChannelWithUsers>
+  ) => void;
   removeChannel: (channelId: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;

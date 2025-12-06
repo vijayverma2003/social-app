@@ -75,5 +75,3 @@ export type DMChannelUserWithProfile = DMChannelUser & {
 export type DMChannelWithUsers = DMChannel & {
   users: DMChannelUserWithProfile[];
 };
-
-export type DMChannelsList = DMChannelWithUsers[];

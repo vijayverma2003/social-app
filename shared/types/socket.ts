@@ -3,7 +3,11 @@ import {
   FRIEND_EVENTS,
   DM_EVENTS,
 } from "../socketEvents";
-import { SocketResponse, FriendRequests, DMChannelsList } from "./responses";
+import {
+  SocketResponse,
+  FriendRequests,
+  DMChannelWithUsers,
+} from "./responses";
 import {
   SendFriendRequestPayload,
   RemoveFriendPayload,
@@ -99,7 +103,7 @@ export interface ClientToServerEvents {
    */
   [DM_EVENTS.GET_LIST]: (
     data: {},
-    callback: (response: SocketResponse<DMChannelsList>) => void
+    callback: (response: SocketResponse<DMChannelWithUsers[]>) => void
   ) => void;
 }
 

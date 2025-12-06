@@ -6,7 +6,7 @@ import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
 import { useDMChannelsStore } from "@/store/dmChannelsStore";
 import { useAuth } from "@clerk/nextjs";
-import { DMChannel } from "@shared/types/responses";
+import { DMChannelWithUsers } from "@shared/types/responses";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -43,7 +43,7 @@ const DMNavigation = () => {
     loadCurrentUser();
   }, [getToken]);
 
-  const getOtherUser = (channel: DMChannel) => {
+  const getOtherUser = (channel: DMChannelWithUsers) => {
     // Find the user that is not the current user
     // Only proceed if currentUserId is loaded
     if (!currentUserId) return null;
@@ -52,7 +52,7 @@ const DMNavigation = () => {
     );
   };
 
-  const getUnreadCount = (channel: DMChannel) => {
+  const getUnreadCount = (channel: DMChannelWithUsers) => {
     if (!currentUserId) return 0;
     const channelUser = channel.users.find((u) => u.userId === currentUserId);
     return channelUser?.totalUnreadMessages || 0;
@@ -91,12 +91,12 @@ const DMNavigation = () => {
           .map((channel) => {
             const otherUser = getOtherUser(channel);
             const unreadCount = getUnreadCount(channel);
-            const isActive = pathname === `/connections/dm/${channel.id}`;
+            const isActive = pathname === `/dms/${channel.id}`;
 
             if (!otherUser) return null;
 
             return (
-              <Link key={channel.id} href={`/connections/dm/${channel.id}`}>
+              <Link key={channel.id} href={`/dms/${channel.id}`}>
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
