@@ -26,16 +26,19 @@ export const useMessageActions = () => {
   const createMessage = useCallback(
     (
       payload: CreateMessagePayload,
-      onSuccess?: (messageId: string) => void
+      onComplete?: (messageId: string | null) => void
     ) => {
       emit(MESSAGE_EVENTS.CREATE, payload, ((response) => {
         if (response.error) {
           toast.error("Failed to send message", {
             description: response.error,
           });
+          onComplete?.(null);
         } else if (response.success && response.data) {
           addMessage(payload.channelId, response.data);
-          onSuccess?.(response.data._id);
+          onComplete?.(response.data._id);
+        } else {
+          onComplete?.(null);
         }
       }) as CreateMessageCallback);
     },

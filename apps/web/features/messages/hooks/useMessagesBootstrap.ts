@@ -4,14 +4,41 @@ import { useSocket } from "@/providers/SocketContextProvider";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useMessagesStore } from "../store/messagesStore";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
+import { toast } from "sonner";
+import { ChannelType } from "@shared/schemas/messages";
 
-export const useMessagesBootstrap = () => {
-  const { socket } = useSocket();
-  const { addMessage } = useMessagesStore();
+export const useMessagesBootstrap = (
+  channelId: string,
+  channelType: ChannelType
+) => {
+  const { socket, emit } = useSocket();
+  const { addMessage, setMessages } = useMessagesStore();
+
+  const loadMessages = useCallback(
+    (channelId: string, channelType: ChannelType) => {
+      emit(
+        MESSAGE_EVENTS.GET,
+        {
+          channelId,
+          channelType,
+          limit: 100,
+          before: undefined,
+        },
+        (response) => {
+          console.log(response);
+          if (response.error) toast.error("Failed to load messages");
+          else if (response.success && response.data) {
+            setMessages(channelId, response.data);
+          }
+        }
+      );
+    },
+    [emit]
+  );
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !channelId || !channelType) return;
 
     const handleMessageCreated: ServerToClientEvents[typeof MESSAGE_EVENTS.CREATED] =
       (message) => {
@@ -19,6 +46,7 @@ export const useMessagesBootstrap = () => {
       };
 
     socket.on(MESSAGE_EVENTS.CREATED, handleMessageCreated);
+    loadMessages(channelId, channelType);
 
     return () => {
       socket.off(MESSAGE_EVENTS.CREATED, handleMessageCreated);

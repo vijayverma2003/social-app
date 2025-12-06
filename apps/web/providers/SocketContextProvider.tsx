@@ -104,17 +104,37 @@ export const SocketContextProvider: React.FC<SocketProviderProps> = ({
     initializeSocket();
 
     return () => {
-      if (socket) socket.disconnect();
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+      }
     };
-  }, [isSignedIn, getToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn]);
 
   const emit = <K extends keyof ClientToServerEvents>(
     event: K,
     data: Parameters<ClientToServerEvents[K]>[0],
     callback: Parameters<ClientToServerEvents[K]>[1]
   ): void => {
-    if (!socket || !isConnected) {
-      callback({ error: "Socket not connected" });
+    if (!socket) return;
+
+    if (!isConnected) {
+      const timeout = setTimeout(() => {
+        callback({ error: "Socket connection timeout" });
+      }, 30_000);
+
+      socket.once("connect", () => {
+        clearTimeout(timeout);
+        (socket.emit as any)(event, data, callback);
+      });
+
+      socket.once("connect_error", () => {
+        clearTimeout(timeout);
+        callback({ error: "Socket connection failed" });
+      });
+
       return;
     }
 
