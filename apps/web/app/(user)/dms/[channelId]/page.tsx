@@ -7,7 +7,7 @@ import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBoots
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
 import { useDMChannelsStore } from "@/features/dms/store/dmChannelsStore";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 const DMChannelPage = () => {
@@ -15,6 +15,7 @@ const DMChannelPage = () => {
   const channelId = params?.channelId as string;
   const { joinChannel, leaveChannel } = useDMChannelActions();
   const { channels } = useDMChannelsStore();
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const channelUsers = useMemo(() => {
     return channels.find((channel) => channel.id === channelId)?.users || [];
@@ -28,6 +29,15 @@ const DMChannelPage = () => {
 
   const messages = useMessagesStore(useShallow(messagesSelector));
 
+  const scrollToBottom = () => {
+    if (!messagesContainerRef.current) return;
+
+    messagesContainerRef.current.scrollTo({
+      top: messagesContainerRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  };
+
   useEffect(() => {
     if (!channelId) return;
     joinChannel(channelId);
@@ -37,13 +47,13 @@ const DMChannelPage = () => {
     };
   }, [channelId, joinChannel, leaveChannel]);
 
-  useMessagesBootstrap(channelId, "dm");
+  useMessagesBootstrap(channelId, "dm", scrollToBottom);
 
   if (!channelId) return <div>Invalid channel</div>;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4">
+    <div className="flex flex-col h-full justify-end">
+      <div ref={messagesContainerRef} className="overflow-y-auto p-4">
         <h1 className="text-2xl font-bold mb-4">
           DM Channel -{" "}
           {channelUsers.map((user) => user.user.username).join(", ")}
@@ -53,7 +63,7 @@ const DMChannelPage = () => {
             No messages yet. Start a conversation!
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {messages.map((message) => {
               const user = channelUsers.find(
                 (user) => user.userId === message.authorId
@@ -69,7 +79,11 @@ const DMChannelPage = () => {
           </div>
         )}
       </div>
-      <MessageInput channelId={channelId} channelType="dm" />
+      <MessageInput
+        channelId={channelId}
+        channelType="dm"
+        onSend={scrollToBottom}
+      />
     </div>
   );
 };

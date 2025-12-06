@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, KeyboardEvent } from "react";
+import { useState, FormEvent, KeyboardEvent, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
@@ -21,6 +21,7 @@ export const MessageInput = ({
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
   const { createMessage } = useMessageActions();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,6 +40,7 @@ export const MessageInput = ({
       (messageId) => {
         setIsSending(false);
         if (messageId) {
+          inputRef.current?.focus();
           setContent("");
           onSend?.();
         }
@@ -59,6 +61,7 @@ export const MessageInput = ({
       className="flex items-center gap-2 border-t p-4 bg-background"
     >
       <Input
+        ref={inputRef}
         type="text"
         placeholder="Type a message..."
         value={content}

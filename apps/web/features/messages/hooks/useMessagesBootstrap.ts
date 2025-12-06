@@ -10,7 +10,8 @@ import { ChannelType } from "@shared/schemas/messages";
 
 export const useMessagesBootstrap = (
   channelId: string,
-  channelType: ChannelType
+  channelType: ChannelType,
+  onLoadComplete?: () => void
 ) => {
   const { socket, emit } = useSocket();
   const { addMessage, setMessages } = useMessagesStore();
@@ -30,11 +31,12 @@ export const useMessagesBootstrap = (
           if (response.error) toast.error("Failed to load messages");
           else if (response.success && response.data) {
             setMessages(channelId, response.data);
+            onLoadComplete?.();
           }
         }
       );
     },
-    [emit]
+    [emit, onLoadComplete]
   );
 
   useEffect(() => {
