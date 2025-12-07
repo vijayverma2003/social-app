@@ -79,9 +79,6 @@ export class DMHandlers {
             include: {
               user: {
                 select: {
-                  id: true,
-                  username: true,
-                  discriminator: true,
                   profile: true,
                 },
               },

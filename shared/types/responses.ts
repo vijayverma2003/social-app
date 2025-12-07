@@ -67,7 +67,7 @@ export type IncomingAndOutgoingFriendRequests = {
 // ============================================================================
 
 export type DMChannelUserWithProfile = DMChannelUser & {
-  user: PublicUser & {
+  user: {
     profile: Profile | null;
   };
 };

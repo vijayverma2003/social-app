@@ -109,17 +109,14 @@ const DMNavigation = () => {
                       src={otherUser.user.profile?.avatarURL || ""}
                     />
                     <AvatarFallback>
-                      {otherUser.user.username.charAt(0).toUpperCase() || "?"}
+                      {otherUser.user.profile?.displayName
+                        ?.charAt(0)
+                        .toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium truncate">
-                      {otherUser.user.username || "Unknown"}
-                      {otherUser.user.discriminator && (
-                        <span className="text-muted-foreground">
-                          #{otherUser.user.discriminator}
-                        </span>
-                      )}
+                      {otherUser.user.profile?.displayName || "Unknown"}
                     </p>
                   </div>
                   {unreadCount > 0 && <NotificationBadge count={unreadCount} />}

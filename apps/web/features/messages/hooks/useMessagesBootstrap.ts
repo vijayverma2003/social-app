@@ -11,7 +11,8 @@ import { ChannelType } from "@shared/schemas/messages";
 export const useMessagesBootstrap = (
   channelId: string,
   channelType: ChannelType,
-  onLoadComplete?: () => void
+  onLoadComplete?: () => void,
+  onNewMessage?: () => void
 ) => {
   const { socket, emit } = useSocket();
   const { addMessage, setMessages } = useMessagesStore();
@@ -36,7 +37,7 @@ export const useMessagesBootstrap = (
         }
       );
     },
-    [emit, onLoadComplete]
+    [emit, setMessages, onLoadComplete]
   );
 
   useEffect(() => {
@@ -44,7 +45,10 @@ export const useMessagesBootstrap = (
 
     const handleMessageCreated: ServerToClientEvents[typeof MESSAGE_EVENTS.CREATED] =
       (message) => {
-        addMessage(message.channelId, message);
+        if (message.channelId === channelId) {
+          addMessage(message.channelId, message);
+          onNewMessage?.();
+        }
       };
 
     socket.on(MESSAGE_EVENTS.CREATED, handleMessageCreated);
@@ -53,5 +57,5 @@ export const useMessagesBootstrap = (
     return () => {
       socket.off(MESSAGE_EVENTS.CREATED, handleMessageCreated);
     };
-  }, [socket, addMessage]);
+  }, [socket, channelId, channelType, addMessage, loadMessages, onNewMessage]);
 };
