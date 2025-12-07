@@ -3,6 +3,7 @@ import {
   FRIEND_EVENTS,
   DM_EVENTS,
   MESSAGE_EVENTS,
+  PRESIGNED_URL_EVENTS,
 } from "../socketEvents";
 import {
   SocketResponse,
@@ -22,6 +23,10 @@ import {
   GetMessagesPayload,
   MessageData,
 } from "../schemas/messages";
+import {
+  GetPresignedUrlPayload,
+  PresignedUrlResponse,
+} from "../schemas/presignedUrl";
 
 /**
  * Socket Data Interface
@@ -162,6 +167,20 @@ export interface ClientToServerEvents {
   [MESSAGE_EVENTS.GET]: (
     data: GetMessagesPayload,
     callback: (response: SocketResponse<MessageData[]>) => void
+  ) => void;
+
+  // ============================================================================
+  // PRESIGNED URL EVENTS
+  // ============================================================================
+
+  /**
+   * GET: Get a presigned URL for uploading files to Cloudflare R2 (using AWS S3-compatible API)
+   * @param data - { fileName: string, contentType: string, bucket: string, expiresIn?: number }
+   * @param callback - SocketResponse<PresignedUrlResponse> - Returns presigned URL and upload method
+   */
+  [PRESIGNED_URL_EVENTS.GET]: (
+    data: GetPresignedUrlPayload,
+    callback: (response: SocketResponse<PresignedUrlResponse>) => void
   ) => void;
 }
 

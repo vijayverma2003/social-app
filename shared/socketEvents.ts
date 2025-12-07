@@ -37,6 +37,11 @@ export const MESSAGE_EVENTS = {
   CREATED: "message:created",
 } as const;
 
+export const PRESIGNED_URL_EVENTS = {
+  // Client -> Server events (actions)
+  GET: "presigned_url:get",
+} as const;
+
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];
 
@@ -45,3 +50,6 @@ export type FriendEvent = (typeof FRIEND_EVENTS)[keyof typeof FRIEND_EVENTS];
 export type DMEvent = (typeof DM_EVENTS)[keyof typeof DM_EVENTS];
 
 export type MessageEvent = (typeof MESSAGE_EVENTS)[keyof typeof MESSAGE_EVENTS];
+
+export type PresignedUrlEvent =
+  (typeof PRESIGNED_URL_EVENTS)[keyof typeof PRESIGNED_URL_EVENTS];

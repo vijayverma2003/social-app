@@ -20,3 +20,6 @@ dotenv.config({ path: envPath });
 export const PORT = process.env.SERVER_PORT || 3000;
 export const DATABASE_URL = process.env.MONGODB_DATABASE_URL;
 export const DATABASE_NAME = process.env.MONGODB_DATABASE_NAME;
+export const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+export const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
+export const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
