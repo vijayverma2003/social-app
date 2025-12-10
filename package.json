@@ -7,7 +7,7 @@
     "build": "pnpm --filter shared build && pnpm --filter web build && pnpm --filter server build"
   },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "concurrently": "^9.2.1"
