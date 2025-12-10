@@ -2,28 +2,60 @@ import z from "zod";
 
 export const ChannelTypeSchema = z.enum(["dm", "post"]);
 
+// Attachment Schema
+export const AttachmentSchema = z
+  .object({
+    url: z.string().url(),
+    fileName: z.string().trim().min(1),
+    contentType: z.string().trim().min(1),
+    size: z.number().int().min(0), // Size in bytes
+  })
+  .strict();
+
 // Message Schema
 export const MessageSchema = z
   .object({
     _id: z.string().trim(),
     channelId: z.string().trim().min(1),
     channelType: ChannelTypeSchema,
-    content: z.string().trim().min(1),
+    content: z.string().trim(),
+    attachments: z.array(AttachmentSchema).optional().default([]),
     createdAt: z.date(),
     updatedAt: z.date(),
     authorId: z.string().trim().min(1),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => {
+      const hasContent = data.content.trim().length > 0;
+      const hasAttachments = (data.attachments?.length || 0) > 0;
+      return hasContent || hasAttachments;
+    },
+    {
+      message: "Message must have either content or attachments",
+    }
+  );
 
 // Create Message Schema
 export const CreateMessageSchema = z
   .object({
     channelId: z.string().trim().min(1),
     channelType: ChannelTypeSchema,
-    content: z.string().trim().min(1),
+    content: z.string().trim(),
     authorId: z.string().trim().min(1),
+    attachments: z.array(AttachmentSchema).optional().default([]),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => {
+      const hasContent = data.content.trim().length > 0;
+      const hasAttachments = (data.attachments?.length || 0) > 0;
+      return hasContent || hasAttachments;
+    },
+    {
+      message: "Message must have either content or attachments",
+    }
+  );
 
 // Update Message Schema
 export const UpdateMessageSchema = z
@@ -48,11 +80,27 @@ export const CreateMessagePayloadSchema = z
   .object({
     channelId: z.string().trim().min(1, "Channel ID is required"),
     channelType: ChannelTypeSchema,
-    content: z.string().trim().min(1, "Message content is required"),
+    content: z.string().trim(),
+    attachments: z
+      .array(AttachmentSchema)
+      .max(10, "Maximum 10 attachments allowed")
+      .optional()
+      .default([]),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => {
+      const hasContent = data.content.trim().length > 0;
+      const hasAttachments = (data.attachments?.length || 0) > 0;
+      return hasContent || hasAttachments;
+    },
+    {
+      message: "Message must have either content or attachments",
+    }
+  );
 
 export type ChannelType = z.infer<typeof ChannelTypeSchema>;
+export type Attachment = z.infer<typeof AttachmentSchema>;
 export type MessageData = z.infer<typeof MessageSchema>;
 export type CreateMessageData = z.infer<typeof CreateMessageSchema>;
 export type UpdateMessageData = z.infer<typeof UpdateMessageSchema>;

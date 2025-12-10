@@ -1,5 +1,6 @@
 import MongoClientProvider from "./client";
 import { Message } from "./entities/Message";
+import { FileAttachment } from "./entities/FileAttachment";
 
 async function connect() {
   return MongoClientProvider.getDatabase();
@@ -15,6 +16,14 @@ async function getCollection(collectionName: string) {
 
 async function ensureIndexes() {
   await Message.ensureIndexes();
+  await FileAttachment.ensureIndexes();
 }
 
-export { close, connect, ensureIndexes, getCollection, Message };
+export {
+  close,
+  connect,
+  ensureIndexes,
+  getCollection,
+  Message,
+  FileAttachment,
+};

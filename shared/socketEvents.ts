@@ -42,6 +42,16 @@ export const PRESIGNED_URL_EVENTS = {
   GET: "presigned_url:get",
 } as const;
 
+export const UPLOAD_EVENTS = {
+  // Client -> Server events (actions)
+  INIT: "upload:init",
+  COMPLETE: "upload:complete",
+
+  // Server -> Client events (notifications)
+  INITIALISED: "upload:initialised",
+  COMPLETED: "upload:completed",
+} as const;
+
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];
 
@@ -53,3 +63,5 @@ export type MessageEvent = (typeof MESSAGE_EVENTS)[keyof typeof MESSAGE_EVENTS];
 
 export type PresignedUrlEvent =
   (typeof PRESIGNED_URL_EVENTS)[keyof typeof PRESIGNED_URL_EVENTS];
+
+export type UploadEvent = (typeof UPLOAD_EVENTS)[keyof typeof UPLOAD_EVENTS];

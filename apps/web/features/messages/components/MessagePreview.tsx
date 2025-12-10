@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageData } from "@shared/schemas/messages";
 import { Profile } from "@shared/types/responses";
 import Image from "next/image";
@@ -18,13 +19,11 @@ const MessagePreview = ({
 
   return (
     <div className="p-2 rounded-lg flex items-start gap-2 hover:bg-accent/40">
-      <Image
-        src={profile?.avatarURL || ""}
-        alt={profile?.displayName || "Unknown user"}
-        width={32}
-        height={32}
-        className="rounded-full"
-      />
+      <Avatar className="size-4">
+        <AvatarImage src={profile?.avatarURL || ""} />
+        <AvatarFallback>U</AvatarFallback>
+      </Avatar>
+
       <div className="flex flex-col">
         <div className="flex gap-2 items-center">
           <p className="text-sm font-extrabold">
@@ -47,6 +46,20 @@ const MessagePreview = ({
                 })}
           </p>
         </div>
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {message.attachments.map((attachment) => (
+              <div key={attachment.url}>
+                <Image
+                  src={attachment.url}
+                  alt={attachment.fileName}
+                  width={32}
+                  height={32}
+                />
+              </div>
+            ))}
+          </div>
+        )}
         <p className="text-sm">{message.content}</p>
       </div>
     </div>

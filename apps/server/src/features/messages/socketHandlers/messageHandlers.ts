@@ -64,7 +64,7 @@ export class MessageHandlers {
         });
       }
 
-      const { channelId, channelType, content } = validation.data;
+      const { channelId, channelType, content, attachments } = validation.data;
 
       // Verify user is a member of the channel
       if (channelType === "dm") {
@@ -90,6 +90,7 @@ export class MessageHandlers {
         channelType,
         content,
         authorId: socket.userId,
+        attachments: attachments || [],
       });
 
       // Convert MongoDB ObjectId to string

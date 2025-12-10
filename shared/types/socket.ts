@@ -4,6 +4,7 @@ import {
   DM_EVENTS,
   MESSAGE_EVENTS,
   PRESIGNED_URL_EVENTS,
+  UPLOAD_EVENTS,
 } from "../socketEvents";
 import {
   SocketResponse,
@@ -27,6 +28,12 @@ import {
   GetPresignedUrlPayload,
   PresignedUrlResponse,
 } from "../schemas/presignedUrl";
+import {
+  UploadInitPayload,
+  UploadCompletePayload,
+  UploadInitialisedResponse,
+  UploadCompletedResponse,
+} from "../schemas/fileAttachment";
 
 /**
  * Socket Data Interface
@@ -182,6 +189,30 @@ export interface ClientToServerEvents {
     data: GetPresignedUrlPayload,
     callback: (response: SocketResponse<PresignedUrlResponse>) => void
   ) => void;
+
+  // ============================================================================
+  // UPLOAD EVENTS
+  // ============================================================================
+
+  /**
+   * INIT: Initialize file upload - creates file attachment record and returns presigned URL
+   * @param data - { fileName: string, contentType: string, size: number, hash: string }
+   * @param callback - SocketResponse<UploadInitialisedResponse> - Returns attachment ID and presigned URL (attachment ID is used as key)
+   */
+  [UPLOAD_EVENTS.INIT]: (
+    data: UploadInitPayload,
+    callback: (response: SocketResponse<UploadInitialisedResponse>) => void
+  ) => void;
+
+  /**
+   * COMPLETE: Complete file upload - verifies hash and updates attachment status
+   * @param data - { attachmentId: string, hash: string }
+   * @param callback - SocketResponse<UploadCompletedResponse> - Returns attachment ID, URL, and status
+   */
+  [UPLOAD_EVENTS.COMPLETE]: (
+    data: UploadCompletePayload,
+    callback: (response: SocketResponse<UploadCompletedResponse>) => void
+  ) => void;
 }
 
 /**
@@ -261,4 +292,22 @@ export interface ServerToClientEvents {
    * @param data - MessageData - The created message
    */
   [MESSAGE_EVENTS.CREATED]: (data: MessageData) => void;
+
+  // ============================================================================
+  // UPLOAD EVENTS
+  // ============================================================================
+
+  /**
+   * INITIALISED: File upload was initialized
+   * @emitted_to Client that initiated the upload (via user:userId room)
+   * @param data - UploadInitialisedResponse - Contains attachment ID and presigned URL (attachment ID is used as key)
+   */
+  [UPLOAD_EVENTS.INITIALISED]: (data: UploadInitialisedResponse) => void;
+
+  /**
+   * COMPLETED: File upload was completed and verified
+   * @emitted_to Client that completed the upload (via user:userId room)
+   * @param data - UploadCompletedResponse - Contains attachment ID, URL, and status
+   */
+  [UPLOAD_EVENTS.COMPLETED]: (data: UploadCompletedResponse) => void;
 }
