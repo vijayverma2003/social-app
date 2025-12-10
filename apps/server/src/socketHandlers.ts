@@ -5,7 +5,6 @@ import { FriendRequestHandlers } from "./features/friends/socketHandlers/FriendR
 import { FriendsHandlers } from "./features/friends/socketHandlers/FriendsHandlers";
 import { DMHandlers } from "./features/dms/socketHandlers/dmsHandlers";
 import { MessageHandlers } from "./features/messages/socketHandlers/messageHandlers";
-import { PresignedUrlHandlers } from "./features/presignedUrl/socketHandlers/presignedUrlHandlers";
 import { UploadHandlers } from "./features/upload/socketHandlers/uploadHandlers";
 import prisma from "@database/postgres";
 import {
@@ -30,7 +29,6 @@ export class SocketHandlers {
   private friendsHandlers: FriendsHandlers;
   private dmHandlers: DMHandlers;
   private messageHandlers: MessageHandlers;
-  private presignedUrlHandlers: PresignedUrlHandlers;
   private uploadHandlers: UploadHandlers;
 
   constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
@@ -39,7 +37,6 @@ export class SocketHandlers {
     this.friendsHandlers = new FriendsHandlers(io);
     this.dmHandlers = new DMHandlers(io);
     this.messageHandlers = new MessageHandlers(io);
-    this.presignedUrlHandlers = new PresignedUrlHandlers(io);
     this.uploadHandlers = new UploadHandlers(io);
   }
 
@@ -98,7 +95,6 @@ export class SocketHandlers {
       this.friendsHandlers.setupHandlers(socket);
       this.dmHandlers.setupHandlers(socket);
       this.messageHandlers.setupHandlers(socket);
-      this.presignedUrlHandlers.setupHandlers(socket);
       this.uploadHandlers.setupHandlers(socket);
 
       socket.on("disconnect", () => {
