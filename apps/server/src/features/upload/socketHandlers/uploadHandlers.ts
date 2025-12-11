@@ -154,6 +154,7 @@ export class UploadHandlers {
           storageKey: key,
           hash,
           status: "pending",
+          createdByUserId: socket.userId, // Track who initiated the upload
         },
       });
 
@@ -215,6 +216,14 @@ export class UploadHandlers {
       });
       if (!storageObject)
         return callback({ error: "Storage object not found" });
+
+      // Verify the user owns this StorageObject (authorization check)
+      if (storageObject.createdByUserId !== socket.userId) {
+        return callback({
+          error:
+            "Unauthorized. You do not have permission to complete this upload.",
+        });
+      }
 
       // Verify hash matches the stored hash
       if (storageObject.hash !== hash) {
