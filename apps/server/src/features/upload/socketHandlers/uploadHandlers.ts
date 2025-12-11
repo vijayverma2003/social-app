@@ -322,6 +322,35 @@ export class UploadHandlers {
       } catch (verifyError) {
         console.error("Error verifying file hash:", verifyError);
 
+        // Clean up: delete the file from R2 and the StorageObject record
+        // This prevents the StorageObject from remaining in "pending" status
+        try {
+          // Try to delete the file from R2
+          await this.r2Client.send(
+            new DeleteObjectCommand({
+              Bucket: R2_BUCKET,
+              Key: key,
+            })
+          );
+        } catch (deleteError) {
+          console.error(
+            "Error deleting file from R2 during cleanup:",
+            deleteError
+          );
+        }
+
+        try {
+          // Delete the StorageObject record
+          await prisma.storageObject.delete({
+            where: { id: storageObjectId },
+          });
+        } catch (deleteError) {
+          console.error(
+            "Error deleting StorageObject during cleanup:",
+            deleteError
+          );
+        }
+
         callback({
           error:
             verifyError instanceof Error
