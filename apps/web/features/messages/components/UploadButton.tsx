@@ -22,6 +22,8 @@ export interface SelectedFile {
   id: string;
   hash: string;
   url?: string;
+  attachmentId?: string; // Attachment ID from PostgreSQL
+  storageObjectId?: string; // StorageObject ID from PostgreSQL
 }
 
 interface UploadButtonProps {
@@ -60,6 +62,7 @@ export const UploadButton = ({
               contentType: selectedFile.file.type || "application/octet-stream",
               size: selectedFile.file.size,
               hash: selectedFile.hash,
+              attachedWith: "message", // Default to message for now
             },
             async (response) => {
               if (!response) {
@@ -72,8 +75,22 @@ export const UploadButton = ({
               }
 
               try {
-                // Upload file to R2 using presigned URL
-                console.log("Response from init upload:", response);
+                // If file already exists, we have attachmentId and url, no need to upload
+                if (response.url && response.attachmentId) {
+                  const doneFile: SelectedFile = {
+                    ...selectedFile,
+                    url: response.url,
+                    attachmentId: response.attachmentId,
+                    storageObjectId: response.storageObjectId,
+                  };
+                  resolveFile(doneFile);
+                  return;
+                }
+
+                // File needs to be uploaded - upload to R2 using presigned URL
+                if (!response.presignedUrl || !response.storageObjectId)
+                  throw new Error("Missing presigned URL or storage object ID");
+
                 const uploadResponse = await fetch(response.presignedUrl, {
                   method: "PUT",
                   body: selectedFile.file,
@@ -95,8 +112,9 @@ export const UploadButton = ({
                 // Complete upload (verify hash)
                 completeUpload(
                   {
-                    attachmentId: response.attachmentId,
+                    storageObjectId: response.storageObjectId,
                     hash: selectedFile.hash,
+                    attachedWith: "message", // Default to message for now
                   },
                   (completeResponse) => {
                     if (!completeResponse) {
@@ -111,6 +129,8 @@ export const UploadButton = ({
                     const doneFile: SelectedFile = {
                       ...selectedFile,
                       url: completeResponse.url,
+                      attachmentId: completeResponse.attachmentId,
+                      storageObjectId: completeResponse.storageObjectId,
                     };
                     resolveFile(doneFile);
                   }

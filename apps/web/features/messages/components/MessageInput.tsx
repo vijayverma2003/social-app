@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, X } from "lucide-react";
 import { useMessageActions } from "../hooks/useMessageActions";
-import { ChannelType, Attachment } from "@shared/schemas/messages";
+import { ChannelType } from "@shared/schemas/messages";
 import { UploadButton, SelectedFile } from "./UploadButton";
 
 interface MessageInputProps {
@@ -72,18 +72,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         if (filesToUpload.length > 0 && uploadFilesFnRef.current)
           uploadedFiles = await uploadFilesFnRef.current(filesToUpload);
 
-        // Convert uploaded files to attachments
-        const attachments: Attachment[] = uploadedFiles
-          .filter((f) => f.url)
-          .map((f) => ({
-            url: f.url!,
-            fileName: f.file.name,
-            contentType: f.file.type || "application/octet-stream",
-            size: f.file.size,
-          }));
+        // Extract attachmentIds from uploaded files
+        const attachmentIds = uploadedFiles
+          .filter((f) => f.attachmentId)
+          .map((f) => f.attachmentId!);
 
         // Check if uploads failed
-        if (filesToUpload.length > 0 && attachments.length === 0) {
+        if (filesToUpload.length > 0 && attachmentIds.length === 0) {
           console.error("All file uploads failed");
           setUploadError(true);
           setIsUploading(false);
@@ -91,13 +86,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           return;
         }
 
-        // Send message with attachments
+        // Send message with attachmentIds
         createMessage(
           {
             channelId,
             channelType,
             content: trimmedContent || "",
-            attachments,
+            attachmentIds,
           },
           (messageId) => {
             setIsUploading(false);

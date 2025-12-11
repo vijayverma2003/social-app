@@ -7,6 +7,7 @@ import {
 } from "@shared/types/socket";
 import { AuthenticatedSocket } from "../../../socketHandlers";
 import {
+  Attachment,
   CreateMessagePayloadSchema,
   GetMessagesPayloadSchema,
 } from "@shared/schemas/messages";
@@ -64,7 +65,8 @@ export class MessageHandlers {
         });
       }
 
-      const { channelId, channelType, content, attachments } = validation.data;
+      const { channelId, channelType, content, attachmentIds } =
+        validation.data;
 
       // Verify user is a member of the channel
       if (channelType === "dm") {
@@ -84,13 +86,40 @@ export class MessageHandlers {
         }
       }
 
+      // Fetch Attachment and StorageObject data from PostgreSQL
+      let attachments: Attachment[] = [];
+      if (attachmentIds && attachmentIds.length > 0) {
+        const attachmentData = await prisma.attachment.findMany({
+          where: {
+            id: { in: attachmentIds },
+          },
+          include: {
+            storageObject: true,
+          },
+        });
+
+        attachments = attachmentData.map((attachment) => ({
+          id: attachment.id,
+          storageObjectId: attachment.storageObjectId,
+          url: attachment.storageObject.url || "",
+          fileName: attachment.storageObject.filename,
+          contentType: attachment.storageObject.mimeType,
+          size: attachment.storageObject.size,
+          hash: attachment.storageObject.hash,
+          storageKey: attachment.storageObject.storageKey,
+          attachedWith: attachment.attachedWith,
+          userId: attachment.userId,
+          createdAt: attachment.createdAt,
+        }));
+      }
+
       // Create message
       const message = await Message.create({
         channelId,
         channelType,
         content,
         authorId: socket.userId,
-        attachments: attachments || [],
+        attachments,
       });
 
       // Convert MongoDB ObjectId to string

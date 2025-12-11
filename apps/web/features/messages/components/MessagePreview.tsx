@@ -19,14 +19,14 @@ const MessagePreview = ({
 
   return (
     <div className="p-2 rounded-lg flex items-start gap-2 hover:bg-accent/40">
-      <Avatar className="size-4">
+      <Avatar className="size-12">
         <AvatarImage src={profile?.avatarURL || ""} />
         <AvatarFallback>U</AvatarFallback>
       </Avatar>
 
       <div className="flex flex-col">
         <div className="flex gap-2 items-center">
-          <p className="text-sm font-extrabold">
+          <p className="text-sm font-extrabold mb-2">
             {profile?.displayName || "Unknown user"}
           </p>
           <p className="text-[10px] text-muted-foreground">
@@ -49,12 +49,12 @@ const MessagePreview = ({
         {message.attachments && message.attachments.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {message.attachments.map((attachment) => (
-              <div key={attachment.url}>
+              <div key={attachment.url} className="rounded-lg overflow-hidden">
                 <Image
                   src={attachment.url}
                   alt={attachment.fileName}
-                  width={32}
-                  height={32}
+                  width={200}
+                  height={200}
                 />
               </div>
             ))}

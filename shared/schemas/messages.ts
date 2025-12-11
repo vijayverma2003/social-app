@@ -2,13 +2,20 @@ import z from "zod";
 
 export const ChannelTypeSchema = z.enum(["dm", "post"]);
 
-// Attachment Schema
+// Attachment Schema (for MongoDB Message - includes fields from Attachment and StorageObject)
 export const AttachmentSchema = z
   .object({
-    url: z.string().url(),
-    fileName: z.string().trim().min(1),
-    contentType: z.string().trim().min(1),
-    size: z.number().int().min(0), // Size in bytes
+    id: z.string().trim(), // Attachment ID from PostgreSQL
+    storageObjectId: z.string().trim(), // StorageObject ID from PostgreSQL
+    url: z.string().url(), // From StorageObject
+    fileName: z.string().trim().min(1), // From StorageObject (filename)
+    contentType: z.string().trim().min(1), // From StorageObject (mimeType)
+    size: z.number().int().min(0), // From StorageObject
+    hash: z.string().trim().min(1), // From StorageObject
+    storageKey: z.string().trim().min(1), // From StorageObject
+    attachedWith: z.enum(["message", "post"]), // From Attachment
+    userId: z.string().trim().min(1), // From Attachment
+    createdAt: z.date(), // From Attachment
   })
   .strict();
 
@@ -36,7 +43,7 @@ export const MessageSchema = z
     }
   );
 
-// Create Message Schema
+// Create Message Schema (for MongoDB - attachments are populated from PostgreSQL)
 export const CreateMessageSchema = z
   .object({
     channelId: z.string().trim().min(1),
@@ -81,8 +88,8 @@ export const CreateMessagePayloadSchema = z
     channelId: z.string().trim().min(1, "Channel ID is required"),
     channelType: ChannelTypeSchema,
     content: z.string().trim(),
-    attachments: z
-      .array(AttachmentSchema)
+    attachmentIds: z
+      .array(z.string().trim().min(1))
       .max(10, "Maximum 10 attachments allowed")
       .optional()
       .default([]),
@@ -91,7 +98,7 @@ export const CreateMessagePayloadSchema = z
   .refine(
     (data) => {
       const hasContent = data.content.trim().length > 0;
-      const hasAttachments = (data.attachments?.length || 0) > 0;
+      const hasAttachments = (data.attachmentIds?.length || 0) > 0;
       return hasContent || hasAttachments;
     },
     {
