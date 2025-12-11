@@ -31,7 +31,6 @@ model User {
   sentRequests     FriendRequest[] @relation("FriendRequestSender")
   receivedRequests FriendRequest[] @relation("FriendRequestReceiver")
   dmChannelUsers   DMChannelUser[]
-  attachments      Attachment[]
 
   @@unique([username, discriminator])
 }
@@ -86,11 +85,6 @@ enum ChannelType {
   dm
 }
 
-enum AttachedWith {
-  message
-  post
-}
-
 enum StorageObjectStatus {
   pending
   done
@@ -109,25 +103,9 @@ model StorageObject {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
-  attachments Attachment[]
-
   @@index([hash])
   @@index([status])
   @@index([createdByUserId])
-}
-
-model Attachment {
-  id              String       @id @default(uuid())
-  storageObjectId String
-  userId          String
-  attachedWith    AttachedWith
-  createdAt       DateTime     @default(now())
-
-  storageObject StorageObject @relation(fields: [storageObjectId], references: [id])
-  user          User          @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([storageObjectId])
 }
 
 model DMChannel {

@@ -97,8 +97,7 @@ export class UploadHandlers {
           error: validation.error.message || "Invalid payload",
         });
 
-      const { fileName, contentType, size, hash, attachedWith } =
-        validation.data;
+      const { fileName, contentType, size, hash } = validation.data;
 
       // Check if StorageObject already exists with this hash
       const existingStorageObject = await prisma.storageObject.findUnique({
@@ -111,17 +110,8 @@ export class UploadHandlers {
         });
 
       if (existingStorageObject) {
-        // File already exists - create Attachment and return it
-        const attachment = await prisma.attachment.create({
-          data: {
-            storageObjectId: existingStorageObject.id,
-            userId: socket.userId,
-            attachedWith,
-          },
-        });
-
+        // File already exists - return StorageObject info
         const response = {
-          attachmentId: attachment.id,
           storageObjectId: existingStorageObject.id,
           url: existingStorageObject.url || undefined,
         };
@@ -208,7 +198,7 @@ export class UploadHandlers {
           error: validation.error.message || "Invalid payload",
         });
 
-      const { storageObjectId, hash, attachedWith } = validation.data;
+      const { storageObjectId, hash } = validation.data;
 
       // Find StorageObject
       const storageObject = await prisma.storageObject.findUnique({
@@ -283,28 +273,15 @@ export class UploadHandlers {
         // Hash matches - file is valid, update status to done
         const fileUrl = `${R2_PUBLIC_URL}/${key}`;
 
-        const { attachment } = await prisma.$transaction(async (tx) => {
-          const storageObject = await tx.storageObject.update({
-            where: { id: storageObjectId },
-            data: {
-              status: "done",
-              url: fileUrl,
-            },
-          });
-
-          const attachment = await tx.attachment.create({
-            data: {
-              storageObjectId,
-              userId: socket.userId!,
-              attachedWith,
-            },
-          });
-
-          return { storageObject, attachment };
+        await prisma.storageObject.update({
+          where: { id: storageObjectId },
+          data: {
+            status: "done",
+            url: fileUrl,
+          },
         });
 
         const response = {
-          attachmentId: attachment.id,
           storageObjectId,
           url: fileUrl,
           status: "done" as const,

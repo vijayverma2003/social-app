@@ -2,10 +2,9 @@ import z from "zod";
 
 export const ChannelTypeSchema = z.enum(["dm", "post"]);
 
-// Attachment Schema (for MongoDB Message - includes fields from Attachment and StorageObject)
+// Attachment Schema (for MongoDB Message - includes fields from StorageObject)
 export const AttachmentSchema = z
   .object({
-    id: z.string().trim(), // Attachment ID from PostgreSQL
     storageObjectId: z.string().trim(), // StorageObject ID from PostgreSQL
     url: z.string().url(), // From StorageObject
     fileName: z.string().trim().min(1), // From StorageObject (filename)
@@ -13,9 +12,6 @@ export const AttachmentSchema = z
     size: z.number().int().min(0), // From StorageObject
     hash: z.string().trim().min(1), // From StorageObject
     storageKey: z.string().trim().min(1), // From StorageObject
-    attachedWith: z.enum(["message", "post"]), // From Attachment
-    userId: z.string().trim().min(1), // From Attachment
-    createdAt: z.date(), // From Attachment
   })
   .strict();
 
@@ -88,7 +84,7 @@ export const CreateMessagePayloadSchema = z
     channelId: z.string().trim().min(1, "Channel ID is required"),
     channelType: ChannelTypeSchema,
     content: z.string().trim(),
-    attachmentIds: z
+    storageObjectIds: z
       .array(z.string().trim().min(1))
       .max(10, "Maximum 10 attachments allowed")
       .optional()
@@ -98,7 +94,7 @@ export const CreateMessagePayloadSchema = z
   .refine(
     (data) => {
       const hasContent = data.content.trim().length > 0;
-      const hasAttachments = (data.attachmentIds?.length || 0) > 0;
+      const hasAttachments = (data.storageObjectIds?.length || 0) > 0;
       return hasContent || hasAttachments;
     },
     {

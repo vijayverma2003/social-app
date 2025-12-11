@@ -22,7 +22,6 @@ export interface SelectedFile {
   id: string;
   hash: string;
   url?: string;
-  attachmentId?: string; // Attachment ID from PostgreSQL
   storageObjectId?: string; // StorageObject ID from PostgreSQL
 }
 
@@ -62,7 +61,6 @@ export const UploadButton = ({
               contentType: selectedFile.file.type || "application/octet-stream",
               size: selectedFile.file.size,
               hash: selectedFile.hash,
-              attachedWith: "message", // Default to message for now
             },
             async (response) => {
               if (!response) {
@@ -75,12 +73,11 @@ export const UploadButton = ({
               }
 
               try {
-                // If file already exists, we have attachmentId and url, no need to upload
-                if (response.url && response.attachmentId) {
+                // If file already exists, we have url, no need to upload
+                if (response.url) {
                   const doneFile: SelectedFile = {
                     ...selectedFile,
                     url: response.url,
-                    attachmentId: response.attachmentId,
                     storageObjectId: response.storageObjectId,
                   };
                   resolveFile(doneFile);
@@ -114,7 +111,6 @@ export const UploadButton = ({
                   {
                     storageObjectId: response.storageObjectId,
                     hash: selectedFile.hash,
-                    attachedWith: "message", // Default to message for now
                   },
                   (completeResponse) => {
                     if (!completeResponse) {
@@ -129,7 +125,6 @@ export const UploadButton = ({
                     const doneFile: SelectedFile = {
                       ...selectedFile,
                       url: completeResponse.url,
-                      attachmentId: completeResponse.attachmentId,
                       storageObjectId: completeResponse.storageObjectId,
                     };
                     resolveFile(doneFile);

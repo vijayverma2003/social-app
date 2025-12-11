@@ -65,7 +65,7 @@ export class MessageHandlers {
         });
       }
 
-      const { channelId, channelType, content, attachmentIds } =
+      const { channelId, channelType, content, storageObjectIds } =
         validation.data;
 
       // Verify user is a member of the channel
@@ -86,30 +86,31 @@ export class MessageHandlers {
         }
       }
 
-      // Fetch Attachment and StorageObject data from PostgreSQL
+      // Fetch StorageObject data from PostgreSQL
       let attachments: Attachment[] = [];
-      if (attachmentIds && attachmentIds.length > 0) {
-        const attachmentData = await prisma.attachment.findMany({
+      if (storageObjectIds && storageObjectIds.length > 0) {
+        const storageObjects = await prisma.storageObject.findMany({
           where: {
-            id: { in: attachmentIds },
-          },
-          include: {
-            storageObject: true,
+            id: { in: storageObjectIds },
+            status: "done", // Only allow completed uploads
           },
         });
 
-        attachments = attachmentData.map((attachment) => ({
-          id: attachment.id,
-          storageObjectId: attachment.storageObjectId,
-          url: attachment.storageObject.url || "",
-          fileName: attachment.storageObject.filename,
-          contentType: attachment.storageObject.mimeType,
-          size: attachment.storageObject.size,
-          hash: attachment.storageObject.hash,
-          storageKey: attachment.storageObject.storageKey,
-          attachedWith: attachment.attachedWith,
-          userId: attachment.userId,
-          createdAt: attachment.createdAt,
+        // Verify all StorageObjects exist and are ready
+        if (storageObjects.length !== storageObjectIds.length) {
+          return callback({
+            error: "One or more storage objects not found or not ready",
+          });
+        }
+
+        attachments = storageObjects.map((storageObject) => ({
+          storageObjectId: storageObject.id,
+          url: storageObject.url || "",
+          fileName: storageObject.filename,
+          contentType: storageObject.mimeType,
+          size: storageObject.size,
+          hash: storageObject.hash,
+          storageKey: storageObject.storageKey,
         }));
       }
 

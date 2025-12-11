@@ -72,13 +72,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         if (filesToUpload.length > 0 && uploadFilesFnRef.current)
           uploadedFiles = await uploadFilesFnRef.current(filesToUpload);
 
-        // Extract attachmentIds from uploaded files
-        const attachmentIds = uploadedFiles
-          .filter((f) => f.attachmentId)
-          .map((f) => f.attachmentId!);
+        // Extract storageObjectIds from uploaded files
+        const storageObjectIds = uploadedFiles
+          .filter((f) => f.storageObjectId)
+          .map((f) => f.storageObjectId!);
 
         // Check if uploads failed
-        if (filesToUpload.length > 0 && attachmentIds.length === 0) {
+        if (filesToUpload.length > 0 && storageObjectIds.length === 0) {
           console.error("All file uploads failed");
           setUploadError(true);
           setIsUploading(false);
@@ -86,13 +86,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           return;
         }
 
-        // Send message with attachmentIds
+        // Send message with storageObjectIds
         createMessage(
           {
             channelId,
             channelType,
             content: trimmedContent || "",
-            attachmentIds,
+            storageObjectIds,
           },
           (messageId) => {
             setIsUploading(false);
