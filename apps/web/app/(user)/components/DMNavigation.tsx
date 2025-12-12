@@ -5,60 +5,32 @@ import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
 import { useDMChannelsStore } from "@/features/dms/store/dmChannelsStore";
-import { useAuth } from "@clerk/nextjs";
 import { DMChannelWithUsers } from "@shared/types/responses";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/services/users";
+import { useUser } from "@/providers/UserContextProvider";
 
 const DMNavigation = () => {
   const pathname = usePathname();
   const { channels, isLoading } = useDMChannelsStore();
-  const { getToken } = useAuth();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isLoadingCurrentUser, setIsLoadingCurrentUser] = useState(true);
-
-  // Load current user ID
-  useEffect(() => {
-    const loadCurrentUser = async () => {
-      try {
-        setIsLoadingCurrentUser(true);
-        const token = await getToken();
-        if (!token) {
-          setIsLoadingCurrentUser(false);
-          return;
-        }
-
-        const response = await getCurrentUser(token);
-        setCurrentUserId(response.data.id);
-      } catch (error) {
-        console.error("Failed to load current user:", error);
-        // Don't set currentUserId on error to prevent showing wrong users
-      } finally {
-        setIsLoadingCurrentUser(false);
-      }
-    };
-
-    loadCurrentUser();
-  }, [getToken]);
+  const { user: currentUser, isLoading: isLoadingCurrentUser } = useUser();
 
   const getOtherUser = (channel: DMChannelWithUsers) => {
     // Find the user that is not the current user
-    // Only proceed if currentUserId is loaded
-    if (!currentUserId) return null;
+    // Only proceed if currentUser is loaded
+    if (!currentUser) return null;
     return (
-      channel.users.find((u) => u.userId !== currentUserId) || channel.users[0]
+      channel.users.find((u) => u.userId !== currentUser.id) || channel.users[0]
     );
   };
 
   const getUnreadCount = (channel: DMChannelWithUsers) => {
-    if (!currentUserId) return 0;
-    const channelUser = channel.users.find((u) => u.userId === currentUserId);
+    if (!currentUser) return 0;
+    const channelUser = channel.users.find((u) => u.userId === currentUser.id);
     return channelUser?.totalUnreadMessages || 0;
   };
 
-  // Don't render channels until currentUserId is loaded to prevent showing wrong users
+  // Don't render channels until currentUser is loaded to prevent showing wrong users
   if (isLoading || isLoadingCurrentUser) {
     return (
       <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
@@ -69,8 +41,8 @@ const DMNavigation = () => {
     );
   }
 
-  // If currentUserId failed to load, don't render channels to avoid showing incorrect data
-  if (!currentUserId) {
+  // If currentUser failed to load, don't render channels to avoid showing incorrect data
+  if (!currentUser) {
     return (
       <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
         <p className="text-sm text-muted-foreground text-center py-4">
