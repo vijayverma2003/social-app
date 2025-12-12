@@ -21,6 +21,7 @@ import { JoinDMChannelPayload, LeaveDMChannelPayload } from "../schemas/dm";
 import {
   CreateMessagePayload,
   GetMessagesPayload,
+  DeleteMessagePayload,
   MessageData,
 } from "../schemas/messages";
 import {
@@ -171,6 +172,18 @@ export interface ClientToServerEvents {
     callback: (response: SocketResponse<MessageData[]>) => void
   ) => void;
 
+  /**
+   * DELETE: Delete a message from a channel
+   * @param data - { messageId: string, channelId: string, channelType: "dm" | "post" }
+   * @param callback - SocketResponse<{ messageId: string }> - Returns the deleted message ID
+   * @requires User must be the author of the message and a member of the channel
+   * @broadcasts DELETED to channel room
+   */
+  [MESSAGE_EVENTS.DELETE]: (
+    data: DeleteMessagePayload,
+    callback: (response: SocketResponse<{ messageId: string }>) => void
+  ) => void;
+
   // ============================================================================
   // UPLOAD EVENTS
   // ============================================================================
@@ -273,6 +286,17 @@ export interface ServerToClientEvents {
    * @param data - MessageData - The created message
    */
   [MESSAGE_EVENTS.CREATED]: (data: MessageData) => void;
+
+  /**
+   * DELETED: A message was deleted from a channel
+   * @emitted_to All users in the channel socket room (via channel:channelId room)
+   * @param data - { messageId: string, channelId: string, channelType: "dm" | "post" }
+   */
+  [MESSAGE_EVENTS.DELETED]: (data: {
+    messageId: string;
+    channelId: string;
+    channelType: "dm" | "post";
+  }) => void;
 
   // ============================================================================
   // UPLOAD EVENTS

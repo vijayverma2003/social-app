@@ -10,6 +10,7 @@ import {
   Attachment,
   CreateMessagePayloadSchema,
   GetMessagesPayloadSchema,
+  DeleteMessagePayloadSchema,
 } from "@shared/schemas/messages";
 import prisma from "@database/postgres";
 
@@ -28,6 +29,13 @@ type GetMessagesCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.GET]
 >[1];
 
+type DeleteMessageData = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
+>[0];
+type DeleteMessageCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
+>[1];
+
 export class MessageHandlers {
   private io: Server<ClientToServerEvents, ServerToClientEvents>;
 
@@ -42,6 +50,10 @@ export class MessageHandlers {
 
     socket.on(MESSAGE_EVENTS.GET, (data, callback) =>
       this.getMessages(socket, data, callback)
+    );
+
+    socket.on(MESSAGE_EVENTS.DELETE, (data, callback) =>
+      this.deleteMessage(socket, data, callback)
     );
   }
 
@@ -211,6 +223,85 @@ export class MessageHandlers {
       callback({
         error:
           error instanceof Error ? error.message : "Failed to get messages",
+      });
+    }
+  }
+
+  private async deleteMessage(
+    socket: AuthenticatedSocket,
+    data: DeleteMessageData,
+    callback: DeleteMessageCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = DeleteMessagePayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { messageId, channelId, channelType } = validation.data;
+
+      // Find the message
+      const message = await Message.findById(messageId);
+      if (!message) {
+        return callback({
+          error: "Message not found",
+        });
+      }
+
+      // Verify the message belongs to the channel
+      if (
+        message.channelId !== channelId ||
+        message.channelType !== channelType
+      ) {
+        return callback({
+          error: "Message does not belong to this channel",
+        });
+      }
+
+      // Verify the user is the author of the message
+      if (message.authorId !== socket.userId) {
+        return callback({
+          error: "You can only delete your own messages",
+        });
+      }
+
+      // Delete the message
+      const deleted = await Message.delete(messageId);
+      if (!deleted) {
+        return callback({
+          error: "Failed to delete message",
+        });
+      }
+
+      // Broadcast to channel room based on channel type
+      const roomName =
+        channelType === "dm"
+          ? `dm_channel:${channelId}`
+          : `channel:${channelId}`;
+      this.io.to(roomName).emit(MESSAGE_EVENTS.DELETED, {
+        messageId,
+        channelId,
+        channelType,
+      });
+
+      callback({
+        success: true,
+        data: { messageId },
+      });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      callback({
+        error:
+          error instanceof Error ? error.message : "Failed to delete message",
       });
     }
   }

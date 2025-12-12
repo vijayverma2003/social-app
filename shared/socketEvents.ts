@@ -32,9 +32,11 @@ export const MESSAGE_EVENTS = {
   // Client -> Server events (actions)
   CREATE: "message:create",
   GET: "message:get",
+  DELETE: "message:delete",
 
   // Server -> Client events (notifications)
   CREATED: "message:created",
+  DELETED: "message:deleted",
 } as const;
 
 export const UPLOAD_EVENTS = {

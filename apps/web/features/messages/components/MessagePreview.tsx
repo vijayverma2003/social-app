@@ -9,6 +9,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useMessageActions } from "../hooks/useMessageActions";
+import { useUser } from "@/providers/UserContextProvider";
 
 const MessagePreview = ({
   message,
@@ -17,6 +19,8 @@ const MessagePreview = ({
   message: MessageData;
   profile: Profile | null;
 }) => {
+  const { user } = useUser();
+  const { deleteMessage } = useMessageActions();
   const isSameDay = useMemo(() => {
     return (
       new Date(message.createdAt).toDateString() === new Date().toDateString()
@@ -81,6 +85,20 @@ const MessagePreview = ({
         >
           Copy Text
         </ContextMenuItem>
+        {user && message.authorId === user.id && (
+          <ContextMenuItem
+            onClick={() =>
+              deleteMessage({
+                messageId: message._id,
+                channelId: message.channelId,
+                channelType: message.channelType,
+              })
+            }
+            variant="destructive"
+          >
+            Delete Message
+          </ContextMenuItem>
+        )}
       </ContextMenuContent>
     </ContextMenu>
   );

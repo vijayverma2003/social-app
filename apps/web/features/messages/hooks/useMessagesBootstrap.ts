@@ -15,7 +15,7 @@ export const useMessagesBootstrap = (
   onNewMessage?: () => void
 ) => {
   const { socket, emit } = useSocket();
-  const { addMessage, setMessages } = useMessagesStore();
+  const { addMessage, setMessages, removeMessage } = useMessagesStore();
 
   const loadMessages = useCallback(
     (channelId: string, channelType: ChannelType) => {
@@ -51,11 +51,28 @@ export const useMessagesBootstrap = (
         }
       };
 
+    const handleMessageDeleted: ServerToClientEvents[typeof MESSAGE_EVENTS.DELETED] =
+      (data) => {
+        if (data.channelId === channelId) {
+          removeMessage(data.channelId, data.messageId);
+        }
+      };
+
     socket.on(MESSAGE_EVENTS.CREATED, handleMessageCreated);
+    socket.on(MESSAGE_EVENTS.DELETED, handleMessageDeleted);
     loadMessages(channelId, channelType);
 
     return () => {
       socket.off(MESSAGE_EVENTS.CREATED, handleMessageCreated);
+      socket.off(MESSAGE_EVENTS.DELETED, handleMessageDeleted);
     };
-  }, [socket, channelId, channelType, addMessage, loadMessages, onNewMessage]);
+  }, [
+    socket,
+    channelId,
+    channelType,
+    addMessage,
+    removeMessage,
+    loadMessages,
+    onNewMessage,
+  ]);
 };

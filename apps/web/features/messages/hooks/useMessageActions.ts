@@ -7,6 +7,7 @@ import { ClientToServerEvents } from "@shared/types/socket";
 import {
   CreateMessagePayload,
   GetMessagesPayload,
+  DeleteMessagePayload,
 } from "@shared/schemas/messages";
 import { useMessagesStore } from "../store/messagesStore";
 import { toast } from "sonner";
@@ -19,9 +20,14 @@ type GetMessagesCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.GET]
 >[1];
 
+type DeleteMessageCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
+>[1];
+
 export const useMessageActions = () => {
   const { emit } = useSocket();
-  const { setMessages, addMessage, prependMessages } = useMessagesStore();
+  const { setMessages, addMessage, prependMessages, removeMessage } =
+    useMessagesStore();
 
   const createMessage = useCallback(
     (
@@ -68,8 +74,31 @@ export const useMessageActions = () => {
     [emit, setMessages, prependMessages]
   );
 
+  const deleteMessage = useCallback(
+    (
+      payload: DeleteMessagePayload,
+      onComplete?: (success: boolean) => void
+    ) => {
+      emit(MESSAGE_EVENTS.DELETE, payload, ((response) => {
+        if (response.error) {
+          toast.error("Failed to delete message", {
+            description: response.error,
+          });
+          onComplete?.(false);
+        } else if (response.success && response.data) {
+          removeMessage(payload.channelId, response.data.messageId);
+          onComplete?.(true);
+        } else {
+          onComplete?.(false);
+        }
+      }) as DeleteMessageCallback);
+    },
+    [emit, removeMessage]
+  );
+
   return {
     createMessage,
     getMessages,
+    deleteMessage,
   };
 };
