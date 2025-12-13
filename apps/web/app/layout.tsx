@@ -1,13 +1,13 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { Quicksand } from "next/font/google";
+import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { SocketContextProvider } from "@/providers/SocketContextProvider";
 import { UserContextProvider } from "@/providers/UserContextProvider";
 import { Toaster } from "sonner";
 
-const quicksand = Quicksand({
-  variable: "--font-quicksand",
+const openSans = Open_Sans({
+  variable: "--font-open-sans",
   subsets: ["latin"],
 });
 
@@ -25,7 +25,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${quicksand.variable} antialiased h-screen overflow-hidden`}
+          className={`${openSans.variable} antialiased h-screen overflow-hidden`}
         >
           <UserContextProvider>
             <SocketContextProvider>{children}</SocketContextProvider>
