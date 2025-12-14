@@ -143,6 +143,24 @@ export class MessageHandlers {
         updatedAt: message.updatedAt,
       };
 
+      // Update totalUnreadMessages for DM channels
+      if (channelType === "dm") {
+        // Increment totalUnreadMessages for all users in the channel except the sender
+        await prisma.dMChannelUser.updateMany({
+          where: {
+            channelId,
+            userId: {
+              not: socket.userId, // Exclude the sender
+            },
+          },
+          data: {
+            totalUnreadMessages: {
+              increment: 1,
+            },
+          },
+        });
+      }
+
       // Broadcast to channel room based on channel type
       const roomName =
         channelType === "dm"
