@@ -225,8 +225,9 @@ export class FriendRequestHandlers {
         });
 
         // Check if a DM channel already exists between these two users
-        const potentialChannels = await tx.dMChannel.findMany({
+        const potentialChannels = await tx.channel.findMany({
           where: {
+            type: "dm",
             AND: [
               {
                 users: {
@@ -250,17 +251,19 @@ export class FriendRequestHandlers {
         });
 
         // Find a channel that has exactly 2 users (DM channels should only have 2 users)
-        const existingDMChannel = potentialChannels.find(
+        const existingChannel = potentialChannels.find(
           (channel) => channel.users.length === 2
         );
 
         if (!existingFriends) {
           // Only create DM channel if we're creating new friend relationships
-          let dmChannelId = existingDMChannel?.id;
+          let channelId = existingChannel?.id;
 
-          if (!existingDMChannel) {
-            const newDMChannel = await tx.dMChannel.create({
+          if (!existingChannel) {
+            // Create Channel
+            const newChannel = await tx.channel.create({
               data: {
+                type: "dm",
                 users: {
                   create: [
                     { userId: socket.userId! },
@@ -270,14 +273,21 @@ export class FriendRequestHandlers {
               },
             });
 
-            dmChannelId = newDMChannel.id;
+            // Create DMChannel linked to the Channel
+            await tx.dMChannel.create({
+              data: {
+                channelId: newChannel.id,
+              },
+            });
+
+            channelId = newChannel.id;
           }
 
           await tx.friend.create({
             data: {
               userId: socket.userId!,
               friendId: friendRequest.senderId,
-              dmChannelId: dmChannelId!,
+              channelId: channelId!,
             },
           });
 
@@ -285,7 +295,7 @@ export class FriendRequestHandlers {
             data: {
               userId: friendRequest.senderId,
               friendId: socket.userId!,
-              dmChannelId: dmChannelId!,
+              channelId: channelId!,
             },
           });
         }

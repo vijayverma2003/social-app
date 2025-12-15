@@ -30,7 +30,7 @@ model User {
   friendOf         Friend[]        @relation("UserFriendOf")
   sentRequests     FriendRequest[] @relation("FriendRequestSender")
   receivedRequests FriendRequest[] @relation("FriendRequestReceiver")
-  dmChannelUsers   DMChannelUser[]
+  channelUsers     ChannelUser[]
 
   @@unique([username, discriminator])
 }
@@ -53,15 +53,15 @@ model Profile {
 }
 
 model Friend {
-  id          String   @id @default(cuid())
-  dmChannelId String?
-  userId      String
-  friendId    String
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  channelId String?
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
 
-  user      User       @relation("UserFriends", fields: [userId], references: [id])
-  friend    User       @relation("UserFriendOf", fields: [friendId], references: [id])
-  dmChannel DMChannel? @relation(fields: [dmChannelId], references: [id])
+  user    User     @relation("UserFriends", fields: [userId], references: [id])
+  friend  User     @relation("UserFriendOf", fields: [friendId], references: [id])
+  channel Channel? @relation(fields: [channelId], references: [id])
 
   @@unique([userId, friendId])
   @@index([userId])
@@ -79,10 +79,6 @@ model FriendRequest {
   @@unique([senderId, receiverId])
   @@index([senderId])
   @@index([receiverId])
-}
-
-enum ChannelType {
-  dm
 }
 
 enum StorageObjectStatus {
@@ -108,23 +104,36 @@ model StorageObject {
   @@index([createdByUserId])
 }
 
-model DMChannel {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  users   DMChannelUser[]
-  friends Friend[]
+enum ChannelType {
+  dm
 }
 
-model DMChannelUser {
+model Channel {
+  id        String      @id @default(cuid())
+  type      ChannelType
+  createdAt DateTime    @default(now())
+
+  users      ChannelUser[]
+  friends    Friend[]
+  dmChannels DMChannel[]
+}
+
+model DMChannel {
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId])
+}
+
+model ChannelUser {
   id                  String    @id @default(cuid())
   channelId           String
   userId              String
   lastReadAt          DateTime?
   totalUnreadMessages Int       @default(0)
 
-  channel DMChannel @relation(fields: [channelId], references: [id])
-  user    User      @relation(fields: [userId], references: [id])
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([channelId, userId])
   @@index([userId])

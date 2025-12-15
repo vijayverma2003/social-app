@@ -3,7 +3,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
 import { FriendRequestHandlers } from "./features/friends/socketHandlers/FriendRequestHandlers";
 import { FriendsHandlers } from "./features/friends/socketHandlers/FriendsHandlers";
-import { DMHandlers } from "./features/dms/socketHandlers/dmsHandlers";
+import { ChannelHandlers } from "./features/dms/socketHandlers/channelHandlers";
 import { MessageHandlers } from "./features/messages/socketHandlers/messageHandlers";
 import { UploadHandlers } from "./features/upload/socketHandlers/uploadHandlers";
 import prisma from "@database/postgres";
@@ -27,7 +27,7 @@ export class SocketHandlers {
   private io: Server<ClientToServerEvents, ServerToClientEvents>;
   private friendRequestHandlers: FriendRequestHandlers;
   private friendsHandlers: FriendsHandlers;
-  private dmHandlers: DMHandlers;
+  private channelHandlers: ChannelHandlers;
   private messageHandlers: MessageHandlers;
   private uploadHandlers: UploadHandlers;
 
@@ -35,7 +35,7 @@ export class SocketHandlers {
     this.io = io;
     this.friendRequestHandlers = new FriendRequestHandlers(io);
     this.friendsHandlers = new FriendsHandlers(io);
-    this.dmHandlers = new DMHandlers(io);
+    this.channelHandlers = new ChannelHandlers(io);
     this.messageHandlers = new MessageHandlers(io);
     this.uploadHandlers = new UploadHandlers(io);
   }
@@ -93,7 +93,7 @@ export class SocketHandlers {
 
       this.friendRequestHandlers.setupHandlers(socket);
       this.friendsHandlers.setupHandlers(socket);
-      this.dmHandlers.setupHandlers(socket);
+      this.channelHandlers.setupHandlers(socket);
       this.messageHandlers.setupHandlers(socket);
       this.uploadHandlers.setupHandlers(socket);
 

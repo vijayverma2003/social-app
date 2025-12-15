@@ -3,8 +3,8 @@ import {
   Profile as PrismaProfile,
   FriendRequest as PrismaFriendRequest,
   Friend as PrismaFriend,
-  DMChannel as PrismaDMChannel,
-  DMChannelUser as PrismaDMChannelUser,
+  Channel as PrismaChannel,
+  ChannelUser as PrismaChannelUser,
 } from "@database/postgres/generated/prisma/client";
 
 export type SocketResponse<T> = {
@@ -17,8 +17,8 @@ export type User = PrismaUser;
 export type Profile = PrismaProfile;
 export type Friend = PrismaFriend;
 export type FriendRequest = PrismaFriendRequest;
-export type DMChannel = PrismaDMChannel;
-export type DMChannelUser = PrismaDMChannelUser;
+export type Channel = PrismaChannel;
+export type ChannelUser = PrismaChannelUser;
 
 // ============================================================================
 // USER RELATED TYPES
@@ -45,7 +45,7 @@ export type FriendsList = {
   id: string;
   username: string;
   discriminator: string;
-  dmChannelId: string;
+  channelId: string | null;
   profile: Profile | null;
 };
 
@@ -63,15 +63,13 @@ export type IncomingAndOutgoingFriendRequests = {
 };
 
 // ============================================================================
-// DM RELATED TYPES
+// CHANNEL RELATED TYPES
 // ============================================================================
 
-export type DMChannelUserWithProfile = DMChannelUser & {
-  user: {
-    profile: Profile | null;
-  };
+export type ChannelUserWithProfile = ChannelUser & {
+  profile: Profile | null;
 };
 
-export type DMChannelWithUsers = DMChannel & {
-  users: DMChannelUserWithProfile[];
+export type ChannelWithUsers = Channel & {
+  users: ChannelUserWithProfile[];
 };

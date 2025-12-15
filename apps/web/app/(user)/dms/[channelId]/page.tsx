@@ -126,7 +126,7 @@ const DMChannelPage = () => {
         <h1 className="text-2xl font-bold mb-4">
           DM Channel -{" "}
           {channelUsers
-            .map((dmChannelUser) => dmChannelUser.user.profile?.displayName)
+            .map((dmChannelUser) => dmChannelUser.profile?.displayName)
             .join(", ")}
         </h1>
         {messages.length === 0 ? (
@@ -136,14 +136,14 @@ const DMChannelPage = () => {
         ) : (
           <div className="flex flex-col gap-2">
             {messages.map((message) => {
-              const dmChannelUser = channelUsers.find(
+              const channelUser = channelUsers.find(
                 (user) => user.userId === message.authorId
               );
               return (
                 <MessagePreview
                   message={message}
                   key={message._id}
-                  profile={dmChannelUser?.user.profile || null}
+                  profile={channelUser?.profile || null}
                 />
               );
             })}

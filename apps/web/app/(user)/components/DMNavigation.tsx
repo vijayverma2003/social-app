@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
 import { useDMChannelsStore } from "@/features/dms/store/dmChannelsStore";
-import { DMChannelWithUsers } from "@shared/types/responses";
+import { ChannelWithUsers } from "@shared/types/responses";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/providers/UserContextProvider";
@@ -15,7 +15,7 @@ const DMNavigation = () => {
   const { channels, isLoading } = useDMChannelsStore();
   const { user: currentUser, isLoading: isLoadingCurrentUser } = useUser();
 
-  const getOtherUser = (channel: DMChannelWithUsers) => {
+  const getOtherUser = (channel: ChannelWithUsers) => {
     // Find the user that is not the current user
     // Only proceed if currentUser is loaded
     if (!currentUser) return null;
@@ -24,7 +24,7 @@ const DMNavigation = () => {
     );
   };
 
-  const getUnreadCount = (channel: DMChannelWithUsers) => {
+  const getUnreadCount = (channel: ChannelWithUsers) => {
     if (!currentUser) return 0;
     const channelUser = channel.users.find((u) => u.userId === currentUser.id);
     return channelUser?.totalUnreadMessages || 0;
@@ -77,18 +77,16 @@ const DMNavigation = () => {
                   )}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={otherUser.user.profile?.avatarURL || ""}
-                    />
+                    <AvatarImage src={otherUser.profile?.avatarURL || ""} />
                     <AvatarFallback>
-                      {otherUser.user.profile?.displayName
+                      {otherUser.profile?.displayName
                         ?.charAt(0)
                         .toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium truncate">
-                      {otherUser.user.profile?.displayName || "Unknown"}
+                      {otherUser.profile?.displayName || "Unknown"}
                     </p>
                   </div>
                   {unreadCount > 0 && <NotificationBadge count={unreadCount} />}

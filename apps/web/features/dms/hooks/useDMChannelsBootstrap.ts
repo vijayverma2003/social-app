@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSocket } from "@/providers/SocketContextProvider";
 import { useDMChannelActions } from "@/features/dms/hooks/useDMChannelActions";
-import { DM_EVENTS, MESSAGE_EVENTS } from "@shared/socketEvents";
+import { CHANNEL_EVENTS, MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useDMChannelsStore } from "../store/dmChannelsStore";
 import { usePathname } from "next/navigation";
@@ -51,15 +51,15 @@ export const useDMChannelsBootstrap = () => {
   useEffect(() => {
     if (!socket || !currentUser) return;
 
-    const handleMarkedAsRead: ServerToClientEvents[typeof DM_EVENTS.MARKED_AS_READ] =
+    const handleMarkedAsRead: ServerToClientEvents[typeof CHANNEL_EVENTS.MARKED_AS_READ] =
       (data) => {
         resetUnreadCount(data.channelId, currentUser.id);
       };
 
-    socket.on(DM_EVENTS.MARKED_AS_READ, handleMarkedAsRead);
+    socket.on(CHANNEL_EVENTS.MARKED_AS_READ, handleMarkedAsRead);
 
     return () => {
-      socket.off(DM_EVENTS.MARKED_AS_READ, handleMarkedAsRead);
+      socket.off(CHANNEL_EVENTS.MARKED_AS_READ, handleMarkedAsRead);
     };
   }, [socket, resetUnreadCount, currentUser]);
 };

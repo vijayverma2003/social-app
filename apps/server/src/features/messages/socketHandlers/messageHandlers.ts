@@ -82,7 +82,7 @@ export class MessageHandlers {
 
       // Verify user is a member of the channel
       if (channelType === "dm") {
-        const channelUser = await prisma.dMChannelUser.findUnique({
+        const channelUser = await prisma.channelUser.findUnique({
           where: {
             channelId_userId: {
               channelId,
@@ -165,7 +165,7 @@ export class MessageHandlers {
         // Increment totalUnreadMessages for all users in the channel except:
         // 1. The sender
         // 2. Users currently viewing the channel (in the socket room)
-        await prisma.dMChannelUser.updateMany({
+        await prisma.channelUser.updateMany({
           where: {
             channelId,
             userId: {
@@ -224,7 +224,7 @@ export class MessageHandlers {
 
       // Verify user is a member of the channel
       if (channelType === "dm") {
-        const channelUser = await prisma.dMChannelUser.findUnique({
+        const channelUser = await prisma.channelUser.findUnique({
           where: {
             channelId_userId: {
               channelId,

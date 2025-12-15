@@ -17,17 +17,17 @@ export const FRIEND_EVENTS = {
   REMOVED: "friends:removed",
 } as const;
 
-export const DM_EVENTS = {
+export const CHANNEL_EVENTS = {
   // Client -> Server events (actions)
-  GET_LIST: "dm:get_list",
-  JOIN: "dm:join",
-  LEAVE: "dm:leave",
-  MARK_AS_READ: "dm:mark_as_read",
+  GET_DMS_LIST: "channel:get_dms_list",
+  JOIN: "channel:join",
+  LEAVE: "channel:leave",
+  MARK_AS_READ: "channel:mark_as_read",
 
   // Server -> Client events (notifications)
-  JOINED: "dm:joined",
-  LEFT: "dm:left",
-  MARKED_AS_READ: "dm:marked_as_read",
+  JOINED: "channel:joined",
+  LEFT: "channel:left",
+  MARKED_AS_READ: "channel:marked_as_read",
 } as const;
 
 export const MESSAGE_EVENTS = {
@@ -56,7 +56,7 @@ export type FriendRequestEvent =
 
 export type FriendEvent = (typeof FRIEND_EVENTS)[keyof typeof FRIEND_EVENTS];
 
-export type DMEvent = (typeof DM_EVENTS)[keyof typeof DM_EVENTS];
+export type ChannelEvent = (typeof CHANNEL_EVENTS)[keyof typeof CHANNEL_EVENTS];
 
 export type MessageEvent = (typeof MESSAGE_EVENTS)[keyof typeof MESSAGE_EVENTS];
 

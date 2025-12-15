@@ -30,8 +30,8 @@ const FriendsList = ({ friends }: FriendsListProps) => {
 
   const handleSendMessage = (friend: FriendsList) => {
     // TODO: Update this route based on your DM routing structure
-    if (friend.dmChannelId) {
-      router.push(`/connections/dm/${friend.dmChannelId}`);
+    if (friend.channelId) {
+      router.push(`/dms/${friend.channelId}`);
     } else {
       // If no DM channel exists, you might want to create one first
       console.warn("No DM channel ID available for this friend");
@@ -84,7 +84,7 @@ const FriendsList = ({ friends }: FriendsListProps) => {
                 <DropdownMenuItem
                   onClick={() => handleSendMessage(friend)}
                   className="cursor-pointer"
-                  disabled={!friend.dmChannelId}
+                  disabled={!friend.channelId}
                 >
                   <span>Send Message</span>
                 </DropdownMenuItem>

@@ -1,8 +1,8 @@
 import { getAuth } from "@clerk/express";
 import prisma from "@database/postgres";
 import {
-    FriendsList,
-    IncomingAndOutgoingFriendRequests,
+  FriendsList,
+  IncomingAndOutgoingFriendRequests,
 } from "@shared/types/responses";
 import { NextFunction, Request, Response } from "express";
 import { NotFoundError, UnauthorizedError } from "../../../errors";
@@ -43,7 +43,7 @@ export class FriendsController {
         id: friend.id,
         username: friend.friend.username,
         discriminator: friend.friend.discriminator,
-        dmChannelId: friend.dmChannelId,
+        channelId: friend.channelId,
         profile: friend.friend.profile,
       }));
 

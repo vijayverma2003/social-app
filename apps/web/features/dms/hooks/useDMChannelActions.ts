@@ -1,6 +1,6 @@
 "use client";
 
-import { DM_EVENTS } from "@shared/socketEvents";
+import { CHANNEL_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/providers/SocketContextProvider";
 import { useCallback, useMemo } from "react";
 import { useDMChannelsStore } from "../store/dmChannelsStore";
@@ -11,7 +11,7 @@ export const useDMChannelActions = () => {
   const { setChannels } = useDMChannelsStore();
 
   const getDMChannelsList = useCallback(() => {
-    emit(DM_EVENTS.GET_LIST, {}, (response) => {
+    emit(CHANNEL_EVENTS.GET_DMS_LIST, {}, (response) => {
       if (response.error) {
         toast.error(response.error);
         return;
@@ -23,7 +23,7 @@ export const useDMChannelActions = () => {
 
   const joinChannel = useCallback(
     (channelId: string) => {
-      emit(DM_EVENTS.JOIN, { channelId }, (response) => {
+      emit(CHANNEL_EVENTS.JOIN, { channelId }, (response) => {
         if (response.error) {
           toast.error(response.error);
           return;
@@ -35,7 +35,7 @@ export const useDMChannelActions = () => {
 
   const leaveChannel = useCallback(
     (channelId: string) => {
-      emit(DM_EVENTS.LEAVE, { channelId }, (response) => {
+      emit(CHANNEL_EVENTS.LEAVE, { channelId }, (response) => {
         if (response.error) {
           toast.error(response.error);
           return;
@@ -47,7 +47,7 @@ export const useDMChannelActions = () => {
 
   const markAsRead = useCallback(
     (channelId: string) => {
-      emit(DM_EVENTS.MARK_AS_READ, { channelId }, (response) => {
+      emit(CHANNEL_EVENTS.MARK_AS_READ, { channelId }, (response) => {
         if (response.error) {
           toast.error(response.error);
           return;
