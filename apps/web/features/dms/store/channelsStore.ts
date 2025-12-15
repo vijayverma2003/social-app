@@ -1,7 +1,7 @@
 import { ChannelWithUsers } from "@shared/types/responses";
 import { create } from "zustand";
 
-interface DMChannelsState {
+interface ChannelsState {
   channels: ChannelWithUsers[];
   isLoading: boolean;
   error: string | null;
@@ -18,7 +18,7 @@ interface DMChannelsState {
   setError: (error: string | null) => void;
 }
 
-export const useDMChannelsStore = create<DMChannelsState>((set) => ({
+export const useChannelsStore = create<ChannelsState>((set) => ({
   channels: [],
   isLoading: false,
   error: null,

@@ -2,17 +2,17 @@
 
 import { useEffect } from "react";
 import { useSocket } from "@/providers/SocketContextProvider";
-import { useDMChannelActions } from "@/features/dms/hooks/useDMChannelActions";
+import { useChannelActions } from "@/features/dms/hooks/useChannelActions";
 import { CHANNEL_EVENTS, MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
-import { useDMChannelsStore } from "../store/dmChannelsStore";
+import { useChannelsStore } from "../store/channelsStore";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/providers/UserContextProvider";
 
-export const useDMChannelsBootstrap = () => {
+export const useChannelsBootstrap = () => {
   const { socket, isConnected } = useSocket();
-  const { getDMChannelsList } = useDMChannelActions();
-  const { incrementUnreadCount, resetUnreadCount } = useDMChannelsStore();
+  const { getDMChannelsList } = useChannelActions();
+  const { incrementUnreadCount, resetUnreadCount } = useChannelsStore();
   const pathname = usePathname();
   const { user: currentUser } = useUser();
 

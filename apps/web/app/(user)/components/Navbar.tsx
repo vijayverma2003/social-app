@@ -8,7 +8,7 @@ import { Home, LucideIcon, Mail, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
-import DMNavigation from "./DMNavigation";
+import ChannelNavigation from "./ChannelNavigation";
 
 interface NavItem {
   href: string;
@@ -81,7 +81,7 @@ const Navbar = () => {
       {pathname.startsWith("/settings") ? (
         <ProfileSettingsNavigation />
       ) : (
-        <DMNavigation />
+        <ChannelNavigation />
       )}
     </aside>
   );

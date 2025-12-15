@@ -3,12 +3,12 @@
 import { CHANNEL_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/providers/SocketContextProvider";
 import { useCallback, useMemo } from "react";
-import { useDMChannelsStore } from "../store/dmChannelsStore";
+import { useChannelsStore } from "../store/channelsStore";
 import { toast } from "sonner";
 
-export const useDMChannelActions = () => {
+export const useChannelActions = () => {
   const { emit } = useSocket();
-  const { setChannels } = useDMChannelsStore();
+  const { setChannels } = useChannelsStore();
 
   const getDMChannelsList = useCallback(() => {
     emit(CHANNEL_EVENTS.GET_DMS_LIST, {}, (response) => {

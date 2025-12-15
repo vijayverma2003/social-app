@@ -1,6 +1,6 @@
 "use client";
 
-import { useDMChannelActions } from "@/features/dms/hooks/useDMChannelActions";
+import { useChannelActions } from "@/features/dms/hooks/useChannelActions";
 import {
   MessageInput,
   MessageInputRef,
@@ -8,17 +8,17 @@ import {
 import MessagePreview from "@/features/messages/components/MessagePreview";
 import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
-import { useDMChannelsStore } from "@/features/dms/store/dmChannelsStore";
+import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useUser } from "@/providers/UserContextProvider";
 
-const DMChannelPage = () => {
+const ChannelPage = () => {
   const params = useParams();
   const channelId = params?.channelId as string;
-  const { joinChannel, leaveChannel, markAsRead } = useDMChannelActions();
-  const { channels } = useDMChannelsStore();
+  const { joinChannel, leaveChannel, markAsRead } = useChannelActions();
+  const { channels } = useChannelsStore();
   const { user: currentUser } = useUser();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
@@ -126,7 +126,7 @@ const DMChannelPage = () => {
         <h1 className="text-2xl font-bold mb-4">
           DM Channel -{" "}
           {channelUsers
-            .map((dmChannelUser) => dmChannelUser.profile?.displayName)
+            .map((channelUser) => channelUser.profile?.displayName)
             .join(", ")}
         </h1>
         {messages.length === 0 ? (
@@ -160,4 +160,4 @@ const DMChannelPage = () => {
   );
 };
 
-export default DMChannelPage;
+export default ChannelPage;

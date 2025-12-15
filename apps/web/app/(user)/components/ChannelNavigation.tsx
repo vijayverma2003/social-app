@@ -4,15 +4,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
 import { cn } from "@/lib/utils";
-import { useDMChannelsStore } from "@/features/dms/store/dmChannelsStore";
+import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { ChannelWithUsers } from "@shared/types/responses";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/providers/UserContextProvider";
 
-const DMNavigation = () => {
+const ChannelNavigation = () => {
   const pathname = usePathname();
-  const { channels, isLoading } = useDMChannelsStore();
+  const { channels, isLoading } = useChannelsStore();
   const { user: currentUser, isLoading: isLoadingCurrentUser } = useUser();
 
   const getOtherUser = (channel: ChannelWithUsers) => {
@@ -100,4 +100,4 @@ const DMNavigation = () => {
   );
 };
 
-export default DMNavigation;
+export default ChannelNavigation;
