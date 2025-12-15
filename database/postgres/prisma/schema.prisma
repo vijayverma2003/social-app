@@ -113,16 +113,8 @@ model Channel {
   type      ChannelType
   createdAt DateTime    @default(now())
 
-  users      ChannelUser[]
-  friends    Friend[]
-  dmChannels DMChannel[]
-}
-
-model DMChannel {
-  channelId String
-  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-
-  @@unique([channelId])
+  users   ChannelUser[]
+  friends Friend[]
 }
 
 model ChannelUser {

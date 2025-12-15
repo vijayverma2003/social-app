@@ -273,13 +273,6 @@ export class FriendRequestHandlers {
               },
             });
 
-            // Create DMChannel linked to the Channel
-            await tx.dMChannel.create({
-              data: {
-                channelId: newChannel.id,
-              },
-            });
-
             channelId = newChannel.id;
           }
 

@@ -1,25 +1,25 @@
 import z from "zod";
 
-export const JoinDMChannelPayloadSchema = z
+export const JoinChannelPayloadSchema = z
   .object({
     channelId: z.string().trim().min(1, "Channel ID is required"),
   })
   .strict();
 
-export const LeaveDMChannelPayloadSchema = z
+export const LeaveChannelPayloadSchema = z
   .object({
     channelId: z.string().trim().min(1, "Channel ID is required"),
   })
   .strict();
 
-export const MarkDMChannelAsReadPayloadSchema = z
+export const MarkChannelAsReadPayloadSchema = z
   .object({
     channelId: z.string().trim().min(1, "Channel ID is required"),
   })
   .strict();
 
-export type JoinDMChannelPayload = z.infer<typeof JoinDMChannelPayloadSchema>;
-export type LeaveDMChannelPayload = z.infer<typeof LeaveDMChannelPayloadSchema>;
-export type MarkDMChannelAsReadPayload = z.infer<
-  typeof MarkDMChannelAsReadPayloadSchema
+export type JoinChannelPayload = z.infer<typeof JoinChannelPayloadSchema>;
+export type LeaveChannelPayload = z.infer<typeof LeaveChannelPayloadSchema>;
+export type MarkChannelAsReadPayload = z.infer<
+  typeof MarkChannelAsReadPayloadSchema
 >;

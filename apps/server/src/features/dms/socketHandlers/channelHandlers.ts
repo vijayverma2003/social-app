@@ -7,9 +7,9 @@ import {
 } from "@shared/types/socket";
 import { AuthenticatedSocket } from "../../../socketHandlers";
 import {
-  JoinDMChannelPayloadSchema,
-  LeaveDMChannelPayloadSchema,
-  MarkDMChannelAsReadPayloadSchema,
+  JoinChannelPayloadSchema,
+  LeaveChannelPayloadSchema,
+  MarkChannelAsReadPayloadSchema,
 } from "@shared/schemas/dm";
 import {
   ChannelWithUsers,
@@ -144,7 +144,7 @@ export class ChannelHandlers {
         return;
       }
 
-      const validationResult = JoinDMChannelPayloadSchema.safeParse(data);
+      const validationResult = JoinChannelPayloadSchema.safeParse(data);
       if (!validationResult.success) {
         cb({
           error: validationResult.error.issues[0]?.message || "Invalid input",
@@ -208,7 +208,7 @@ export class ChannelHandlers {
         return;
       }
 
-      const validationResult = LeaveDMChannelPayloadSchema.safeParse(data);
+      const validationResult = LeaveChannelPayloadSchema.safeParse(data);
       if (!validationResult.success) {
         cb({
           error: validationResult.error.issues[0]?.message || "Invalid input",
@@ -257,7 +257,7 @@ export class ChannelHandlers {
         return;
       }
 
-      const validationResult = MarkDMChannelAsReadPayloadSchema.safeParse(data);
+      const validationResult = MarkChannelAsReadPayloadSchema.safeParse(data);
       if (!validationResult.success) {
         cb({
           error: validationResult.error.issues[0]?.message || "Invalid input",

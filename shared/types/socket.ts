@@ -14,9 +14,9 @@ import {
   AcceptFriendRequestPayload,
 } from "../schemas/friends";
 import {
-  JoinDMChannelPayload,
-  LeaveDMChannelPayload,
-  MarkDMChannelAsReadPayload,
+  JoinChannelPayload,
+  LeaveChannelPayload,
+  MarkChannelAsReadPayload,
 } from "../schemas/dm";
 import {
   CreateMessagePayload,
@@ -124,25 +124,25 @@ export interface ClientToServerEvents {
   /**
    * JOIN: Join a channel socket room for receiving broadcasts
    * @param data - { channelId: string }
-   * @param callback - SocketResponse<JoinDMChannelPayload>
+   * @param callback - SocketResponse<JoinChannelPayload>
    * @requires User must be a member of the channel (ChannelUser record exists)
    * @broadcasts JOINED to channel room
    */
   [CHANNEL_EVENTS.JOIN]: (
-    data: JoinDMChannelPayload,
+    data: JoinChannelPayload,
     callback: (response: SocketResponse<{ channelId: string }>) => void
   ) => void;
 
   /**
    * LEAVE: Leave a channel socket room (stops receiving broadcasts)
    * @param data - { channelId: string }
-   * @param callback - SocketResponse<LeaveDMChannelPayload>
+   * @param callback - SocketResponse<LeaveChannelPayload>
    * @note This does not remove the user from the channel (ChannelUser record remains)
    * @broadcasts LEFT to channel room
    */
   [CHANNEL_EVENTS.LEAVE]: (
-    data: LeaveDMChannelPayload,
-    callback: (response: SocketResponse<LeaveDMChannelPayload>) => void
+    data: LeaveChannelPayload,
+    callback: (response: SocketResponse<LeaveChannelPayload>) => void
   ) => void;
 
   /**
@@ -153,7 +153,7 @@ export interface ClientToServerEvents {
    * @broadcasts MARKED_AS_READ to user room
    */
   [CHANNEL_EVENTS.MARK_AS_READ]: (
-    data: MarkDMChannelAsReadPayload,
+    data: MarkChannelAsReadPayload,
     callback: (response: SocketResponse<{ channelId: string }>) => void
   ) => void;
 
@@ -270,7 +270,7 @@ export interface ServerToClientEvents {
   [FRIEND_EVENTS.REMOVED]: (data: { friendId: string }) => void;
 
   // ============================================================================
-  // DM EVENTS
+  // CHANNEL EVENTS
   // ============================================================================
 
   /**
