@@ -63,12 +63,12 @@ const ChannelNavigation = () => {
           .map((channel) => {
             const otherUser = getOtherUser(channel);
             const unreadCount = getUnreadCount(channel);
-            const isActive = pathname === `/dms/${channel.id}`;
+            const isActive = pathname === `/channels/${channel.id}`;
 
             if (!otherUser) return null;
 
             return (
-              <Link key={channel.id} href={`/dms/${channel.id}`}>
+              <Link key={channel.id} href={`/channels/${channel.id}`}>
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(

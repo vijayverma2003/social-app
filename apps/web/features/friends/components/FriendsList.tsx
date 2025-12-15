@@ -30,12 +30,9 @@ const FriendsList = ({ friends }: FriendsListProps) => {
 
   const handleSendMessage = (friend: FriendsList) => {
     // TODO: Update this route based on your DM routing structure
-    if (friend.channelId) {
-      router.push(`/dms/${friend.channelId}`);
-    } else {
-      // If no DM channel exists, you might want to create one first
-      console.warn("No DM channel ID available for this friend");
-    }
+    if (friend.channelId) router.push(`/channels/${friend.channelId}`);
+    // If no DM channel exists, you might want to create one first
+    else console.warn("No DM channel ID available for this friend");
   };
 
   return (

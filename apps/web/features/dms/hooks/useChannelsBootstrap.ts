@@ -30,7 +30,8 @@ export const useChannelsBootstrap = () => {
         // Only update unread count for DM channels
         if (message.channelType === "dm") {
           // Check if the current user is viewing this channel
-          const isViewingChannel = pathname === `/dms/${message.channelId}`;
+          const isViewingChannel =
+            pathname === `/channels/${message.channelId}`;
 
           // Only increment if:
           // 1. The message is not from the current user (authorId !== currentUser.id)
