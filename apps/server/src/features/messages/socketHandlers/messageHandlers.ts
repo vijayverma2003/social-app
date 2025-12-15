@@ -145,12 +145,31 @@ export class MessageHandlers {
 
       // Update totalUnreadMessages for DM channels
       if (channelType === "dm") {
-        // Increment totalUnreadMessages for all users in the channel except the sender
+        // Get all users currently viewing the channel (in the socket room)
+        const roomName = `dm_channel:${channelId}`;
+        const room = this.io.sockets.adapter.rooms.get(roomName);
+        const activeUserIds = new Set<string>();
+
+        if (room)
+          // Extract userIds from all sockets in the room
+          for (const socketId of room) {
+            const socketInRoom = this.io.sockets.sockets.get(socketId) as
+              | AuthenticatedSocket
+              | undefined;
+            if (socketInRoom?.userId) activeUserIds.add(socketInRoom.userId);
+          }
+
+        // Build list of userIds to exclude (sender + active viewers)
+        const excludeUserIds = [socket.userId, ...Array.from(activeUserIds)];
+
+        // Increment totalUnreadMessages for all users in the channel except:
+        // 1. The sender
+        // 2. Users currently viewing the channel (in the socket room)
         await prisma.dMChannelUser.updateMany({
           where: {
             channelId,
             userId: {
-              not: socket.userId, // Exclude the sender
+              notIn: excludeUserIds,
             },
           },
           data: {
