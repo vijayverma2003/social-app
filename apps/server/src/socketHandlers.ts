@@ -3,7 +3,7 @@ import { clerkMiddleware, getAuth } from "@clerk/express";
 import { Request } from "express";
 import { FriendRequestHandlers } from "./features/friends/socketHandlers/FriendRequestHandlers";
 import { FriendsHandlers } from "./features/friends/socketHandlers/FriendsHandlers";
-import { ChannelHandlers } from "./features/dms/socketHandlers/channelHandlers";
+import { ChannelHandlers } from "./features/channels/socketHandlers/channelHandlers";
 import { MessageHandlers } from "./features/messages/socketHandlers/messageHandlers";
 import { UploadHandlers } from "./features/upload/socketHandlers/uploadHandlers";
 import prisma from "@database/postgres";
