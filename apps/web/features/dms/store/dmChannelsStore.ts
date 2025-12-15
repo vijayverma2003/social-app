@@ -12,6 +12,7 @@ interface DMChannelsState {
     updates: Partial<DMChannelWithUsers>
   ) => void;
   incrementUnreadCount: (channelId: string, excludeUserId: string) => void;
+  resetUnreadCount: (channelId: string, userId: string) => void;
   removeChannel: (channelId: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
@@ -53,6 +54,26 @@ export const useDMChannelsStore = create<DMChannelsState>((set) => ({
                   ? {
                       ...user,
                       totalUnreadMessages: user.totalUnreadMessages + 1,
+                    }
+                  : user
+              ),
+            }
+          : channel
+      ),
+    })),
+
+  resetUnreadCount: (channelId, userId) =>
+    set((state) => ({
+      channels: state.channels.map((channel) =>
+        channel.id === channelId
+          ? {
+              ...channel,
+              users: channel.users.map((user) =>
+                user.userId === userId
+                  ? {
+                      ...user,
+                      totalUnreadMessages: 0,
+                      lastReadAt: new Date(),
                     }
                   : user
               ),

@@ -12,14 +12,17 @@ import { useDMChannelsStore } from "@/features/dms/store/dmChannelsStore";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useUser } from "@/providers/UserContextProvider";
 
 const DMChannelPage = () => {
   const params = useParams();
   const channelId = params?.channelId as string;
-  const { joinChannel, leaveChannel } = useDMChannelActions();
+  const { joinChannel, leaveChannel, markAsRead } = useDMChannelActions();
   const { channels } = useDMChannelsStore();
+  const { user: currentUser } = useUser();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
+  const hasMarkedAsReadRef = useRef(false);
 
   const channelUsers = useMemo(() => {
     return channels.find((channel) => channel.id === channelId)?.users || [];
@@ -57,11 +60,38 @@ const DMChannelPage = () => {
   useEffect(() => {
     if (!channelId) return;
     joinChannel(channelId);
+    hasMarkedAsReadRef.current = false;
 
     return () => {
       leaveChannel(channelId);
     };
   }, [channelId, joinChannel, leaveChannel]);
+
+  // Detect when user scrolls to bottom and mark as read
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || !channelId || !currentUser) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50; // 50px threshold
+
+      if (isAtBottom && !hasMarkedAsReadRef.current) {
+        markAsRead(channelId);
+        hasMarkedAsReadRef.current = true;
+      } else if (!isAtBottom) {
+        hasMarkedAsReadRef.current = false;
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    // Also check on initial load if already at bottom
+    handleScroll();
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [channelId, currentUser, markAsRead]);
 
   useMessagesBootstrap(channelId, "dm", scrollToBottom, scrollToBottom);
 

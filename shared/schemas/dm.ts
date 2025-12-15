@@ -12,5 +12,14 @@ export const LeaveDMChannelPayloadSchema = z
   })
   .strict();
 
+export const MarkDMChannelAsReadPayloadSchema = z
+  .object({
+    channelId: z.string().trim().min(1, "Channel ID is required"),
+  })
+  .strict();
+
 export type JoinDMChannelPayload = z.infer<typeof JoinDMChannelPayloadSchema>;
 export type LeaveDMChannelPayload = z.infer<typeof LeaveDMChannelPayloadSchema>;
+export type MarkDMChannelAsReadPayload = z.infer<
+  typeof MarkDMChannelAsReadPayloadSchema
+>;

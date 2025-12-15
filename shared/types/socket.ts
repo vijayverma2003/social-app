@@ -17,7 +17,11 @@ import {
   CancelFriendRequestPayload,
   AcceptFriendRequestPayload,
 } from "../schemas/friends";
-import { JoinDMChannelPayload, LeaveDMChannelPayload } from "../schemas/dm";
+import {
+  JoinDMChannelPayload,
+  LeaveDMChannelPayload,
+  MarkDMChannelAsReadPayload,
+} from "../schemas/dm";
 import {
   CreateMessagePayload,
   GetMessagesPayload,
@@ -143,6 +147,18 @@ export interface ClientToServerEvents {
   [DM_EVENTS.LEAVE]: (
     data: LeaveDMChannelPayload,
     callback: (response: SocketResponse<LeaveDMChannelPayload>) => void
+  ) => void;
+
+  /**
+   * MARK_AS_READ: Mark a DM channel as read (reset unread count to 0 and update lastReadAt)
+   * @param data - { channelId: string }
+   * @param callback - SocketResponse<{ channelId: string }>
+   * @requires User must be a member of the channel
+   * @broadcasts MARKED_AS_READ to user room
+   */
+  [DM_EVENTS.MARK_AS_READ]: (
+    data: MarkDMChannelAsReadPayload,
+    callback: (response: SocketResponse<{ channelId: string }>) => void
   ) => void;
 
   // ============================================================================
@@ -275,6 +291,13 @@ export interface ServerToClientEvents {
    * @note This does not mean the user left the channel (DMChannelUser record may still exist)
    */
   [DM_EVENTS.LEFT]: (data: { channelId: string }) => void;
+
+  /**
+   * MARKED_AS_READ: A DM channel was marked as read
+   * @emitted_to The user who marked it as read (via user:userId room)
+   * @param data - { channelId: string }
+   */
+  [DM_EVENTS.MARKED_AS_READ]: (data: { channelId: string }) => void;
 
   // ============================================================================
   // MESSAGE EVENTS

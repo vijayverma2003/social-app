@@ -45,9 +45,22 @@ export const useDMChannelActions = () => {
     [emit]
   );
 
+  const markAsRead = useCallback(
+    (channelId: string) => {
+      emit(DM_EVENTS.MARK_AS_READ, { channelId }, (response) => {
+        if (response.error) {
+          toast.error(response.error);
+          return;
+        }
+      });
+    },
+    [emit]
+  );
+
   return {
     getDMChannelsList,
     joinChannel,
     leaveChannel,
+    markAsRead,
   };
 };

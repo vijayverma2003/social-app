@@ -9,6 +9,7 @@ import { AuthenticatedSocket } from "../../../socketHandlers";
 import {
   JoinDMChannelPayloadSchema,
   LeaveDMChannelPayloadSchema,
+  MarkDMChannelAsReadPayloadSchema,
 } from "@shared/schemas/dm";
 
 // Extract types from ClientToServerEvents for type safety
@@ -33,6 +34,13 @@ type LeaveDMChannelCallback = Parameters<
   ClientToServerEvents[typeof DM_EVENTS.LEAVE]
 >[1];
 
+type MarkDMChannelAsReadData = Parameters<
+  ClientToServerEvents[typeof DM_EVENTS.MARK_AS_READ]
+>[0];
+type MarkDMChannelAsReadCallback = Parameters<
+  ClientToServerEvents[typeof DM_EVENTS.MARK_AS_READ]
+>[1];
+
 export class DMHandlers {
   private io: Server<ClientToServerEvents, ServerToClientEvents>;
 
@@ -51,6 +59,10 @@ export class DMHandlers {
 
     socket.on(DM_EVENTS.LEAVE, (data, callback) =>
       this.leaveDMChannel(socket, data, callback)
+    );
+
+    socket.on(DM_EVENTS.MARK_AS_READ, (data, callback) =>
+      this.markDMChannelAsRead(socket, data, callback)
     );
   }
 
@@ -209,6 +221,81 @@ export class DMHandlers {
     } catch (error) {
       console.error("Error leaving DM channel socket room:", error);
       cb({ error: "Failed to leave DM channel socket room" });
+    }
+  }
+
+  private async markDMChannelAsRead(
+    socket: AuthenticatedSocket,
+    data: MarkDMChannelAsReadData,
+    cb: MarkDMChannelAsReadCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        cb({ error: "Unauthorized" });
+        return;
+      }
+
+      const validationResult = MarkDMChannelAsReadPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        cb({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
+        return;
+      }
+
+      const { channelId } = validationResult.data;
+
+      // Check if channel exists
+      const channel = await prisma.dMChannel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        cb({ error: "DM channel not found" });
+        return;
+      }
+
+      // Check if user is a member of the channel
+      const member = await prisma.dMChannelUser.findUnique({
+        where: {
+          channelId_userId: {
+            channelId,
+            userId: socket.userId,
+          },
+        },
+      });
+
+      if (!member) {
+        cb({ error: "User is not a member of this channel" });
+        return;
+      }
+
+      // Update lastReadAt and reset totalUnreadMessages to 0
+      await prisma.dMChannelUser.update({
+        where: {
+          channelId_userId: {
+            channelId,
+            userId: socket.userId,
+          },
+        },
+        data: {
+          lastReadAt: new Date(),
+          totalUnreadMessages: 0,
+        },
+      });
+
+      // Broadcast to the user that the channel was marked as read
+      this.io.to(`user:${socket.userId}`).emit(DM_EVENTS.MARKED_AS_READ, {
+        channelId,
+      });
+
+      cb({
+        success: true,
+        data: { channelId },
+      });
+    } catch (error) {
+      console.error("Error marking DM channel as read:", error);
+      cb({ error: "Failed to mark DM channel as read" });
     }
   }
 }

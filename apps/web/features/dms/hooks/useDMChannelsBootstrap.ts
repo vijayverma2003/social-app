@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSocket } from "@/providers/SocketContextProvider";
 import { useDMChannelActions } from "@/features/dms/hooks/useDMChannelActions";
-import { MESSAGE_EVENTS } from "@shared/socketEvents";
+import { DM_EVENTS, MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useDMChannelsStore } from "../store/dmChannelsStore";
 import { usePathname } from "next/navigation";
@@ -12,7 +12,7 @@ import { useUser } from "@/providers/UserContextProvider";
 export const useDMChannelsBootstrap = () => {
   const { socket, isConnected } = useSocket();
   const { getDMChannelsList } = useDMChannelActions();
-  const { incrementUnreadCount } = useDMChannelsStore();
+  const { incrementUnreadCount, resetUnreadCount } = useDMChannelsStore();
   const pathname = usePathname();
   const { user: currentUser } = useUser();
 
@@ -46,4 +46,20 @@ export const useDMChannelsBootstrap = () => {
       socket.off(MESSAGE_EVENTS.CREATED, handleMessageCreated);
     };
   }, [socket, incrementUnreadCount, pathname, currentUser]);
+
+  // Listen for marked as read events and update store
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+
+    const handleMarkedAsRead: ServerToClientEvents[typeof DM_EVENTS.MARKED_AS_READ] =
+      (data) => {
+        resetUnreadCount(data.channelId, currentUser.id);
+      };
+
+    socket.on(DM_EVENTS.MARKED_AS_READ, handleMarkedAsRead);
+
+    return () => {
+      socket.off(DM_EVENTS.MARKED_AS_READ, handleMarkedAsRead);
+    };
+  }, [socket, resetUnreadCount, currentUser]);
 };

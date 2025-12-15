@@ -22,10 +22,12 @@ export const DM_EVENTS = {
   GET_LIST: "dm:get_list",
   JOIN: "dm:join",
   LEAVE: "dm:leave",
+  MARK_AS_READ: "dm:mark_as_read",
 
   // Server -> Client events (notifications)
   JOINED: "dm:joined",
   LEFT: "dm:left",
+  MARKED_AS_READ: "dm:marked_as_read",
 } as const;
 
 export const MESSAGE_EVENTS = {
