@@ -6,6 +6,7 @@ import { FriendsHandlers } from "./features/friends/socketHandlers/FriendsHandle
 import { ChannelHandlers } from "./features/channels/socketHandlers/channelHandlers";
 import { MessageHandlers } from "./features/messages/socketHandlers/messageHandlers";
 import { UploadHandlers } from "./features/upload/socketHandlers/uploadHandlers";
+import { PostHandlers } from "./features/posts/socketHandlers/postHandlers";
 import prisma from "@database/postgres";
 import {
   ClientToServerEvents,
@@ -30,6 +31,7 @@ export class SocketHandlers {
   private channelHandlers: ChannelHandlers;
   private messageHandlers: MessageHandlers;
   private uploadHandlers: UploadHandlers;
+  private postHandlers: PostHandlers;
 
   constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
     this.io = io;
@@ -38,6 +40,7 @@ export class SocketHandlers {
     this.channelHandlers = new ChannelHandlers(io);
     this.messageHandlers = new MessageHandlers(io);
     this.uploadHandlers = new UploadHandlers(io);
+    this.postHandlers = new PostHandlers(io);
   }
 
   public initialize() {
@@ -96,6 +99,7 @@ export class SocketHandlers {
       this.channelHandlers.setupHandlers(socket);
       this.messageHandlers.setupHandlers(socket);
       this.uploadHandlers.setupHandlers(socket);
+      this.postHandlers.setupHandlers(socket);
 
       socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.id}`);

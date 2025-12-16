@@ -51,6 +51,16 @@ export const UPLOAD_EVENTS = {
   COMPLETED: "upload:completed",
 } as const;
 
+export const POST_EVENTS = {
+  // Client -> Server events (actions)
+  CREATE: "post:create",
+  UPDATE: "post:update",
+
+  // Server -> Client events (notifications)
+  CREATED: "post:created",
+  UPDATED: "post:updated",
+} as const;
+
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];
 
@@ -61,3 +71,5 @@ export type ChannelEvent = (typeof CHANNEL_EVENTS)[keyof typeof CHANNEL_EVENTS];
 export type MessageEvent = (typeof MESSAGE_EVENTS)[keyof typeof MESSAGE_EVENTS];
 
 export type UploadEvent = (typeof UPLOAD_EVENTS)[keyof typeof UPLOAD_EVENTS];
+
+export type PostEvent = (typeof POST_EVENTS)[keyof typeof POST_EVENTS];

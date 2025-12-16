@@ -4,6 +4,7 @@ import {
   CHANNEL_EVENTS,
   MESSAGE_EVENTS,
   UPLOAD_EVENTS,
+  POST_EVENTS,
 } from "../socketEvents";
 import { SocketResponse, FriendRequests, ChannelWithUsers } from "./responses";
 import {
@@ -30,6 +31,11 @@ import {
   UploadInitialisedResponse,
   UploadCompletedResponse,
 } from "../schemas/fileAttachment";
+import {
+  CreatePostPayload,
+  UpdatePostPayload,
+  PostData,
+} from "../schemas/post";
 
 /**
  * Socket Data Interface
@@ -219,6 +225,33 @@ export interface ClientToServerEvents {
     data: UploadCompletePayload,
     callback: (response: SocketResponse<UploadCompletedResponse>) => void
   ) => void;
+
+  // ============================================================================
+  // POST EVENTS
+  // ============================================================================
+
+  /**
+   * CREATE: Create a new post
+   * @param data - { content: string, storageObjectIds?: string[] }
+   * @param callback - SocketResponse<PostData> - Returns the created post
+   * @broadcasts CREATED to all users
+   */
+  [POST_EVENTS.CREATE]: (
+    data: CreatePostPayload,
+    callback: (response: SocketResponse<PostData>) => void
+  ) => void;
+
+  /**
+   * UPDATE: Update an existing post
+   * @param data - { postId: string, content: string, storageObjectIds?: string[] }
+   * @param callback - SocketResponse<PostData> - Returns the updated post
+   * @requires User must be the author of the post
+   * @broadcasts UPDATED to all users
+   */
+  [POST_EVENTS.UPDATE]: (
+    data: UpdatePostPayload,
+    callback: (response: SocketResponse<PostData>) => void
+  ) => void;
 }
 
 /**
@@ -334,4 +367,22 @@ export interface ServerToClientEvents {
    * @param data - UploadCompletedResponse - Contains attachment ID, URL, and status
    */
   [UPLOAD_EVENTS.COMPLETED]: (data: UploadCompletedResponse) => void;
+
+  // ============================================================================
+  // POST EVENTS
+  // ============================================================================
+
+  /**
+   * CREATED: A new post was created
+   * @emitted_to All users (posts are public)
+   * @param data - PostData - The created post
+   */
+  [POST_EVENTS.CREATED]: (data: PostData) => void;
+
+  /**
+   * UPDATED: A post was updated
+   * @emitted_to All users (posts are public)
+   * @param data - PostData - The updated post
+   */
+  [POST_EVENTS.UPDATED]: (data: PostData) => void;
 }
