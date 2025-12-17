@@ -55,6 +55,7 @@ export const POST_EVENTS = {
   // Client -> Server events (actions)
   CREATE: "post:create",
   UPDATE: "post:update",
+  GET_FEED: "post:get_feed",
 
   // Server -> Client events (notifications)
   CREATED: "post:created",

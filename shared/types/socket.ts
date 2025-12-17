@@ -252,6 +252,16 @@ export interface ClientToServerEvents {
     data: UpdatePostPayload,
     callback: (response: SocketResponse<PostData>) => void
   ) => void;
+
+  /**
+   * GET_FEED: Get the 20 most recent posts
+   * @param data - {} (no payload needed)
+   * @param callback - SocketResponse<PostData[]> - Returns array of 20 most recent posts
+   */
+  [POST_EVENTS.GET_FEED]: (
+    data: {},
+    callback: (response: SocketResponse<PostData[]>) => void
+  ) => void;
 }
 
 /**

@@ -27,6 +27,13 @@ type UpdatePostCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.UPDATE]
 >[1];
 
+type GetFeedData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.GET_FEED]
+>[0];
+type GetFeedCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.GET_FEED]
+>[1];
+
 export class PostHandlers {
   private io: Server<ClientToServerEvents, ServerToClientEvents>;
 
@@ -41,6 +48,10 @@ export class PostHandlers {
 
     socket.on(POST_EVENTS.UPDATE, (data, callback) =>
       this.updatePost(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.GET_FEED, (data, callback) =>
+      this.getFeed(socket, data, callback)
     );
   }
 
@@ -283,6 +294,78 @@ export class PostHandlers {
       console.error("Error updating post:", error);
       callback({
         error: error instanceof Error ? error.message : "Failed to update post",
+      });
+    }
+  }
+
+  private async getFeed(
+    socket: AuthenticatedSocket,
+    data: GetFeedData,
+    callback: GetFeedCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Get 20 most recent posts ordered by createdAt descending
+      const posts = await prisma.post.findMany({
+        take: 20,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          attachments: {
+            include: {
+              storageObject: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              discriminator: true,
+              profile: true,
+            },
+          },
+        },
+      });
+
+      // Format posts for response
+      const postsData: PostData[] = posts.map((post) => {
+        const attachments = post.attachments.map((attachment) => ({
+          id: attachment.id,
+          storageObjectId: attachment.storageObjectId,
+          url: attachment.storageObject.url || "",
+          fileName: attachment.storageObject.filename,
+          contentType: attachment.storageObject.mimeType,
+          size: attachment.storageObject.size,
+          hash: attachment.storageObject.hash,
+          storageKey: attachment.storageObject.storageKey,
+          createdAt: attachment.createdAt,
+          updatedAt: attachment.updatedAt,
+        }));
+
+        return {
+          id: post.id,
+          userId: post.userId,
+          content: post.content,
+          attachments,
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt,
+        };
+      });
+
+      callback({
+        success: true,
+        data: postsData,
+      });
+    } catch (error) {
+      console.error("Error getting feed:", error);
+      callback({
+        error: error instanceof Error ? error.message : "Failed to get feed",
       });
     }
   }
