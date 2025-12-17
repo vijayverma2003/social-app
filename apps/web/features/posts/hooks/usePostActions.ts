@@ -4,7 +4,11 @@ import { POST_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/providers/SocketContextProvider";
 import { useCallback } from "react";
 import { ClientToServerEvents } from "@shared/types/socket";
-import { CreatePostPayload, PostData } from "@shared/schemas/post";
+import {
+  CreatePostPayload,
+  PostData,
+  PostWithUser,
+} from "@shared/schemas/post";
 import { usePostsStore } from "../store/postsStore";
 import { toast } from "sonner";
 
@@ -22,7 +26,8 @@ type GetFeedCallback = Parameters<
 
 export const usePostActions = () => {
   const { emit } = useSocket();
-  const { setPosts, prependPost, updatePost } = usePostsStore();
+  const { setPosts, setPostsWithUser, prependPost, updatePost } =
+    usePostsStore();
 
   const createPost = useCallback(
     (payload: CreatePostPayload, onComplete?: (success: boolean) => void) => {
@@ -45,7 +50,7 @@ export const usePostActions = () => {
   );
 
   const getFeed = useCallback(
-    (onComplete?: (posts: PostData[] | null) => void) => {
+    (onComplete?: (posts: PostWithUser[] | null) => void) => {
       emit(POST_EVENTS.GET_FEED, {}, ((response) => {
         if (response.error) {
           toast.error("Failed to load feed", {
@@ -53,14 +58,20 @@ export const usePostActions = () => {
           });
           onComplete?.(null);
         } else if (response.success && response.data) {
-          setPosts(response.data);
+          // Store posts with user info for display
+          setPostsWithUser(response.data);
+          // Convert PostWithUser[] to PostData[] for store
+          const postsData: PostData[] = response.data.map(
+            ({ user, ...post }) => post
+          );
+          setPosts(postsData);
           onComplete?.(response.data);
         } else {
           onComplete?.(null);
         }
       }) as GetFeedCallback);
     },
-    [emit, setPosts]
+    [emit, setPosts, setPostsWithUser]
   );
 
   return {

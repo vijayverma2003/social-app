@@ -83,3 +83,16 @@ export type PostAttachment = z.infer<typeof PostAttachmentSchema>;
 export type PostData = z.infer<typeof PostSchema>;
 export type CreatePostPayload = z.infer<typeof CreatePostPayloadSchema>;
 export type UpdatePostPayload = z.infer<typeof UpdatePostPayloadSchema>;
+
+// Post with user info (for feed display)
+export type PostWithUser = PostData & {
+  user: {
+    id: string;
+    username: string;
+    discriminator: string;
+    profile: {
+      avatarURL: string | null;
+      displayName: string | null;
+    } | null;
+  };
+};

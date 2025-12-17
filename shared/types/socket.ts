@@ -35,6 +35,7 @@ import {
   CreatePostPayload,
   UpdatePostPayload,
   PostData,
+  PostWithUser,
 } from "../schemas/post";
 
 /**
@@ -256,11 +257,11 @@ export interface ClientToServerEvents {
   /**
    * GET_FEED: Get the 20 most recent posts
    * @param data - {} (no payload needed)
-   * @param callback - SocketResponse<PostData[]> - Returns array of 20 most recent posts
+   * @param callback - SocketResponse<PostWithUser[]> - Returns array of 20 most recent posts with user info
    */
   [POST_EVENTS.GET_FEED]: (
     data: {},
-    callback: (response: SocketResponse<PostData[]>) => void
+    callback: (response: SocketResponse<PostWithUser[]>) => void
   ) => void;
 }
 

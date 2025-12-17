@@ -333,8 +333,8 @@ export class PostHandlers {
         },
       });
 
-      // Format posts for response
-      const postsData: PostData[] = posts.map((post) => {
+      // Format posts for response with user info
+      const postsData = posts.map((post) => {
         const attachments = post.attachments.map((attachment) => ({
           id: attachment.id,
           storageObjectId: attachment.storageObjectId,
@@ -355,6 +355,12 @@ export class PostHandlers {
           attachments,
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
+          user: {
+            id: post.user.id,
+            username: post.user.username,
+            discriminator: post.user.discriminator,
+            profile: post.user.profile,
+          },
         };
       });
 
