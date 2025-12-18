@@ -293,6 +293,7 @@ export class PostHandlers {
       const postData: PostData = {
         id: post.id,
         userId: post.userId,
+        channelId: post.channelId || undefined,
         content: post.content,
         attachments,
         createdAt: post.createdAt,
@@ -367,6 +368,7 @@ export class PostHandlers {
         return {
           id: post.id,
           userId: post.userId,
+          channelId: post.channelId || undefined,
           content: post.content,
           attachments,
           createdAt: post.createdAt,

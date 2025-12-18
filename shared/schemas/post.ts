@@ -21,6 +21,7 @@ export const PostSchema = z
   .object({
     id: z.string().trim(),
     userId: z.string().trim().min(1),
+    channelId: z.string().trim().optional(),
     content: z.string().trim().max(2000),
     attachments: z.array(PostAttachmentSchema).optional().default([]),
     createdAt: z.date(),

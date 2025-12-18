@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PostData } from "@shared/schemas/post";
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -31,7 +32,11 @@ export const PostCard = ({
     ? authorUsername.charAt(0).toUpperCase()
     : "U";
 
-  return (
+  const channelHref = post.channelId
+    ? `/channels/${post.id}/${post.channelId}`
+    : undefined;
+
+  const cardContent = (
     <div className="p-4 rounded-lg border bg-card hover:bg-accent/40 transition-colors">
       <div className="flex items-start gap-3">
         <Avatar className="size-10">
@@ -78,6 +83,7 @@ export const PostCard = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           View
                         </a>
@@ -92,4 +98,14 @@ export const PostCard = ({
       </div>
     </div>
   );
+
+  if (channelHref) {
+    return (
+      <Link href={channelHref} className="block">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return cardContent;
 };
