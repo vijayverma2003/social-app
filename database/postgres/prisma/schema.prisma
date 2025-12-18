@@ -102,6 +102,7 @@ model StorageObject {
 
 enum ChannelType {
   dm
+  post
 }
 
 model Channel {

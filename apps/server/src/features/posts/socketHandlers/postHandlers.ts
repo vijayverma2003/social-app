@@ -103,28 +103,43 @@ export class PostHandlers {
         };
       }
 
-      // Create post with or without attachments
-      const post = await prisma.post.create({
-        data: {
-          userId: socket.userId,
-          content,
-          ...(attachmentData && { attachments: attachmentData }),
-        },
-        include: {
-          attachments: {
-            include: {
-              storageObject: true,
+      // Create post with or without attachments, and create a channel for the post
+      const { post } = await prisma.$transaction(async (tx) => {
+        // Create post
+        const createdPost = await tx.post.create({
+          data: {
+            userId: socket.userId!,
+            content,
+            ...(attachmentData && { attachments: attachmentData }),
+          },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                username: true,
+                discriminator: true,
+                profile: true,
+              },
             },
           },
-          user: {
-            select: {
-              id: true,
-              username: true,
-              discriminator: true,
-              profile: true,
+        });
+
+        // Create a channel of type "post" for this post
+        await tx.channel.create({
+          data: {
+            type: "post",
+            users: {
+              create: [{ userId: socket.userId! }],
             },
           },
-        },
+        });
+
+        return { post: createdPost };
       });
 
       // Format attachments for response
