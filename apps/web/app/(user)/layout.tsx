@@ -6,11 +6,13 @@ import Navbar from "./components/Navbar";
 import { useFriendRequestsBootstrap } from "@/features/friends/hooks/useFriendRequestsBootstrap";
 import { useFriendsBootstrap } from "@/features/friends/hooks/useFriendsBootstrap";
 import { useChannelsBootstrap } from "@/features/dms/hooks/useChannelsBootstrap";
+import { usePostChannelsBootstrap } from "@/features/posts/hooks/usePostChannelsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
   useFriendsBootstrap();
   useChannelsBootstrap();
+  usePostChannelsBootstrap();
 
   return (
     <div className="flex max-h-screen">

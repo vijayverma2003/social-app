@@ -13,9 +13,11 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useUser } from "@/providers/UserContextProvider";
+import { ChannelType } from "@shared/schemas/messages";
 
 const ChannelPage = () => {
   const params = useParams();
+  const postId = params?.postId as string;
   const channelId = params?.channelId as string;
   const { joinChannel, leaveChannel, markAsRead } = useChannelActions();
   const { channels } = useChannelsStore();
@@ -23,6 +25,9 @@ const ChannelPage = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
   const hasMarkedAsReadRef = useRef(false);
+
+  // Determine channel type: if postId is "@me", it's a DM channel, otherwise it's a post channel
+  const channelType: ChannelType = postId === "@me" ? "dm" : "post";
 
   const channelUsers = useMemo(() => {
     return channels.find((channel) => channel.id === channelId)?.users || [];
@@ -93,7 +98,7 @@ const ChannelPage = () => {
     };
   }, [channelId, currentUser, markAsRead]);
 
-  useMessagesBootstrap(channelId, "dm", scrollToBottom, scrollToBottom);
+  useMessagesBootstrap(channelId, channelType, scrollToBottom, scrollToBottom);
 
   useEffect(() => {
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
@@ -120,15 +125,17 @@ const ChannelPage = () => {
 
   if (!channelId) return <div>Invalid channel</div>;
 
+  const channelTitle =
+    channelType === "dm"
+      ? `DM Channel - ${channelUsers
+          .map((channelUser) => channelUser.profile?.displayName)
+          .join(", ")}`
+      : `Post Channel - ${channelId}`;
+
   return (
     <div className="flex flex-col h-full justify-end">
       <div ref={messagesContainerRef} className="overflow-y-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">
-          DM Channel -{" "}
-          {channelUsers
-            .map((channelUser) => channelUser.profile?.displayName)
-            .join(", ")}
-        </h1>
+        <h1 className="text-2xl font-bold mb-4">{channelTitle}</h1>
         {messages.length === 0 ? (
           <p className="text-muted-foreground">
             No messages yet. Start a conversation!
@@ -153,7 +160,7 @@ const ChannelPage = () => {
       <MessageInput
         ref={messageInputRef}
         channelId={channelId}
-        channelType="dm"
+        channelType={channelType}
         onSend={scrollToBottom}
       />
     </div>

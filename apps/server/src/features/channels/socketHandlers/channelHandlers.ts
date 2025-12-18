@@ -24,6 +24,13 @@ type GetDMsListCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DMS_LIST]
 >[1];
 
+type GetPostsListData = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_POSTS_LIST]
+>[0];
+type GetPostsListCallback = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_POSTS_LIST]
+>[1];
+
 type JoinChannelData = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.JOIN]
 >[0];
@@ -55,6 +62,10 @@ export class ChannelHandlers {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(CHANNEL_EVENTS.GET_DMS_LIST, (data, callback) =>
       this.getDMChannels(socket, data, callback)
+    );
+
+    socket.on(CHANNEL_EVENTS.GET_POSTS_LIST, (data, callback) =>
+      this.getPostChannels(socket, data, callback)
     );
 
     socket.on(CHANNEL_EVENTS.JOIN, (data, callback) =>
@@ -133,6 +144,85 @@ export class ChannelHandlers {
     }
   }
 
+  private async getPostChannels(
+    socket: AuthenticatedSocket,
+    data: GetPostsListData,
+    cb: GetPostsListCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        cb({ error: "Unauthorized" });
+        return;
+      }
+
+      // Get all post channels where the user is a member
+      const channels = await prisma.channel.findMany({
+        where: {
+          type: "post",
+          users: {
+            some: {
+              userId: socket.userId,
+            },
+          },
+        },
+        include: {
+          users: {
+            include: {
+              user: {
+                select: {
+                  profile: true,
+                },
+              },
+            },
+          },
+          posts: {
+            take: 1,
+            orderBy: {
+              createdAt: "desc",
+            },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  discriminator: true,
+                  profile: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 50, // Max 50 items
+      });
+
+      // Transform to match ChannelWithUsers type (flatten user.profile to profile)
+      const channelsWithUsers: ChannelWithUsers[] = channels.map((channel) => {
+        const { users, ...channelData } = channel;
+        return {
+          ...channelData,
+          users: users.map((channelUser) => {
+            const { user, ...channelUserData } = channelUser;
+            return {
+              ...channelUserData,
+              profile: user.profile,
+            } as ChannelUserWithProfile;
+          }),
+        };
+      });
+
+      cb({
+        success: true,
+        data: channelsWithUsers,
+      });
+    } catch (error) {
+      console.error("Error getting post channels list:", error);
+      cb({ error: "Failed to get post channels list" });
+    }
+  }
+
   private async joinChannelSocketRoom(
     socket: AuthenticatedSocket,
     data: JoinChannelData,
@@ -154,38 +244,58 @@ export class ChannelHandlers {
 
       const { channelId } = validationResult.data;
 
-      // Check if channel exists and is a DM channel
+      // Check if channel exists (can be DM or post channel)
       const channel = await prisma.channel.findUnique({
-        where: { id: channelId, type: "dm" },
+        where: { id: channelId },
       });
 
       if (!channel) {
-        cb({ error: "DM channel not found" });
+        cb({ error: "Channel not found" });
         return;
       }
 
-      // Check if user is a member of the channel (must be a member to join socket room)
-      const member = await prisma.channelUser.findUnique({
-        where: {
-          channelId_userId: {
+      // For post channels, allow anyone to join (they can be added as members later)
+      // For DM channels, check if user is a member
+      if (channel.type === "dm") {
+        const member = await prisma.channelUser.findUnique({
+          where: {
+            channelId_userId: {
+              channelId,
+              userId: socket.userId,
+            },
+          },
+        });
+
+        if (!member) {
+          cb({ error: "User is not a member of this channel" });
+          return;
+        }
+      } else if (channel.type === "post") {
+        // For post channels, add user as member if not already a member
+        await prisma.channelUser.upsert({
+          where: {
+            channelId_userId: {
+              channelId,
+              userId: socket.userId,
+            },
+          },
+          create: {
             channelId,
             userId: socket.userId,
           },
-        },
-      });
-
-      if (!member) {
-        cb({ error: "User is not a member of this channel" });
-        return;
+          update: {},
+        });
       }
 
-      // Join socket room for broadcasting
-      socket.join(`dm_channel:${channelId}`);
+      // Join socket room for broadcasting based on channel type
+      const roomName =
+        channel.type === "dm"
+          ? `dm_channel:${channelId}`
+          : `channel:${channelId}`;
+      socket.join(roomName);
 
       // Broadcast to all users in the channel that this user joined the socket room
-      this.io
-        .to(`dm_channel:${channelId}`)
-        .emit(CHANNEL_EVENTS.JOINED, { channelId });
+      this.io.to(roomName).emit(CHANNEL_EVENTS.JOINED, { channelId });
 
       cb({
         success: true,
@@ -218,9 +328,9 @@ export class ChannelHandlers {
 
       const { channelId } = validationResult.data;
 
-      // Check if channel exists and is a DM channel
+      // Check if channel exists
       const channel = await prisma.channel.findUnique({
-        where: { id: channelId, type: "dm" },
+        where: { id: channelId },
       });
 
       if (!channel) {
@@ -228,13 +338,15 @@ export class ChannelHandlers {
         return;
       }
 
-      // Leave socket room for this channel
-      socket.leave(`dm_channel:${channelId}`);
+      // Leave socket room for this channel based on channel type
+      const roomName =
+        channel.type === "dm"
+          ? `dm_channel:${channelId}`
+          : `channel:${channelId}`;
+      socket.leave(roomName);
 
       // Broadcast to all users in the channel that this user left the socket room
-      this.io
-        .to(`dm_channel:${channelId}`)
-        .emit(CHANNEL_EVENTS.LEFT, { channelId });
+      this.io.to(roomName).emit(CHANNEL_EVENTS.LEFT, { channelId });
 
       cb({
         success: true,
@@ -267,9 +379,9 @@ export class ChannelHandlers {
 
       const { channelId } = validationResult.data;
 
-      // Check if channel exists and is a DM channel
+      // Check if channel exists
       const channel = await prisma.channel.findUnique({
-        where: { id: channelId, type: "dm" },
+        where: { id: channelId },
       });
 
       if (!channel) {

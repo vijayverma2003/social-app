@@ -129,6 +129,16 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
+   * GET_POSTS_LIST: Get list of post channels for the authenticated user
+   * @param data - {} - No payload required
+   * @param callback - SocketResponse<ChannelWithUsers[]>
+   */
+  [CHANNEL_EVENTS.GET_POSTS_LIST]: (
+    data: {},
+    callback: (response: SocketResponse<ChannelWithUsers[]>) => void
+  ) => void;
+
+  /**
    * JOIN: Join a channel socket room for receiving broadcasts
    * @param data - { channelId: string }
    * @param callback - SocketResponse<JoinChannelPayload>

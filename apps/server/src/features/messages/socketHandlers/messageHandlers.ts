@@ -143,10 +143,13 @@ export class MessageHandlers {
         updatedAt: message.updatedAt,
       };
 
-      // Update totalUnreadMessages for DM channels
-      if (channelType === "dm") {
+      // Update totalUnreadMessages for DM and post channels
+      if (channelType === "dm" || channelType === "post") {
         // Get all users currently viewing the channel (in the socket room)
-        const roomName = `dm_channel:${channelId}`;
+        const roomName =
+          channelType === "dm"
+            ? `dm_channel:${channelId}`
+            : `channel:${channelId}`;
         const room = this.io.sockets.adapter.rooms.get(roomName);
         const activeUserIds = new Set<string>();
 

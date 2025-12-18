@@ -27,11 +27,15 @@ export const useChannelsBootstrap = () => {
 
     const handleMessageCreated: ServerToClientEvents[typeof MESSAGE_EVENTS.CREATED] =
       (message) => {
-        // Only update unread count for DM channels
-        if (message.channelType === "dm") {
+        // Update unread count for DM and post channels
+        if (message.channelType === "dm" || message.channelType === "post") {
           // Check if the current user is viewing this channel
+          // For DM channels: /channels/@me/[channelId]
+          // For post channels: /channels/[postId]/[channelId]
           const isViewingChannel =
-            pathname === `/channels/${message.channelId}`;
+            pathname === `/channels/@me/${message.channelId}` ||
+            (pathname.includes(`/channels/`) &&
+              pathname.endsWith(`/${message.channelId}`));
 
           // Only increment if:
           // 1. The message is not from the current user (authorId !== currentUser.id)

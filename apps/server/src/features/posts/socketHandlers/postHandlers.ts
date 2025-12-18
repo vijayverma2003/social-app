@@ -105,10 +105,21 @@ export class PostHandlers {
 
       // Create post with or without attachments, and create a channel for the post
       const { post } = await prisma.$transaction(async (tx) => {
-        // Create post
+        // Create a channel of type "post" for this post
+        const channel = await tx.channel.create({
+          data: {
+            type: "post",
+            users: {
+              create: [{ userId: socket.userId! }],
+            },
+          },
+        });
+
+        // Create post with channelId
         const createdPost = await tx.post.create({
           data: {
             userId: socket.userId!,
+            channelId: channel.id,
             content,
             ...(attachmentData && { attachments: attachmentData }),
           },
@@ -125,16 +136,6 @@ export class PostHandlers {
                 discriminator: true,
                 profile: true,
               },
-            },
-          },
-        });
-
-        // Create a channel of type "post" for this post
-        await tx.channel.create({
-          data: {
-            type: "post",
-            users: {
-              create: [{ userId: socket.userId! }],
             },
           },
         });
