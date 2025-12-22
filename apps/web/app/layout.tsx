@@ -1,15 +1,12 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { Open_Sans } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { SocketContextProvider } from "@/providers/SocketContextProvider";
 import { UserContextProvider } from "@/providers/UserContextProvider";
 import { Toaster } from "sonner";
 
-const openSans = Open_Sans({
-  variable: "--font-open-sans",
-  subsets: ["latin"],
-});
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "The Social App",
@@ -23,9 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" className={outfit.variable}>
         <body
-          className={`${openSans.variable} antialiased h-screen overflow-hidden`}
+          className={`${outfit.variable} antialiased h-screen overflow-hidden dark`}
         >
           <UserContextProvider>
             <SocketContextProvider>{children}</SocketContextProvider>

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { NotificationBadge } from "@/components/ui/notification-badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { NotificationBadge } from "@/components/custom/notification-badge";
 import {
   Popover,
   PopoverContent,
@@ -61,14 +61,14 @@ const Navbar = () => {
 
       <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit">
         <Popover open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="default"
-              className="w-full justify-start gap-3 mb-2"
-            >
-              <Plus className="size-5" />
-              <span>Create Post</span>
-            </Button>
+          <PopoverTrigger
+            className={cn(
+              buttonVariants({ variant: "default" }),
+              "w-full justify-start gap-3 mb-2"
+            )}
+          >
+            <Plus className="size-5" />
+            <span>Create Post</span>
           </PopoverTrigger>
           <PopoverContent className="w-96" align="start">
             <CreatePostForm

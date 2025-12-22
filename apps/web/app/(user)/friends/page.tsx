@@ -1,6 +1,6 @@
 "use client";
 
-import { NotificationBadge } from "@/components/ui/notification-badge";
+import { NotificationBadge } from "@/components/custom/notification-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FriendRequestForm from "@/features/friends/components/FriendRequestForm";
 import FriendsList from "@/features/friends/components/FriendsList";

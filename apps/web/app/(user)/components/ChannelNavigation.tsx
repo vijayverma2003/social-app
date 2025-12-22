@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { NotificationBadge } from "@/components/ui/notification-badge";
+import { NotificationBadge } from "@/components/custom/notification-badge";
 import { cn } from "@/lib/utils";
 import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { ChannelWithUsers } from "@shared/types/responses";
