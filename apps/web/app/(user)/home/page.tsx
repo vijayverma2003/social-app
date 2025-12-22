@@ -20,9 +20,7 @@ const HomePage = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto p-6 space-y-4">
-        <h1 className="text-2xl font-bold mb-6">Feed</h1>
-
+      <div className="max-w-2xl space-y-4">
         {postsWithUser.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <p>No posts yet. Be the first to post!</p>

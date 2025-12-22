@@ -11,7 +11,7 @@ const MainHeader = () => {
   const { isSignedIn, user } = useUser();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-50 w-full">
       <div className="flex h-16 items-center justify-between px-4 gap-4">
         <div className="flex-1 max-w-2xl">
           <div className="relative">

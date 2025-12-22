@@ -52,14 +52,14 @@ const Navbar = () => {
   ];
 
   return (
-    <aside className="min-h-screen w-64 border-r border-border bg-background p-4 flex flex-col gap-4 overflow-y-scroll">
+    <aside className="min-h-screen w-64 bg-background p-4 flex flex-col gap-4 overflow-y-scroll">
       <div className="mb-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
           <span>Social App</span>
         </Link>
       </div>
 
-      <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit">
+      <nav className="flex flex-col gap-2 flex-1 bg-secondary/50 p-4 rounded-2xl max-h-fit">
         <Popover open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
           <PopoverTrigger
             className={cn(

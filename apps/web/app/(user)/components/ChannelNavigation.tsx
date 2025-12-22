@@ -56,30 +56,8 @@ const ChannelNavigation = () => {
     return pathname === href;
   };
 
-  // Don't render channels until currentUser is loaded to prevent showing wrong users
-  if (isLoading || isLoadingCurrentUser) {
-    return (
-      <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Loading...
-        </p>
-      </nav>
-    );
-  }
-
-  // If currentUser failed to load, don't render channels to avoid showing incorrect data
-  if (!currentUser) {
-    return (
-      <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Unable to load user data
-        </p>
-      </nav>
-    );
-  }
-
   return (
-    <nav className="flex flex-col gap-2 flex-1 bg-accent/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
+    <nav className="flex flex-col gap-2 flex-1 bg-secondary/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
       {/* DM Channels */}
       {dmChannels.length > 0 && (
         <div className="mb-2">

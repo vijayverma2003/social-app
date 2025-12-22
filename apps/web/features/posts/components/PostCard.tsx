@@ -37,7 +37,7 @@ export const PostCard = ({
     : undefined;
 
   const cardContent = (
-    <div className="p-4 rounded-lg border bg-card hover:bg-accent/40 transition-colors">
+    <div className="p-4 rounded-3xl bg-secondary/50 hover:bg-secondary/70 transition-colors">
       <div className="flex items-start gap-3">
         <Avatar className="size-10">
           <AvatarImage src={authorAvatarUrl || ""} />
