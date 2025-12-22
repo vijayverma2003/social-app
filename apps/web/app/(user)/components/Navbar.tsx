@@ -1,21 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/custom/notification-badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
+import { CreatePostForm } from "@/features/posts/components/CreatePostForm";
 import { cn } from "@/lib/utils";
-import { Home, LucideIcon, Mail, Users, Plus } from "lucide-react";
+import { Home, LucideIcon, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
 import ChannelNavigation from "./ChannelNavigation";
-import { CreatePostForm } from "@/features/posts/components/CreatePostForm";
 
 interface NavItem {
   href: string;
@@ -44,11 +44,6 @@ const Navbar = () => {
       icon: Users,
       showBadge: true,
     },
-    {
-      href: "/message-requests",
-      label: "Message Requests",
-      icon: Mail,
-    },
   ];
 
   return (
@@ -60,24 +55,6 @@ const Navbar = () => {
       </div>
 
       <nav className="flex flex-col gap-2 flex-1 bg-secondary/50 p-4 rounded-2xl max-h-fit">
-        <Popover open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-          <PopoverTrigger
-            className={cn(
-              buttonVariants({ variant: "default" }),
-              "w-full justify-start gap-3 mb-2"
-            )}
-          >
-            <Plus className="size-5" />
-            <span>Create Post</span>
-          </PopoverTrigger>
-          <PopoverContent className="w-96" align="start">
-            <CreatePostForm
-              onSuccess={() => setIsCreatePostOpen(false)}
-              onCancel={() => setIsCreatePostOpen(false)}
-            />
-          </PopoverContent>
-        </Popover>
-
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -102,6 +79,24 @@ const Navbar = () => {
             </Link>
           );
         })}
+
+        <Popover open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+          <PopoverTrigger
+            className={cn(
+              buttonVariants({ variant: "default" }),
+              "w-full justify-start gap-3 mb-2"
+            )}
+          >
+            <Plus className="size-5" />
+            <span>Create Post</span>
+          </PopoverTrigger>
+          <PopoverContent className="w-96" align="start">
+            <CreatePostForm
+              onSuccess={() => setIsCreatePostOpen(false)}
+              onCancel={() => setIsCreatePostOpen(false)}
+            />
+          </PopoverContent>
+        </Popover>
       </nav>
 
       {pathname.startsWith("/settings") ? (
