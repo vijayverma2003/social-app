@@ -90,6 +90,8 @@ model StorageObject {
   storageKey      String              @db.VarChar(500)
   hash            String              @unique @db.VarChar(64)
   status          StorageObjectStatus @default(pending)
+  width           Int?
+  height          Int?
   createdByUserId String? // User who initiated the upload
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt

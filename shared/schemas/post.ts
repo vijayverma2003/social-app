@@ -11,6 +11,8 @@ export const PostAttachmentSchema = z
     size: z.number().int().min(0),
     hash: z.string().trim().min(1),
     storageKey: z.string().trim().min(1),
+    width: z.number().int().min(0).optional().nullable(),
+    height: z.number().int().min(0).optional().nullable(),
     createdAt: z.date(),
     updatedAt: z.date(),
   })

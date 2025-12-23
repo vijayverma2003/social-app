@@ -25,6 +25,7 @@ import {
 import crypto from "crypto";
 import { randomUUID } from "crypto";
 import prisma from "@database/postgres";
+import imageSize from "image-size";
 
 // Extract types from ClientToServerEvents for type safety
 type UploadInitData = Parameters<
@@ -237,14 +238,38 @@ export class UploadHandlers {
         // Calculate SHA256 hash of the uploaded file
         const stream = getObjectResponse.Body as NodeJS.ReadableStream;
         const hashStream = crypto.createHash("sha256");
+        const chunks: Buffer[] = [];
 
         await new Promise<void>((resolve, reject) => {
-          stream.on("data", (chunk) => hashStream.update(chunk));
+          stream.on("data", (chunk) => {
+            hashStream.update(chunk);
+            chunks.push(chunk as Buffer);
+          });
           stream.on("end", () => resolve());
           stream.on("error", reject);
         });
 
+        const buffer = Buffer.concat(chunks);
         const actualHash = hashStream.digest("hex");
+
+        // Try to extract image dimensions if this is an image
+        let width: number | null = null;
+        let height: number | null = null;
+        if (storageObject.mimeType.startsWith("image/")) {
+          try {
+            const dimensions = imageSize(buffer);
+            if (dimensions.width && dimensions.height) {
+              width = dimensions.width;
+              height = dimensions.height;
+            }
+          } catch (dimensionError) {
+            console.error(
+              "Failed to extract image dimensions for storageObject",
+              storageObjectId,
+              dimensionError
+            );
+          }
+        }
 
         // Verify actual hash matches expected hash
         if (actualHash !== storageObject.hash) {
@@ -278,6 +303,8 @@ export class UploadHandlers {
           data: {
             status: "done",
             url: fileUrl,
+            width: width ?? undefined,
+            height: height ?? undefined,
           },
         });
 

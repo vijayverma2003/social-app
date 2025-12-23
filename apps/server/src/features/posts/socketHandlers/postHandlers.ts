@@ -153,6 +153,8 @@ export class PostHandlers {
         size: attachment.storageObject.size,
         hash: attachment.storageObject.hash,
         storageKey: attachment.storageObject.storageKey,
+        width: attachment.storageObject.width ?? null,
+        height: attachment.storageObject.height ?? null,
         createdAt: attachment.createdAt,
         updatedAt: attachment.updatedAt,
       }));
@@ -285,6 +287,8 @@ export class PostHandlers {
         size: attachment.storageObject.size,
         hash: attachment.storageObject.hash,
         storageKey: attachment.storageObject.storageKey,
+        width: attachment.storageObject.width ?? null,
+        height: attachment.storageObject.height ?? null,
         createdAt: attachment.createdAt,
         updatedAt: attachment.updatedAt,
       }));
@@ -361,6 +365,8 @@ export class PostHandlers {
           size: attachment.storageObject.size,
           hash: attachment.storageObject.hash,
           storageKey: attachment.storageObject.storageKey,
+          width: attachment.storageObject.width ?? null,
+          height: attachment.storageObject.height ?? null,
           createdAt: attachment.createdAt,
           updatedAt: attachment.updatedAt,
         }));

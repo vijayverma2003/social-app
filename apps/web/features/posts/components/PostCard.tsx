@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface PostCardProps {
   post: PostData;
@@ -38,63 +39,73 @@ export const PostCard = ({
 
   const cardContent = (
     <div className="p-4 rounded-3xl bg-secondary/50 hover:bg-secondary/70 transition-colors">
-      <div className="flex items-start gap-3">
-        <Avatar className="size-10">
-          <AvatarImage src={authorAvatarUrl || ""} />
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <p className="text-sm font-semibold">{displayName}</p>
-            <p className="text-xs text-muted-foreground">{timeAgo}</p>
+      <div className="flex flex-col items-start gap-3">
+        <div className="flex items-center gap-2">
+          <Avatar className="size-10">
+            <AvatarImage src={authorAvatarUrl || ""} />
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-sm font-semibold">{displayName}</p>
+              <p className="text-xs text-muted-foreground">{timeAgo}</p>
+            </div>
           </div>
+        </div>
 
-          {post.content && (
-            <p className="text-sm mb-3 whitespace-pre-wrap wrap-break-word">
-              {post.content}
-            </p>
-          )}
+        {post.attachments && post.attachments.length > 0 && (
+          <div className="gap-2 mb-2 w-full">
+            {post.attachments.map((attachment) => {
+              const isImage =
+                attachment.contentType?.startsWith("image/") ?? false;
 
-          {post.attachments && post.attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {post.attachments.map((attachment) => {
-                const isImage =
-                  attachment.contentType?.startsWith("image/") ?? false;
+              const aspectRatio =
+                attachment.width && attachment.height
+                  ? attachment.width / attachment.height
+                  : 1;
 
-                return (
-                  <div
-                    key={attachment.id}
-                    className="rounded-lg overflow-hidden border"
-                  >
-                    {isImage ? (
+              console.log(aspectRatio);
+
+              return (
+                <div
+                  key={attachment.id}
+                  className="rounded-2xl overflow-hidden"
+                >
+                  {isImage ? (
+                    <div className="relative">
                       <Image
                         src={attachment.url}
                         alt={attachment.fileName}
-                        width={400}
-                        height={400}
-                        className="max-w-full h-auto"
+                        width={500}
+                        height={500}
+                        className={"object-cover w-full"}
                       />
-                    ) : (
-                      <div className="p-4 bg-muted flex items-center gap-2">
-                        <span className="text-sm">{attachment.fileName}</span>
-                        <a
-                          href={attachment.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          View
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-muted flex items-center gap-2">
+                      <span className="text-sm">{attachment.fileName}</span>
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        View
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {post.content && (
+          <p className="text-sm mb-3 whitespace-pre-wrap wrap-break-word">
+            {post.content}
+          </p>
+        )}
       </div>
     </div>
   );
