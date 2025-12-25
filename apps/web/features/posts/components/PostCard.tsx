@@ -3,10 +3,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PostData } from "@shared/schemas/post";
-import { MessageSquare } from "lucide-react";
-import Link from "next/link";
-import { useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { useMemo } from "react";
 import { ImageCollage } from "./ImageCollage";
 
 interface PostCardProps {
@@ -14,6 +12,8 @@ interface PostCardProps {
   authorUsername?: string;
   authorDiscriminator?: string;
   authorAvatarUrl?: string | null;
+  onPreviewChat?: (post: PostData) => void;
+  postForPreview?: PostData;
 }
 
 export const PostCard = ({
@@ -21,6 +21,8 @@ export const PostCard = ({
   authorUsername,
   authorDiscriminator,
   authorAvatarUrl,
+  onPreviewChat,
+  postForPreview,
 }: PostCardProps) => {
   const timeAgo = useMemo(() => {
     return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
@@ -39,11 +41,11 @@ export const PostCard = ({
     : undefined;
 
   return (
-    <div className="p-4 rounded-3xl bg-secondary/50 hover:bg-secondary/70 transition-colors">
+    <div className="p-4 rounded-3xl bg-secondary/50">
       <div className="flex flex-col items-start gap-3">
         <div className="flex items-center gap-2">
           <Avatar className="size-10">
-            <AvatarImage src={authorAvatarUrl || ""} />
+            <AvatarImage src={authorAvatarUrl || undefined} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
@@ -87,23 +89,25 @@ export const PostCard = ({
                   </a>
                 </div>
               ))}
-
-            {/* Chat preview button */}
-            <div className="flex justify-end w-full">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="bg-secondary/50 hover:bg-secondary/70"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // TODO: Add chat preview functionality
-                }}
-              >
-                <MessageSquare className="size-4 mr-2" />
-                Preview Chat
-              </Button>
-            </div>
           </>
+        )}
+
+        {/* Chat preview button - shown for all posts with channelId */}
+        {post.channelId && (
+          <div className="flex justify-end w-full">
+            <Button
+              variant="secondary"
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (postForPreview) {
+                  onPreviewChat?.(postForPreview);
+                }
+              }}
+            >
+              Preview Chat
+            </Button>
+          </div>
         )}
       </div>
     </div>

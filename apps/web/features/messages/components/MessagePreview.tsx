@@ -32,7 +32,7 @@ const MessagePreview = ({
       <ContextMenuTrigger>
         <div className="p-2 rounded-lg flex items-start gap-2 hover:bg-accent/40">
           <Avatar className="size-12">
-            <AvatarImage src={profile?.avatarURL || ""} />
+            <AvatarImage src={profile?.avatarURL || undefined} />
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
 

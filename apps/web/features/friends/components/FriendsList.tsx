@@ -45,7 +45,7 @@ const FriendsList = ({ friends }: FriendsListProps) => {
           >
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarImage src={friend.profile?.avatarURL || ""} />
+                <AvatarImage src={friend.profile?.avatarURL || undefined} />
                 <AvatarFallback>
                   {friend.username.charAt(0).toUpperCase()}
                 </AvatarFallback>

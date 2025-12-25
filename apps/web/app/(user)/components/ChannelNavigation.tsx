@@ -81,7 +81,9 @@ const ChannelNavigation = () => {
                   )}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={otherUser.profile?.avatarURL || ""} />
+                    <AvatarImage
+                      src={otherUser.profile?.avatarURL || undefined}
+                    />
                     <AvatarFallback>
                       {otherUser.profile?.displayName
                         ?.charAt(0)
@@ -128,7 +130,9 @@ const ChannelNavigation = () => {
                   )}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={postAuthor?.profile?.avatarURL || ""} />
+                    <AvatarImage
+                      src={postAuthor?.profile?.avatarURL || undefined}
+                    />
                     <AvatarFallback>
                       {displayName.charAt(0).toUpperCase()}
                     </AvatarFallback>

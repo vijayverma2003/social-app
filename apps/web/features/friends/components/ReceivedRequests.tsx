@@ -25,7 +25,7 @@ const ReceivedRequests = ({ receivedRequests }: ReceivedRequestsProps) => {
             >
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={request.profile?.avatarURL || ""} />
+                  <AvatarImage src={request.profile?.avatarURL || undefined} />
                   <AvatarFallback>
                     {request.username.charAt(0).toUpperCase()}
                   </AvatarFallback>
