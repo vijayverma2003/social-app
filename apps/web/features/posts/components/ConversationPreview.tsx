@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import MessagePreview from "@/features/messages/components/MessagePreview";
+import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
 import { useChannelsStore } from "@/features/dms/store/channelsStore";
@@ -71,26 +71,13 @@ export const ConversationPreview = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
         <div
           ref={messagesContainerRef}
-          className="bottom-0 absolute w-full left-0"
+          className="bottom-0 absolute w-full left-0 px-4"
         >
-          {messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No messages yet. Be the first to comment!
-            </p>
-          ) : (
-            messages.map((message) => {
-              const channelUser = channelUsers.find(
-                (user) => user.userId === message.authorId
-              );
-              return (
-                <MessagePreview
-                  key={message._id}
-                  message={message}
-                  profile={channelUser?.profile || null}
-                />
-              );
-            })
-          )}
+          <MessagesList
+            messages={messages}
+            channelUsers={channelUsers}
+            emptyMessage="No messages yet. Be the first to comment!"
+          />
         </div>
       </div>
 

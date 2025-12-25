@@ -5,7 +5,7 @@ import {
   MessageInput,
   MessageInputRef,
 } from "@/features/messages/components/MessageInput";
-import MessagePreview from "@/features/messages/components/MessagePreview";
+import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
 import { useChannelsStore } from "@/features/dms/store/channelsStore";
@@ -136,26 +136,11 @@ const ChannelPage = () => {
     <div className="flex flex-col h-full justify-end">
       <div ref={messagesContainerRef} className="overflow-y-auto p-4">
         <h1 className="text-2xl font-bold mb-4">{channelTitle}</h1>
-        {messages.length === 0 ? (
-          <p className="text-muted-foreground">
-            No messages yet. Start a conversation!
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {messages.map((message) => {
-              const channelUser = channelUsers.find(
-                (user) => user.userId === message.authorId
-              );
-              return (
-                <MessagePreview
-                  message={message}
-                  key={message._id}
-                  profile={channelUser?.profile || null}
-                />
-              );
-            })}
-          </div>
-        )}
+        <MessagesList
+          messages={messages}
+          channelUsers={channelUsers}
+          emptyMessage="No messages yet. Start a conversation!"
+        />
       </div>
       <MessageInput
         ref={messageInputRef}
