@@ -186,9 +186,7 @@ export const UploadButton = ({
     );
 
     setSelectedFiles((prev) => {
-      const updated = [...prev, ...newFiles];
-      onFilesChange?.(updated);
-      return updated;
+      return [...prev, ...newFiles];
     });
 
     // Reset file input
@@ -197,11 +195,14 @@ export const UploadButton = ({
 
   const removeFile = (id: string) => {
     setSelectedFiles((prev) => {
-      const updated = prev.filter((f) => f.id !== id);
-      onFilesChange?.(updated);
-      return updated;
+      return prev.filter((f) => f.id !== id);
     });
   };
+
+  // Notify parent of file changes after state update
+  useEffect(() => {
+    onFilesChange?.(selectedFiles);
+  }, [selectedFiles, onFilesChange]);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
