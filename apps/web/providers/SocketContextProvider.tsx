@@ -103,13 +103,6 @@ export const SocketContextProvider: React.FC<SocketProviderProps> = ({
 
     initializeSocket();
 
-    return () => {
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-        setIsConnected(false);
-      }
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]);
 
@@ -124,6 +117,8 @@ export const SocketContextProvider: React.FC<SocketProviderProps> = ({
       const timeout = setTimeout(() => {
         callback({ error: "Socket connection timeout" });
       }, 30_000);
+
+      console.log(`Calling ${event} with data:`, data);
 
       socket.once("connect", () => {
         clearTimeout(timeout);

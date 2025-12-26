@@ -32,7 +32,7 @@ const ChannelPage = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
   const hasMarkedAsReadRef = useRef(false);
-  console.log(postId);
+
   // Determine channel type: if postId is "@me", it's a DM channel, otherwise it's a post channel
   const channelType: ChannelType = postId === "%40me" ? "dm" : "post";
 
@@ -127,13 +127,6 @@ const ChannelPage = () => {
   }, []);
 
   if (!channelId) return <div>Invalid channel</div>;
-
-  const channelTitle =
-    channelType === "dm"
-      ? `DM Channel - ${channelUsers
-          .map((channelUser) => channelUser.profile?.displayName)
-          .join(", ")}`
-      : `Post Channel - ${channelId}`;
 
   return (
     <div className="flex flex-col h-full justify-end max-w-2xl bg-secondary/50 rounded-2xl relative overflow-hidden">

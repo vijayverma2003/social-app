@@ -10,11 +10,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/providers/UserContextProvider";
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 const ChannelNavigation = () => {
   const pathname = usePathname();
-  const { channels, isLoading } = useChannelsStore();
-  const { user: currentUser, isLoading: isLoadingCurrentUser } = useUser();
+  const channels = useChannelsStore(useShallow((state) => state.channels));
+  const { user: currentUser } = useUser();
 
   // Separate DM and post channels
   const { dmChannels, postChannels } = useMemo(() => {
@@ -59,7 +60,7 @@ const ChannelNavigation = () => {
   return (
     <nav className="flex flex-col gap-2 flex-1 bg-secondary/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
       {/* DM Channels */}
-      {dmChannels.length > 0 && (
+      {
         <div className="mb-2">
           <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">
             Direct Messages
@@ -101,10 +102,10 @@ const ChannelNavigation = () => {
             );
           })}
         </div>
-      )}
+      }
 
       {/* Post Channels */}
-      {postChannels.length > 0 && (
+      {
         <div>
           <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">
             Post Channels
@@ -151,7 +152,7 @@ const ChannelNavigation = () => {
             );
           })}
         </div>
-      )}
+      }
 
       {channels.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-4">

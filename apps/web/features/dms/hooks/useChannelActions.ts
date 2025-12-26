@@ -2,7 +2,7 @@
 
 import { CHANNEL_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/providers/SocketContextProvider";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useChannelsStore } from "../store/channelsStore";
 import { toast } from "sonner";
 
@@ -11,13 +11,20 @@ export const useChannelActions = () => {
   const { setChannels } = useChannelsStore();
 
   const getDMChannelsList = useCallback(() => {
+    console.log("Getting DM channels list...");
+    console.time("getDMChannelsList");
     emit(CHANNEL_EVENTS.GET_DMS_LIST, {}, (response) => {
       if (response.error) {
         toast.error(response.error);
         return;
       } else if (response.success && response.data) {
-        setChannels(response.data ?? []);
+        const existingChannels = useChannelsStore.getState().channels;
+        const newChannels = response.data.filter(
+          (channel) => !existingChannels.some((ch) => ch.id === channel.id)
+        );
+        setChannels([...existingChannels, ...newChannels]);
       }
+      console.timeEnd("getDMChannelsList");
     });
   }, [emit, setChannels]);
 

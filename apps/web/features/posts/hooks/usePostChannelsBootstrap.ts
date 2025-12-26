@@ -2,16 +2,19 @@
 
 import { CHANNEL_EVENTS } from "@shared/socketEvents";
 import { useSocket } from "@/providers/SocketContextProvider";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { toast } from "sonner";
 
 export const usePostChannelsBootstrap = () => {
   const { emit, socket, isConnected } = useSocket();
-  const { addChannel } = useChannelsStore();
+  const { setChannels } = useChannelsStore();
+  const fetchedRef = useRef(false);
 
   const getPostChannels = useCallback(() => {
     if (!socket || !isConnected) return;
+    console.log("Getting post channels...");
+    console.time("getPostChannels");
 
     emit(CHANNEL_EVENTS.GET_POSTS_LIST, {}, (response) => {
       if (response.error) {
@@ -29,16 +32,18 @@ export const usePostChannelsBootstrap = () => {
         );
 
         // Add new post channels
-        newChannels.forEach((channel) => addChannel(channel));
+        setChannels([...existingChannels, ...newChannels]);
       }
+      console.timeEnd("getPostChannels");
     });
-  }, [emit, socket, isConnected, addChannel]);
+  }, [emit, socket, isConnected, setChannels]);
 
   useEffect(() => {
-    if (socket && isConnected) {
-      getPostChannels();
-    }
-  }, [socket, isConnected, getPostChannels]);
+    if (!socket || !isConnected) return;
+    if (fetchedRef.current) return;
+    getPostChannels();
+    fetchedRef.current = true;
+  }, [socket, isConnected]);
 
   return { getPostChannels };
 };

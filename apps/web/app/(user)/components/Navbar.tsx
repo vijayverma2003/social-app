@@ -13,8 +13,7 @@ import { cn } from "@/lib/utils";
 import { Home, LucideIcon, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import ProfileSettingsNavigation from "../settings/profile/components/ProfileSettingsNavigation";
+import { memo, useState } from "react";
 import ChannelNavigation from "./ChannelNavigation";
 
 interface NavItem {
@@ -99,13 +98,9 @@ const Navbar = () => {
         </Popover>
       </nav>
 
-      {pathname.startsWith("/settings") ? (
-        <ProfileSettingsNavigation />
-      ) : (
-        <ChannelNavigation />
-      )}
+      <ChannelNavigation />
     </aside>
   );
 };
 
-export default Navbar;
+export default memo(Navbar);

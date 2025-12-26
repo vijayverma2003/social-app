@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSocket } from "@/providers/SocketContextProvider";
 import { useChannelActions } from "@/features/dms/hooks/useChannelActions";
 import { CHANNEL_EVENTS, MESSAGE_EVENTS } from "@shared/socketEvents";
@@ -15,9 +15,12 @@ export const useChannelsBootstrap = () => {
   const { incrementUnreadCount, resetUnreadCount } = useChannelsStore();
   const pathname = usePathname();
   const { user: currentUser } = useUser();
+  const fetchedRef = useRef(false); // To prevent multiple calls to getDMChannelsList
 
   useEffect(() => {
     if (!socket || !isConnected) return;
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
     getDMChannelsList();
   }, [socket, isConnected, getDMChannelsList]);
 
