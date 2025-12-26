@@ -129,7 +129,7 @@ const ChannelPage = () => {
   if (!channelId) return <div>Invalid channel</div>;
 
   return (
-    <div className="flex flex-col h-full justify-end max-w-2xl bg-secondary/50 rounded-2xl relative overflow-hidden">
+    <div className="flex flex-col h-full justify-end max-w-2xl rounded-2xl relative overflow-hidden">
       <div
         ref={messagesContainerRef}
         className="overflow-y-auto p-4 no-scrollbar"

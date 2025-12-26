@@ -126,7 +126,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
     };
 
     return (
-      <div className="border-t">
+      <div className="bg-secondary/50 rounded-2xl">
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 p-2 border-b">
             {selectedFiles.map((selectedFile) => (
@@ -162,7 +162,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             An error occurred while uploading files
           </div>
         )}
-        <form onSubmit={handleSubmit} className="flex items-center p-4">
+        <form onSubmit={handleSubmit} className="flex items-center p-2">
           <UploadButton
             maxFiles={10}
             onFilesChange={setSelectedFiles}
