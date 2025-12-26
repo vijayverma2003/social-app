@@ -125,10 +125,8 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       setSelectedFiles((prev) => prev.filter((f) => f.id !== id));
     };
 
-    const hasContentOrFiles = content.trim() || selectedFiles.length > 0;
-
     return (
-      <div className="border-t bg-background">
+      <div className="border-t">
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 p-2 border-b">
             {selectedFiles.map((selectedFile) => (
@@ -164,7 +162,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             An error occurred while uploading files
           </div>
         )}
-        <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4">
+        <form onSubmit={handleSubmit} className="flex items-center p-4">
           <UploadButton
             maxFiles={10}
             onFilesChange={setSelectedFiles}
@@ -182,15 +180,10 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isSending || isUploading}
-            className="flex-1"
+            className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none"
             autoComplete="off"
           />
-          <Button
-            type="submit"
-            disabled={!hasContentOrFiles || isSending || isUploading}
-            size="icon"
-            aria-label="Send message"
-          >
+          <Button type="submit" size="icon" aria-label="Send message">
             <Send className="size-4" />
           </Button>
         </form>

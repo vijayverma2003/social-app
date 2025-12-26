@@ -30,9 +30,14 @@ export const PostCard = ({
     ? `${authorUsername}${authorDiscriminator ? `#${authorDiscriminator}` : ""}`
     : "Unknown user";
 
-  const initials = authorUsername
-    ? authorUsername.charAt(0).toUpperCase()
-    : "U";
+  const initials = useMemo(() => {
+    return authorUsername ? authorUsername.charAt(0).toUpperCase() : "U";
+  }, [authorUsername]);
+
+  // Memoize avatar URL to prevent flickering
+  const avatarUrl = useMemo(() => {
+    return authorAvatarUrl || undefined;
+  }, [authorAvatarUrl]);
 
   const channelHref = post.channelId
     ? `/channels/${post.id}/${post.channelId}`
@@ -43,7 +48,7 @@ export const PostCard = ({
       <div className="flex flex-col items-start gap-3">
         <div className="flex items-center gap-2">
           <Avatar className="size-10">
-            <AvatarImage src={authorAvatarUrl || undefined} />
+            <AvatarImage src={avatarUrl} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">

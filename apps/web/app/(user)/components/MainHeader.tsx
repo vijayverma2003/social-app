@@ -16,7 +16,11 @@ const MainHeader = () => {
         <div className="flex-1 max-w-2xl">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input type="search" placeholder="Search..." className="pl-10" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="pl-10 py-5 border-none bg-secondary/50 ring-0 focus-visible:ring-0 focus-visible:border-none"
+            />
           </div>
         </div>
 

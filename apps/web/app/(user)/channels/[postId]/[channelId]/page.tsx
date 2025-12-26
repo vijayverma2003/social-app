@@ -20,18 +20,21 @@ const ChannelPage = () => {
   const postId = params?.postId as string;
   const channelId = params?.channelId as string;
   const { joinChannel, leaveChannel, markAsRead } = useChannelActions();
-  const { channels } = useChannelsStore();
+  // Use shallow selector to only subscribe to the specific channel we need
+  const channelUsers = useChannelsStore(
+    useShallow((state) => {
+      return (
+        state.channels.find((channel) => channel.id === channelId)?.users || []
+      );
+    })
+  );
   const { user: currentUser } = useUser();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
   const hasMarkedAsReadRef = useRef(false);
-
+  console.log(postId);
   // Determine channel type: if postId is "@me", it's a DM channel, otherwise it's a post channel
-  const channelType: ChannelType = postId === "@me" ? "dm" : "post";
-
-  const channelUsers = useMemo(() => {
-    return channels.find((channel) => channel.id === channelId)?.users || [];
-  }, [channels, channelId]);
+  const channelType: ChannelType = postId === "%40me" ? "dm" : "post";
 
   const messagesSelector = useMemo(
     () => (state: ReturnType<typeof useMessagesStore.getState>) =>
@@ -133,12 +136,12 @@ const ChannelPage = () => {
       : `Post Channel - ${channelId}`;
 
   return (
-    <div className="flex flex-col h-full justify-end">
+    <div className="flex flex-col h-full justify-end max-w-2xl bg-secondary/50 rounded-2xl relative overflow-hidden">
       <div
         ref={messagesContainerRef}
         className="overflow-y-auto p-4 no-scrollbar"
       >
-        <h1 className="text-2xl font-bold mb-4">{channelTitle}</h1>
+        <p>Conversation started here...</p>
         <MessagesList
           messages={messages}
           channelUsers={channelUsers}

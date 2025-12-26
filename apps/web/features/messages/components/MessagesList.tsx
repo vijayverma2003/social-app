@@ -38,12 +38,14 @@ export const MessagesList = ({
       {messages.map((message, index) => {
         const channelUser = userMap.get(message.authorId);
         const lastMessage = index > 0 ? messages[index - 1] : null;
+        // Use a stable profile reference - only pass profile if it exists
+        const profile = channelUser?.profile || null;
 
         return (
           <MessagePreview
             key={message._id}
             message={message}
-            profile={channelUser?.profile || null}
+            profile={profile}
             lastMessage={lastMessage}
           />
         );

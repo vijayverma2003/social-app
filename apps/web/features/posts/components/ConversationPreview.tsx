@@ -24,14 +24,18 @@ export const ConversationPreview = ({
   onClose,
   title = "Conversation",
 }: ConversationPreviewProps) => {
-  const { channels } = useChannelsStore();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const channelType: ChannelType = "post";
 
-  const channelUsers = useMemo(() => {
-    return channels.find((channel) => channel.id === channelId)?.users || [];
-  }, [channels, channelId]);
+  // Use shallow selector to only subscribe to the specific channel we need
+  const channelUsers = useChannelsStore(
+    useShallow((state) => {
+      return (
+        state.channels.find((channel) => channel.id === channelId)?.users || []
+      );
+    })
+  );
 
   const messagesSelector = useMemo(
     () => (state: ReturnType<typeof useMessagesStore.getState>) =>
