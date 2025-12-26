@@ -134,7 +134,10 @@ const ChannelPage = () => {
 
   return (
     <div className="flex flex-col h-full justify-end">
-      <div ref={messagesContainerRef} className="overflow-y-auto p-4">
+      <div
+        ref={messagesContainerRef}
+        className="overflow-y-auto p-4 no-scrollbar"
+      >
         <h1 className="text-2xl font-bold mb-4">{channelTitle}</h1>
         <MessagesList
           messages={messages}

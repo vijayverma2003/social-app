@@ -68,6 +68,10 @@ const HomePage = () => {
             channelId={previewedPost.channelId}
             postId={previewedPost.id}
             onClose={handleClosePreview}
+            title={
+              previewedPost.content.slice(0, 30) +
+              (previewedPost.content.length > 30 ? "..." : "")
+            }
           />
         </div>
       )}

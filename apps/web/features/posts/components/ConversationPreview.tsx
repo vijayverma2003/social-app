@@ -8,19 +8,21 @@ import { useMessagesStore } from "@/features/messages/store/messagesStore";
 import { ChannelType } from "@shared/schemas/messages";
 import { X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 interface ConversationPreviewProps {
   channelId: string;
   postId: string;
   onClose?: () => void;
+  title?: string;
 }
 
 export const ConversationPreview = ({
   channelId,
   postId,
   onClose,
+  title = "Conversation",
 }: ConversationPreviewProps) => {
   const { channels } = useChannelsStore();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -39,22 +41,31 @@ export const ConversationPreview = ({
 
   const messages = useMessagesStore(useShallow(messagesSelector));
 
-  const scrollToBottom = useCallback(() => {
-    if (!messagesContainerRef.current) return;
-    messagesContainerRef.current.scrollTo({
-      top: messagesContainerRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, []);
+  const scrollToBottom = useCallback(
+    (behavior: "smooth" | "instant" | "auto" = "smooth") => {
+      if (!messagesContainerRef.current) return;
+      console.log("Scrolling to bottom");
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior,
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    console.log("Calling scrollToBottom");
+    scrollToBottom("instant");
+  }, [scrollToBottom]);
 
   useMessagesBootstrap(channelId, channelType, scrollToBottom);
 
   if (!channelId) return null;
 
   return (
-    <div className="flex flex-col max-h-[500px] h-full bg-secondary/50 rounded-2xl w-full">
+    <div className="flex flex-col h-[50vh] bg-secondary/50 rounded-2xl w-full">
       <div className="flex items-center justify-between p-4">
-        <h2 className="text-lg font-semibold">Conversation</h2>
+        <h2 className="text-lg font-semibold">{title}</h2>
         {onClose && (
           <Button
             variant="ghost"
@@ -67,18 +78,18 @@ export const ConversationPreview = ({
         )}
       </div>
 
+      <div className="flex-1" />
+
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
-        <div
-          ref={messagesContainerRef}
-          className="bottom-0 absolute w-full left-0 px-4"
-        >
-          <MessagesList
-            messages={messages}
-            channelUsers={channelUsers}
-            emptyMessage="No messages yet. Be the first to comment!"
-          />
-        </div>
+      <div
+        ref={messagesContainerRef}
+        className="overflow-y-auto p-4 space-y-2 relative no-scrollbar"
+      >
+        <MessagesList
+          messages={messages}
+          channelUsers={channelUsers}
+          emptyMessage="No messages yet. Be the first to comment!"
+        />
       </div>
 
       {/* Join Chat Button */}
