@@ -1,15 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
-import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { ChannelType } from "@shared/schemas/messages";
-import { useMemo, useEffect, useRef, useCallback } from "react";
-import { useShallow } from "zustand/react/shallow";
+import { X } from "lucide-react";
 import Link from "next/link";
-import { LogIn, X } from "lucide-react";
+import { useCallback, useMemo, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 interface ConversationPreviewProps {
   channelId: string;

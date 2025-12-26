@@ -4,7 +4,7 @@ import { useSocket } from "@/providers/SocketContextProvider";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useMessagesStore } from "../store/messagesStore";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { ChannelType } from "@shared/schemas/messages";
 
@@ -16,6 +16,19 @@ export const useMessagesBootstrap = (
 ) => {
   const { socket, emit } = useSocket();
   const { addMessage, setMessages, removeMessage } = useMessagesStore();
+
+  // Use refs to store callbacks to prevent unnecessary re-renders
+  const onLoadCompleteRef = useRef(onLoadComplete);
+  const onNewMessageRef = useRef(onNewMessage);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onLoadCompleteRef.current = onLoadComplete;
+  }, [onLoadComplete]);
+
+  useEffect(() => {
+    onNewMessageRef.current = onNewMessage;
+  }, [onNewMessage]);
 
   const loadMessages = useCallback(
     (channelId: string, channelType: ChannelType) => {
@@ -32,12 +45,12 @@ export const useMessagesBootstrap = (
           if (response.error) toast.error("Failed to load messages");
           else if (response.success && response.data) {
             setMessages(channelId, response.data);
-            onLoadComplete?.();
+            onLoadCompleteRef.current?.();
           }
         }
       );
     },
-    [emit, setMessages, onLoadComplete]
+    [emit, setMessages]
   );
 
   useEffect(() => {
@@ -47,7 +60,7 @@ export const useMessagesBootstrap = (
       (message) => {
         if (message.channelId === channelId) {
           addMessage(message.channelId, message);
-          onNewMessage?.();
+          onNewMessageRef.current?.();
         }
       };
 
@@ -66,13 +79,5 @@ export const useMessagesBootstrap = (
       socket.off(MESSAGE_EVENTS.CREATED, handleMessageCreated);
       socket.off(MESSAGE_EVENTS.DELETED, handleMessageDeleted);
     };
-  }, [
-    socket,
-    channelId,
-    channelType,
-    addMessage,
-    removeMessage,
-    loadMessages,
-    onNewMessage,
-  ]);
+  }, [socket, channelId, channelType, loadMessages]);
 };

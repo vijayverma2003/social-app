@@ -60,7 +60,7 @@ const ChannelPage = () => {
     }
 
     previousMessagesLengthRef.current = currentLength;
-  }, [messages.length, scrollToBottom]);
+  }, [messages.length]);
 
   useEffect(() => {
     if (!channelId) return;
@@ -70,7 +70,7 @@ const ChannelPage = () => {
     return () => {
       leaveChannel(channelId);
     };
-  }, [channelId, joinChannel, leaveChannel]);
+  }, [channelId]);
 
   // Detect when user scrolls to bottom and mark as read
   useEffect(() => {
@@ -96,7 +96,7 @@ const ChannelPage = () => {
     return () => {
       container.removeEventListener("scroll", handleScroll);
     };
-  }, [channelId, currentUser, markAsRead]);
+  }, [channelId, currentUser]);
 
   useMessagesBootstrap(channelId, channelType, scrollToBottom, scrollToBottom);
 

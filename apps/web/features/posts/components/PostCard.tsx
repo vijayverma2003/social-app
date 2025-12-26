@@ -13,7 +13,6 @@ interface PostCardProps {
   authorDiscriminator?: string;
   authorAvatarUrl?: string | null;
   onPreviewChat?: (post: PostData) => void;
-  postForPreview?: PostData;
 }
 
 export const PostCard = ({
@@ -22,7 +21,6 @@ export const PostCard = ({
   authorDiscriminator,
   authorAvatarUrl,
   onPreviewChat,
-  postForPreview,
 }: PostCardProps) => {
   const timeAgo = useMemo(() => {
     return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
@@ -100,9 +98,7 @@ export const PostCard = ({
               className="cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                if (postForPreview) {
-                  onPreviewChat?.(postForPreview);
-                }
+                onPreviewChat?.(post);
               }}
             >
               Preview Chat

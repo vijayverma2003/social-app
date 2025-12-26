@@ -23,7 +23,6 @@ const HomePage = () => {
   usePostsBootstrap();
 
   useEffect(() => {
-    // Fetch feed on mount
     getFeed();
   }, [getFeed]);
 
@@ -55,7 +54,6 @@ const HomePage = () => {
                   authorDiscriminator={post.user.discriminator}
                   authorAvatarUrl={post.user.profile?.avatarURL}
                   onPreviewChat={handlePreviewChat}
-                  postForPreview={post}
                 />
               ))}
             </div>
