@@ -89,6 +89,7 @@ export const CreateMessagePayloadSchema = z
       .max(10, "Maximum 10 attachments allowed")
       .optional()
       .default([]),
+    optimisticId: z.string().trim().optional(), // Client-generated optimistic message ID
   })
   .strict()
   .refine(

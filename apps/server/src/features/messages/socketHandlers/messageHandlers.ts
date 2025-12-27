@@ -77,8 +77,13 @@ export class MessageHandlers {
         });
       }
 
-      const { channelId, channelType, content, storageObjectIds } =
-        validation.data;
+      const {
+        channelId,
+        channelType,
+        content,
+        storageObjectIds,
+        optimisticId,
+      } = validation.data;
 
       // Verify user is a member of the channel
       if (channelType === "dm") {
@@ -124,6 +129,18 @@ export class MessageHandlers {
           hash: storageObject.hash,
           storageKey: storageObject.storageKey,
         }));
+
+        // Increment refCount for all storageObjects used in message attachments
+        await prisma.storageObject.updateMany({
+          where: {
+            id: { in: storageObjectIds },
+          },
+          data: {
+            refCount: {
+              increment: 1,
+            },
+          },
+        });
       }
 
       // Create message
@@ -141,6 +158,7 @@ export class MessageHandlers {
         _id: message._id.toString(),
         createdAt: message.createdAt,
         updatedAt: message.updatedAt,
+        optimisticId, // Return the optimisticId so client can match and replace
       };
 
       // Update totalUnreadMessages for DM and post channels

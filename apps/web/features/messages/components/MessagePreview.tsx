@@ -12,6 +12,8 @@ import {
 import { useMessageActions } from "../hooks/useMessageActions";
 import { useUser } from "@/providers/UserContextProvider";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { RotateCcw, Loader2 } from "lucide-react";
 
 const MessagePreview = memo(
   ({
@@ -19,17 +21,50 @@ const MessagePreview = memo(
     profile,
     lastMessage,
   }: {
-    message: MessageData;
+    message: MessageData & {
+      error?: string;
+      uploadingFiles?: Array<{ id: string; name: string; size: number }>;
+    };
     profile: Profile | null;
     lastMessage?: MessageData | null;
   }) => {
     const { user } = useUser();
-    const { deleteMessage } = useMessageActions();
+    const { deleteMessage, createMessage } = useMessageActions();
 
     // Check if message is optimistic (pending)
     const isOptimistic = useMemo(() => {
       return message._id.startsWith("optimistic-");
     }, [message._id]);
+
+    // Check if message has error
+    const hasError = useMemo(() => {
+      return !!(message as any).error;
+    }, [(message as any).error]);
+
+    // Get uploading files
+    const uploadingFiles = useMemo(() => {
+      return (message as any).uploadingFiles || [];
+    }, [(message as any).uploadingFiles]);
+
+    // Handle retry
+    const handleRetry = () => {
+      if (hasError && user) {
+        createMessage(
+          {
+            channelId: message.channelId,
+            channelType: message.channelType,
+            content: message.content,
+            storageObjectIds:
+              message.attachments?.map((a) => a.storageObjectId) || [],
+            optimisticId: message._id,
+          },
+          () => {
+            // Message will be replaced when it succeeds
+          },
+          message._id
+        );
+      }
+    };
 
     const isSameDay = useMemo(() => {
       return (
@@ -102,8 +137,25 @@ const MessagePreview = memo(
                   </p>
                 </div>
               )}
+              {/* Show uploading files */}
+              {uploadingFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {uploadingFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-sm"
+                    >
+                      <Loader2 className="size-3 animate-spin" />
+                      <span className="truncate max-w-[200px]">
+                        {file.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Show uploaded attachments */}
               {message.attachments && message.attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-2">
                   {message.attachments.map((attachment) => (
                     <div
                       key={attachment.url}
@@ -119,9 +171,33 @@ const MessagePreview = memo(
                   ))}
                 </div>
               )}
-              <p className={cn("text-sm", isOptimistic && "opacity-50")}>
-                {message.content}
-              </p>
+              <div className="flex items-center gap-2">
+                <p
+                  className={cn(
+                    "text-sm",
+                    isOptimistic && !hasError && "text-muted-foreground",
+                    hasError && "text-destructive"
+                  )}
+                >
+                  {message.content}
+                </p>
+                {hasError && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="h-6 px-2 text-destructive hover:text-destructive"
+                  >
+                    <RotateCcw className="size-3 mr-1" />
+                    Retry
+                  </Button>
+                )}
+              </div>
+              {hasError && (
+                <p className="text-xs text-destructive mt-1">
+                  {(message as any).error}
+                </p>
+              )}
             </div>
           </div>
         </ContextMenuTrigger>

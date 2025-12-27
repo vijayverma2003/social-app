@@ -32,15 +32,13 @@ export interface MessageInputRef {
 export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
   ({ channelId, channelType, onSend }, ref) => {
     const [content, setContent] = useState("");
-    const [isSending, setIsSending] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadError, setUploadError] = useState(false);
     const uploadFilesFnRef = useRef<
       ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
     >(null);
     const { createMessage } = useMessageActions();
-    const { addOptimisticMessage } = useMessagesStore();
+    const { addOptimisticMessage, markMessageAsError, updateMessage } =
+      useMessagesStore();
     const { user } = useUser();
     const pendingMessagesRef = useRef<Set<string>>(new Set());
     const inputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +60,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       const hasFiles = selectedFiles.length > 0;
 
       // Require either content or files
-      if ((!trimmedContent && !hasFiles) || isSending || isUploading) return;
+      if (!trimmedContent && !hasFiles) return;
 
       // Check if we've reached the limit of 5 pending messages
       if (pendingMessagesRef.current.size >= 5) {
@@ -75,8 +73,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         return;
       }
 
-      // Create optimistic message immediately
-      const optimisticMessage: Omit<MessageData, "_id"> & { _id: string } = {
+      const filesToUpload = [...selectedFiles];
+
+      // Create optimistic message immediately with files
+      const optimisticMessage: Omit<MessageData, "_id"> & {
+        _id: string;
+        uploadingFiles?: Array<{ id: string; name: string; size: number }>;
+      } = {
         _id: "", // Will be set by addOptimisticMessage
         channelId,
         channelType,
@@ -85,6 +88,11 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         createdAt: new Date(),
         updatedAt: new Date(),
         authorId: user.id,
+        uploadingFiles: filesToUpload.map((f) => ({
+          id: f.id,
+          name: f.file.name,
+          size: f.file.size,
+        })),
       };
 
       const optimisticId = addOptimisticMessage(channelId, optimisticMessage);
@@ -93,13 +101,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       // Clear input immediately for better UX
       const contentToSend = trimmedContent;
       setContent("");
-
-      setIsSending(true);
-      setUploadError(false);
-      
-      if (hasFiles) setIsUploading(true);
       // Clear file previews immediately
-      const filesToUpload = [...selectedFiles];
       setSelectedFiles([]);
 
       try {
@@ -116,29 +118,43 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         // Check if uploads failed
         if (filesToUpload.length > 0 && storageObjectIds.length === 0) {
           console.error("All file uploads failed");
-          setUploadError(true);
-          setIsUploading(false);
-          setIsSending(false);
-          // Remove optimistic message on upload failure
+          // Mark optimistic message as error instead of removing
           pendingMessagesRef.current.delete(optimisticId);
-          useMessagesStore.getState().removeMessage(channelId, optimisticId);
+          markMessageAsError(
+            channelId,
+            optimisticId,
+            "Failed to upload files. Click to retry."
+          );
           return;
         }
 
-        // Send message with storageObjectIds
+        // Update optimistic message to remove uploadingFiles and add attachments
+        updateMessage(channelId, optimisticId, {
+          attachments: uploadedFiles
+            .filter((f) => f.url && f.storageObjectId)
+            .map((f) => ({
+              storageObjectId: f.storageObjectId!,
+              url: f.url!,
+              fileName: f.file.name,
+              contentType: f.file.type || "application/octet-stream",
+              size: f.file.size,
+              hash: f.hash,
+              storageKey: "", // Not needed for display
+            })),
+        } as Partial<MessageData>);
+
+        // Send message with storageObjectIds and optimisticId
         createMessage(
           {
             channelId,
             channelType,
             content: contentToSend || "",
             storageObjectIds,
+            optimisticId,
           },
           (messageId) => {
             pendingMessagesRef.current.delete(optimisticId);
-            setIsUploading(false);
-            setIsSending(false);
             if (messageId) {
-              setUploadError(false);
               onSend?.();
             }
           },
@@ -146,12 +162,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         );
       } catch (error) {
         console.error("Error uploading files:", error);
-        setUploadError(true);
-        setIsUploading(false);
-        setIsSending(false);
-        // Remove optimistic message on error
+        // Mark optimistic message as error instead of removing
         pendingMessagesRef.current.delete(optimisticId);
-        useMessagesStore.getState().removeMessage(channelId, optimisticId);
+        markMessageAsError(
+          channelId,
+          optimisticId,
+          "Failed to send message. Click to retry."
+        );
       }
 
       inputRef.current?.focus();
@@ -183,7 +200,6 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
                 <Button
                   type="button"
                   onClick={() => removeFile(selectedFile.id)}
-                  disabled={isSending || isUploading}
                   size="icon-sm"
                   variant="ghost"
                   className="h-5 w-5"
@@ -195,21 +211,10 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             ))}
           </div>
         )}
-        {isUploading && (
-          <div className="px-4 py-2 border-b text-sm text-muted-foreground">
-            Uploading... files
-          </div>
-        )}
-        {uploadError && (
-          <div className="px-4 py-2 border-b text-sm text-destructive">
-            An error occurred while uploading files
-          </div>
-        )}
         <form onSubmit={handleSubmit} className="flex items-center p-2">
           <UploadButton
             maxFiles={10}
             onFilesChange={setSelectedFiles}
-            disabled={isSending || isUploading}
             showPreviews={false}
             onUploadFilesReady={(fn) => {
               uploadFilesFnRef.current = fn;
@@ -222,7 +227,6 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={isSending || isUploading}
             className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none"
             autoComplete="off"
           />

@@ -60,22 +60,34 @@ export const useMessagesBootstrap = (
     const handleMessageCreated: ServerToClientEvents[typeof MESSAGE_EVENTS.CREATED] =
       (message) => {
         if (message.channelId === channelId) {
-          // Check if there's an optimistic message from the same author with similar content
-          const existingMessages =
-            useMessagesStore.getState().messagesByChannel[channelId] || [];
-          const optimisticMessage = existingMessages.find(
-            (m) =>
-              m._id.startsWith("optimistic-") &&
-              m.authorId === message.authorId &&
-              m.content === message.content
-          );
+          // Check if message has optimisticId (from server response)
+          const optimisticId = (message as any).optimisticId;
 
-          if (optimisticMessage) {
-            // Replace optimistic message with real one
-            replaceOptimisticMessage(channelId, optimisticMessage._id, message);
+          if (optimisticId) {
+            // Replace optimistic message with real one using the optimisticId
+            replaceOptimisticMessage(channelId, optimisticId, message);
           } else {
-            // No matching optimistic message, just add it
-            addMessage(message.channelId, message);
+            // Fallback: Check if there's an optimistic message from the same author with similar content
+            const existingMessages =
+              useMessagesStore.getState().messagesByChannel[channelId] || [];
+            const optimisticMessage = existingMessages.find(
+              (m) =>
+                m._id.startsWith("optimistic-") &&
+                m.authorId === message.authorId &&
+                m.content === message.content
+            );
+
+            if (optimisticMessage) {
+              // Replace optimistic message with real one
+              replaceOptimisticMessage(
+                channelId,
+                optimisticMessage._id,
+                message
+              );
+            } else {
+              // No matching optimistic message, just add it
+              addMessage(message.channelId, message);
+            }
           }
           onNewMessageRef.current?.();
         }

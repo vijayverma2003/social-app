@@ -32,6 +32,7 @@ export const useMessageActions = () => {
     prependMessages,
     removeMessage,
     replaceOptimisticMessage,
+    markMessageAsError,
   } = useMessagesStore();
 
   const createMessage = useCallback(
@@ -45,17 +46,23 @@ export const useMessageActions = () => {
           toast.error("Failed to send message", {
             description: response.error,
           });
-          // Remove optimistic message on error
+          // Mark optimistic message as error instead of removing
           if (optimisticId) {
-            removeMessage(payload.channelId, optimisticId);
+            markMessageAsError(
+              payload.channelId,
+              optimisticId,
+              response.error || "Failed to send message. Click to retry."
+            );
           }
           onComplete?.(null);
         } else if (response.success && response.data) {
-          // Replace optimistic message with real one, or add if no optimistic
-          if (optimisticId) {
+          // Use optimisticId from response if available, otherwise use the one passed in
+          const idToReplace =
+            (response.data as any).optimisticId || optimisticId;
+          if (idToReplace) {
             replaceOptimisticMessage(
               payload.channelId,
-              optimisticId,
+              idToReplace,
               response.data
             );
           } else {
@@ -63,15 +70,25 @@ export const useMessageActions = () => {
           }
           onComplete?.(response.data._id);
         } else {
-          // Remove optimistic message if no data returned
+          // Mark optimistic message as error if no data returned
           if (optimisticId) {
-            removeMessage(payload.channelId, optimisticId);
+            markMessageAsError(
+              payload.channelId,
+              optimisticId,
+              "Failed to send message. Click to retry."
+            );
           }
           onComplete?.(null);
         }
       }) as CreateMessageCallback);
     },
-    [emit, addMessage, removeMessage, replaceOptimisticMessage]
+    [
+      emit,
+      addMessage,
+      removeMessage,
+      replaceOptimisticMessage,
+      markMessageAsError,
+    ]
   );
 
   const getMessages = useCallback(

@@ -115,6 +115,20 @@ export class PostHandlers {
           },
         });
 
+        // Increment refCount for all storageObjects used in attachments
+        if (storageObjectIds && storageObjectIds.length > 0) {
+          await tx.storageObject.updateMany({
+            where: {
+              id: { in: storageObjectIds },
+            },
+            data: {
+              refCount: {
+                increment: 1,
+              },
+            },
+          });
+        }
+
         // Create post with channelId
         const createdPost = await tx.post.create({
           data: {
@@ -224,6 +238,15 @@ export class PostHandlers {
         });
       }
 
+      // Get existing attachments to decrement refCount for old storageObjects
+      const existingAttachments = await prisma.postAttachment.findMany({
+        where: { postId },
+        select: { storageObjectId: true },
+      });
+      const oldStorageObjectIds = existingAttachments.map(
+        (att) => att.storageObjectId
+      );
+
       // Validate and fetch StorageObject data from PostgreSQL if attachments are provided
       let attachmentData:
         | { create: Array<{ storageObjectId: string }> }
@@ -249,9 +272,40 @@ export class PostHandlers {
         };
       }
 
-      // Delete existing attachments (will be replaced if new ones are provided)
-      await prisma.postAttachment.deleteMany({
-        where: { postId },
+      // Update refCounts: decrement for old attachments, increment for new ones
+      await prisma.$transaction(async (tx) => {
+        // Decrement refCount for old storageObjects (if any)
+        if (oldStorageObjectIds.length > 0) {
+          await tx.storageObject.updateMany({
+            where: {
+              id: { in: oldStorageObjectIds },
+            },
+            data: {
+              refCount: {
+                decrement: 1,
+              },
+            },
+          });
+        }
+
+        // Increment refCount for new storageObjects (if any)
+        if (storageObjectIds && storageObjectIds.length > 0) {
+          await tx.storageObject.updateMany({
+            where: {
+              id: { in: storageObjectIds },
+            },
+            data: {
+              refCount: {
+                increment: 1,
+              },
+            },
+          });
+        }
+
+        // Delete existing attachments (will be replaced if new ones are provided)
+        await tx.postAttachment.deleteMany({
+          where: { postId },
+        });
       });
 
       // Update post with new content and attachments (if provided)

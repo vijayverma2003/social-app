@@ -10,12 +10,22 @@ interface MessagesState {
   addMessage: (channelId: string, message: MessageData) => void;
   addOptimisticMessage: (
     channelId: string,
-    message: MessageData & { _id: string; isOptimistic?: boolean }
+    message: MessageData & {
+      _id: string;
+      isOptimistic?: boolean;
+      error?: string;
+      uploadingFiles?: Array<{ id: string; name: string; size: number }>;
+    }
   ) => string; // Returns the optimistic message ID
   replaceOptimisticMessage: (
     channelId: string,
     optimisticId: string,
     realMessage: MessageData
+  ) => void;
+  markMessageAsError: (
+    channelId: string,
+    messageId: string,
+    error: string
   ) => void;
   prependMessages: (channelId: string, messages: MessageData[]) => void;
   updateMessage: (
@@ -63,9 +73,14 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     const optimisticId = `optimistic-${Date.now()}-${Math.random()
       .toString(36)
       .substr(2, 9)}`;
-    const optimisticMessage: MessageData = {
+    const optimisticMessage: MessageData & {
+      error?: string;
+      uploadingFiles?: Array<{ id: string; name: string; size: number }>;
+    } = {
       ...message,
       _id: optimisticId,
+      error: message.error,
+      uploadingFiles: message.uploadingFiles,
     };
 
     set((state) => {
@@ -80,6 +95,21 @@ export const useMessagesStore = create<MessagesState>((set) => ({
 
     return optimisticId;
   },
+
+  markMessageAsError: (channelId, messageId, error) =>
+    set((state) => {
+      const messages = state.messagesByChannel[channelId] || [];
+      return {
+        messagesByChannel: {
+          ...state.messagesByChannel,
+          [channelId]: messages.map((message) =>
+            message._id === messageId
+              ? ({ ...message, error } as MessageData & { error?: string })
+              : message
+          ),
+        },
+      };
+    }),
 
   replaceOptimisticMessage: (channelId, optimisticId, realMessage) =>
     set((state) => {
