@@ -15,7 +15,8 @@ export const useMessagesBootstrap = (
   onNewMessage?: () => void
 ) => {
   const { socket, emit } = useSocket();
-  const { addMessage, setMessages, removeMessage } = useMessagesStore();
+  const { addMessage, setMessages, removeMessage, replaceOptimisticMessage } =
+    useMessagesStore();
 
   // Use refs to store callbacks to prevent unnecessary re-renders
   const onLoadCompleteRef = useRef(onLoadComplete);
@@ -59,7 +60,23 @@ export const useMessagesBootstrap = (
     const handleMessageCreated: ServerToClientEvents[typeof MESSAGE_EVENTS.CREATED] =
       (message) => {
         if (message.channelId === channelId) {
-          addMessage(message.channelId, message);
+          // Check if there's an optimistic message from the same author with similar content
+          const existingMessages =
+            useMessagesStore.getState().messagesByChannel[channelId] || [];
+          const optimisticMessage = existingMessages.find(
+            (m) =>
+              m._id.startsWith("optimistic-") &&
+              m.authorId === message.authorId &&
+              m.content === message.content
+          );
+
+          if (optimisticMessage) {
+            // Replace optimistic message with real one
+            replaceOptimisticMessage(channelId, optimisticMessage._id, message);
+          } else {
+            // No matching optimistic message, just add it
+            addMessage(message.channelId, message);
+          }
           onNewMessageRef.current?.();
         }
       };

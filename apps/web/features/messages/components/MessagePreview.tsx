@@ -26,6 +26,11 @@ const MessagePreview = memo(
     const { user } = useUser();
     const { deleteMessage } = useMessageActions();
 
+    // Check if message is optimistic (pending)
+    const isOptimistic = useMemo(() => {
+      return message._id.startsWith("optimistic-");
+    }, [message._id]);
+
     const isSameDay = useMemo(() => {
       return (
         new Date(message.createdAt).toDateString() === new Date().toDateString()
@@ -114,7 +119,9 @@ const MessagePreview = memo(
                   ))}
                 </div>
               )}
-              <p className="text-sm">{message.content}</p>
+              <p className={cn("text-sm", isOptimistic && "opacity-50")}>
+                {message.content}
+              </p>
             </div>
           </div>
         </ContextMenuTrigger>
@@ -124,7 +131,7 @@ const MessagePreview = memo(
           >
             Copy Text
           </ContextMenuItem>
-          {user && message.authorId === user.id && (
+          {user && message.authorId === user.id && !isOptimistic && (
             <ContextMenuItem
               onClick={() =>
                 deleteMessage({

@@ -12,8 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, X } from "lucide-react";
 import { useMessageActions } from "../hooks/useMessageActions";
-import { ChannelType } from "@shared/schemas/messages";
+import { ChannelType, MessageData } from "@shared/schemas/messages";
 import { UploadButton, SelectedFile } from "./UploadButton";
+import { useUser } from "@/providers/UserContextProvider";
+import { useMessagesStore } from "../store/messagesStore";
+import { toast } from "sonner";
 
 interface MessageInputProps {
   channelId: string;
@@ -37,6 +40,9 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
     >(null);
     const { createMessage } = useMessageActions();
+    const { addOptimisticMessage } = useMessagesStore();
+    const { user } = useUser();
+    const pendingMessagesRef = useRef<Set<string>>(new Set());
     const inputRef = useRef<HTMLInputElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -58,10 +64,40 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       // Require either content or files
       if ((!trimmedContent && !hasFiles) || isSending || isUploading) return;
 
-      setIsSending(true);
-      setIsUploading(true);
-      setUploadError(false);
+      // Check if we've reached the limit of 5 pending messages
+      if (pendingMessagesRef.current.size >= 5) {
+        toast.error("Please wait for previous messages to send");
+        return;
+      }
 
+      if (!user) {
+        toast.error("You must be logged in to send messages");
+        return;
+      }
+
+      // Create optimistic message immediately
+      const optimisticMessage: Omit<MessageData, "_id"> & { _id: string } = {
+        _id: "", // Will be set by addOptimisticMessage
+        channelId,
+        channelType,
+        content: trimmedContent || "",
+        attachments: [], // Will be populated when files are uploaded
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        authorId: user.id,
+      };
+
+      const optimisticId = addOptimisticMessage(channelId, optimisticMessage);
+      pendingMessagesRef.current.add(optimisticId);
+
+      // Clear input immediately for better UX
+      const contentToSend = trimmedContent;
+      setContent("");
+
+      setIsSending(true);
+      setUploadError(false);
+      
+      if (hasFiles) setIsUploading(true);
       // Clear file previews immediately
       const filesToUpload = [...selectedFiles];
       setSelectedFiles([]);
@@ -83,6 +119,9 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           setUploadError(true);
           setIsUploading(false);
           setIsSending(false);
+          // Remove optimistic message on upload failure
+          pendingMessagesRef.current.delete(optimisticId);
+          useMessagesStore.getState().removeMessage(channelId, optimisticId);
           return;
         }
 
@@ -91,24 +130,28 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           {
             channelId,
             channelType,
-            content: trimmedContent || "",
+            content: contentToSend || "",
             storageObjectIds,
           },
           (messageId) => {
+            pendingMessagesRef.current.delete(optimisticId);
             setIsUploading(false);
             setIsSending(false);
             if (messageId) {
-              setContent("");
               setUploadError(false);
               onSend?.();
             }
-          }
+          },
+          optimisticId
         );
       } catch (error) {
         console.error("Error uploading files:", error);
         setUploadError(true);
         setIsUploading(false);
         setIsSending(false);
+        // Remove optimistic message on error
+        pendingMessagesRef.current.delete(optimisticId);
+        useMessagesStore.getState().removeMessage(channelId, optimisticId);
       }
 
       inputRef.current?.focus();

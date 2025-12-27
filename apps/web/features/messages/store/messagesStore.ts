@@ -8,6 +8,15 @@ interface MessagesState {
   error: string | null;
   setMessages: (channelId: string, messages: MessageData[]) => void;
   addMessage: (channelId: string, message: MessageData) => void;
+  addOptimisticMessage: (
+    channelId: string,
+    message: MessageData & { _id: string; isOptimistic?: boolean }
+  ) => string; // Returns the optimistic message ID
+  replaceOptimisticMessage: (
+    channelId: string,
+    optimisticId: string,
+    realMessage: MessageData
+  ) => void;
   prependMessages: (channelId: string, messages: MessageData[]) => void;
   updateMessage: (
     channelId: string,
@@ -46,6 +55,55 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         messagesByChannel: {
           ...state.messagesByChannel,
           [channelId]: [...existingMessages, message],
+        },
+      };
+    }),
+
+  addOptimisticMessage: (channelId, message) => {
+    const optimisticId = `optimistic-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+    const optimisticMessage: MessageData = {
+      ...message,
+      _id: optimisticId,
+    };
+
+    set((state) => {
+      const existingMessages = state.messagesByChannel[channelId] || [];
+      return {
+        messagesByChannel: {
+          ...state.messagesByChannel,
+          [channelId]: [...existingMessages, optimisticMessage],
+        },
+      };
+    });
+
+    return optimisticId;
+  },
+
+  replaceOptimisticMessage: (channelId, optimisticId, realMessage) =>
+    set((state) => {
+      const messages = state.messagesByChannel[channelId] || [];
+      const messageIndex = messages.findIndex((m) => m._id === optimisticId);
+
+      if (messageIndex === -1) {
+        // Optimistic message not found, just add the real message
+        return {
+          messagesByChannel: {
+            ...state.messagesByChannel,
+            [channelId]: [...messages, realMessage],
+          },
+        };
+      }
+
+      // Replace optimistic message with real one
+      const newMessages = [...messages];
+      newMessages[messageIndex] = realMessage;
+
+      return {
+        messagesByChannel: {
+          ...state.messagesByChannel,
+          [channelId]: newMessages,
         },
       };
     }),

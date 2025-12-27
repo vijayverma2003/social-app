@@ -26,29 +26,52 @@ type DeleteMessageCallback = Parameters<
 
 export const useMessageActions = () => {
   const { emit } = useSocket();
-  const { setMessages, addMessage, prependMessages, removeMessage } =
-    useMessagesStore();
+  const {
+    setMessages,
+    addMessage,
+    prependMessages,
+    removeMessage,
+    replaceOptimisticMessage,
+  } = useMessagesStore();
 
   const createMessage = useCallback(
     (
       payload: CreateMessagePayload,
-      onComplete?: (messageId: string | null) => void
+      onComplete?: (messageId: string | null) => void,
+      optimisticId?: string
     ) => {
       emit(MESSAGE_EVENTS.CREATE, payload, ((response) => {
         if (response.error) {
           toast.error("Failed to send message", {
             description: response.error,
           });
+          // Remove optimistic message on error
+          if (optimisticId) {
+            removeMessage(payload.channelId, optimisticId);
+          }
           onComplete?.(null);
         } else if (response.success && response.data) {
-          addMessage(payload.channelId, response.data);
+          // Replace optimistic message with real one, or add if no optimistic
+          if (optimisticId) {
+            replaceOptimisticMessage(
+              payload.channelId,
+              optimisticId,
+              response.data
+            );
+          } else {
+            addMessage(payload.channelId, response.data);
+          }
           onComplete?.(response.data._id);
         } else {
+          // Remove optimistic message if no data returned
+          if (optimisticId) {
+            removeMessage(payload.channelId, optimisticId);
+          }
           onComplete?.(null);
         }
       }) as CreateMessageCallback);
     },
-    [emit, addMessage]
+    [emit, addMessage, removeMessage, replaceOptimisticMessage]
   );
 
   const getMessages = useCallback(
