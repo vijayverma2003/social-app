@@ -1,22 +1,23 @@
 "use client";
 
-import {
-  useState,
-  FormEvent,
-  KeyboardEvent,
-  useRef,
-  useImperativeHandle,
-  forwardRef,
-} from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, X } from "lucide-react";
-import { useMessageActions } from "../hooks/useMessageActions";
-import { ChannelType, MessageData } from "@shared/schemas/messages";
-import { UploadButton, SelectedFile } from "./UploadButton";
+import { Input } from "@/components/ui/input";
 import { useUser } from "@/providers/UserContextProvider";
-import { useMessagesStore } from "../store/messagesStore";
+import { ChannelType, MessageData } from "@shared/schemas/messages";
+import { Send, X } from "lucide-react";
+import {
+  FormEvent,
+  forwardRef,
+  KeyboardEvent,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
+import { useMessageActions } from "../hooks/useMessageActions";
+import { useMessagesStore } from "../store/messagesStore";
+import { SelectedFile, UploadButton } from "./UploadButton";
 
 interface MessageInputProps {
   channelId: string;
@@ -28,6 +29,78 @@ export interface MessageInputRef {
   focus: () => void;
   appendText: (text: string) => void;
 }
+
+const MAX_PENDING_MESSAGES = 5;
+
+// Helper: Create optimistic message data
+const createOptimisticMessage = (
+  channelId: string,
+  channelType: ChannelType,
+  content: string,
+  authorId: string,
+  files: SelectedFile[]
+): Omit<MessageData, "_id"> & {
+  _id: string;
+  uploadingFiles?: Array<{ id: string; name: string; size: number }>;
+} => ({
+  _id: "", // Will be set by addOptimisticMessage
+  channelId,
+  channelType,
+  content: content || "",
+  attachments: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  authorId,
+  uploadingFiles: files.map((f) => ({
+    id: f.id,
+    name: f.file.name,
+    size: f.file.size,
+  })),
+});
+
+// Helper: Convert uploaded files to message attachments
+const convertFilesToAttachments = (
+  files: SelectedFile[]
+): MessageData["attachments"] => {
+  return files
+    .filter((f) => f.url && f.storageObjectId)
+    .map((f) => ({
+      storageObjectId: f.storageObjectId!,
+      url: f.url!,
+      fileName: f.file.name,
+      contentType: f.file.type || "application/octet-stream",
+      size: f.file.size,
+      hash: f.hash,
+      storageKey: "", // Not needed for display
+    }));
+};
+
+// Helper: Extract storage object IDs from uploaded files
+const extractStorageObjectIds = (files: SelectedFile[]): string[] => {
+  return files.filter((f) => f.storageObjectId).map((f) => f.storageObjectId!);
+};
+
+// File preview component
+interface FilePreviewProps {
+  file: SelectedFile;
+  onRemove: (id: string) => void;
+}
+
+const FilePreview = ({ file, onRemove }: FilePreviewProps) => (
+  <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-sm">
+    <span className="truncate max-w-[200px]">{file.file.name}</span>
+    <Button
+      type="button"
+      onClick={() => onRemove(file.id)}
+      size="icon-sm"
+      variant="ghost"
+      className="h-5 w-5"
+      aria-label="Remove file"
+    >
+      <X className="size-3" />
+    </Button>
+  </div>
+);
 
 export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
   ({ channelId, channelType, onSend }, ref) => {
@@ -44,170 +117,181 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
     const inputRef = useRef<HTMLInputElement>(null);
 
     useImperativeHandle(ref, () => ({
-      focus: () => {
-        inputRef.current?.focus();
-      },
+      focus: () => inputRef.current?.focus(),
       appendText: (text: string) => {
         setContent((prev) => prev + text);
         inputRef.current?.focus();
       },
     }));
 
-    const handleSubmit = async (e: FormEvent) => {
-      e.preventDefault();
+    const removeFile = useCallback((id: string) => {
+      setSelectedFiles((prev) => prev.filter((f) => f.id !== id));
+    }, []);
 
-      const trimmedContent = content.trim();
-      const hasFiles = selectedFiles.length > 0;
+    const validateSubmission = useCallback(
+      (trimmedContent: string, hasFiles: boolean): string | null => {
+        if (!trimmedContent && !hasFiles) {
+          return null; // Silent return - no error message needed
+        }
 
-      // Require either content or files
-      if (!trimmedContent && !hasFiles) return;
+        if (pendingMessagesRef.current.size >= MAX_PENDING_MESSAGES) {
+          return "Please wait for previous messages to send";
+        }
 
-      // Check if we've reached the limit of 5 pending messages
-      if (pendingMessagesRef.current.size >= 5) {
-        toast.error("Please wait for previous messages to send");
-        return;
-      }
+        if (!user) {
+          return "You must be logged in to send messages";
+        }
 
-      if (!user) {
-        toast.error("You must be logged in to send messages");
-        return;
-      }
+        return null;
+      },
+      [user]
+    );
 
-      const filesToUpload = [...selectedFiles];
+    const handleFileUpload = useCallback(
+      async (
+        files: SelectedFile[],
+        optimisticId: string
+      ): Promise<string[]> => {
+        if (files.length === 0 || !uploadFilesFnRef.current) {
+          return [];
+        }
 
-      // Create optimistic message immediately with files
-      const optimisticMessage: Omit<MessageData, "_id"> & {
-        _id: string;
-        uploadingFiles?: Array<{ id: string; name: string; size: number }>;
-      } = {
-        _id: "", // Will be set by addOptimisticMessage
-        channelId,
-        channelType,
-        content: trimmedContent || "",
-        attachments: [], // Will be populated when files are uploaded
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        authorId: user.id,
-        uploadingFiles: filesToUpload.map((f) => ({
-          id: f.id,
-          name: f.file.name,
-          size: f.file.size,
-        })),
-      };
-
-      const optimisticId = addOptimisticMessage(channelId, optimisticMessage);
-      pendingMessagesRef.current.add(optimisticId);
-
-      // Clear input immediately for better UX
-      const contentToSend = trimmedContent;
-      setContent("");
-      // Clear file previews immediately
-      setSelectedFiles([]);
-
-      try {
-        // Upload files if any
-        let uploadedFiles: SelectedFile[] = [];
-        if (filesToUpload.length > 0 && uploadFilesFnRef.current)
-          uploadedFiles = await uploadFilesFnRef.current(filesToUpload);
-
-        // Extract storageObjectIds from uploaded files
-        const storageObjectIds = uploadedFiles
-          .filter((f) => f.storageObjectId)
-          .map((f) => f.storageObjectId!);
+        const uploadedFiles = await uploadFilesFnRef.current(files);
+        const storageObjectIds = extractStorageObjectIds(uploadedFiles);
 
         // Check if uploads failed
-        if (filesToUpload.length > 0 && storageObjectIds.length === 0) {
-          console.error("All file uploads failed");
-          // Mark optimistic message as error instead of removing
+        if (files.length > 0 && storageObjectIds.length === 0) {
           pendingMessagesRef.current.delete(optimisticId);
           markMessageAsError(
             channelId,
             optimisticId,
             "Failed to upload files. Click to retry."
           );
-          return;
+          throw new Error("File upload failed");
         }
 
-        // Update optimistic message to remove uploadingFiles and add attachments
+        // Update optimistic message with attachments
+        const attachments = convertFilesToAttachments(uploadedFiles);
         updateMessage(channelId, optimisticId, {
-          attachments: uploadedFiles
-            .filter((f) => f.url && f.storageObjectId)
-            .map((f) => ({
-              storageObjectId: f.storageObjectId!,
-              url: f.url!,
-              fileName: f.file.name,
-              contentType: f.file.type || "application/octet-stream",
-              size: f.file.size,
-              hash: f.hash,
-              storageKey: "", // Not needed for display
-            })),
+          attachments,
         } as Partial<MessageData>);
 
-        // Send message with storageObjectIds and optimisticId
+        return storageObjectIds;
+      },
+      [channelId, markMessageAsError, updateMessage]
+    );
+
+    const sendMessage = useCallback(
+      (
+        content: string,
+        storageObjectIds: string[],
+        optimisticId: string
+      ): void => {
         createMessage(
           {
             channelId,
             channelType,
-            content: contentToSend || "",
+            content: content || "",
             storageObjectIds,
             optimisticId,
           },
           (messageId) => {
             pendingMessagesRef.current.delete(optimisticId);
-            if (messageId) {
-              onSend?.();
-            }
+            if (messageId) onSend?.();
           },
           optimisticId
         );
-      } catch (error) {
-        console.error("Error uploading files:", error);
-        // Mark optimistic message as error instead of removing
-        pendingMessagesRef.current.delete(optimisticId);
-        markMessageAsError(
-          channelId,
-          optimisticId,
-          "Failed to send message. Click to retry."
-        );
-      }
+      },
+      [channelId, channelType, createMessage, onSend]
+    );
 
-      inputRef.current?.focus();
-    };
-
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+    const handleSubmit = useCallback(
+      async (e: FormEvent) => {
         e.preventDefault();
-        handleSubmit(e as any);
-      }
-    };
 
-    const removeFile = (id: string) => {
-      setSelectedFiles((prev) => prev.filter((f) => f.id !== id));
-    };
+        const trimmedContent = content.trim();
+        const hasFiles = selectedFiles.length > 0;
+
+        // Validate submission
+        const validationError = validateSubmission(trimmedContent, hasFiles);
+        if (validationError) {
+          toast.error(validationError);
+          return;
+        }
+
+        const filesToUpload = [...selectedFiles];
+        const contentToSend = trimmedContent;
+
+        // Create optimistic message
+        const optimisticMessage = createOptimisticMessage(
+          channelId,
+          channelType,
+          contentToSend,
+          user!.id,
+          filesToUpload
+        );
+
+        const optimisticId = addOptimisticMessage(channelId, optimisticMessage);
+        pendingMessagesRef.current.add(optimisticId);
+
+        // Clear input immediately for better UX
+        setContent("");
+        setSelectedFiles([]);
+
+        try {
+          // Upload files and get storage object IDs
+          const storageObjectIds = await handleFileUpload(
+            filesToUpload,
+            optimisticId
+          );
+
+          // Send message
+          sendMessage(contentToSend, storageObjectIds, optimisticId);
+        } catch (error) {
+          console.error("Error sending message:", error);
+          // Error already handled in handleFileUpload or needs to be handled here
+          if (!pendingMessagesRef.current.has(optimisticId)) {
+            // Only mark as error if not already marked
+            markMessageAsError(
+              channelId,
+              optimisticId,
+              "Failed to send message. Click to retry."
+            );
+          }
+        }
+
+        inputRef.current?.focus();
+      },
+      [
+        content,
+        selectedFiles,
+        validateSubmission,
+        channelId,
+        channelType,
+        user,
+        addOptimisticMessage,
+        handleFileUpload,
+        sendMessage,
+        markMessageAsError,
+      ]
+    );
+
+    const handleKeyDown = useCallback(
+      (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleSubmit(e as any);
+        }
+      },
+      [handleSubmit]
+    );
 
     return (
       <div className="bg-secondary/50 rounded-2xl">
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 p-2 border-b">
-            {selectedFiles.map((selectedFile) => (
-              <div
-                key={selectedFile.id}
-                className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-sm"
-              >
-                <span className="truncate max-w-[200px]">
-                  {selectedFile.file.name}
-                </span>
-                <Button
-                  type="button"
-                  onClick={() => removeFile(selectedFile.id)}
-                  size="icon-sm"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  aria-label="Remove file"
-                >
-                  <X className="size-3" />
-                </Button>
-              </div>
+            {selectedFiles.map((file) => (
+              <FilePreview key={file.id} file={file} onRemove={removeFile} />
             ))}
           </div>
         )}

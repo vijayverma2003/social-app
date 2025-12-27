@@ -73,6 +73,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     const optimisticId = `optimistic-${Date.now()}-${Math.random()
       .toString(36)
       .substr(2, 9)}`;
+      
     const optimisticMessage: MessageData & {
       error?: string;
       uploadingFiles?: Array<{ id: string; name: string; size: number }>;
