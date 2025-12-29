@@ -26,7 +26,7 @@ model User {
   receivedRequests FriendRequest[] @relation("FriendRequestReceiver")
   channelUsers     ChannelUser[]
   posts            Post[]
-  joinedPosts      JoinedPosts[]
+  joinedPosts      JoinedPostsHistory[]
   likes            PostLikes[]
 
   @@unique([username, discriminator])
@@ -144,7 +144,7 @@ model Post {
   user        User             @relation(fields: [userId], references: [id])
   channel     Channel?         @relation(fields: [channelId], references: [id])
   attachments PostAttachment[]
-  joinedPosts JoinedPosts[]
+  joinedPosts JoinedPostsHistory[]
   likes       PostLikes[]
 
   @@index([userId])
@@ -163,7 +163,7 @@ model PostAttachment {
   @@unique([postId, storageObjectId])
 }
 
-model JoinedPosts {
+model JoinedPostsHistory {
   id        String   @id @default(cuid())
   postId    String
   userId    String
@@ -171,6 +171,10 @@ model JoinedPosts {
   updatedAt DateTime @updatedAt
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
 }
 
 model PostLikes {

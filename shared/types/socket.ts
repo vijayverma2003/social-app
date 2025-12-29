@@ -34,6 +34,7 @@ import {
 import {
   CreatePostPayload,
   UpdatePostPayload,
+  JoinPostPayload,
   PostData,
   PostWithUser,
 } from "../schemas/post";
@@ -273,6 +274,20 @@ export interface ClientToServerEvents {
     data: {},
     callback: (response: SocketResponse<PostWithUser[]>) => void
   ) => void;
+
+  /**
+   * JOIN: Join a post (mark user as participating in the post - stored in history)
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<{ postId: string, userId: string }> - Returns post ID and user ID
+   * @broadcasts JOINED to all users
+   * @note This creates a permanent history record - users cannot leave posts
+   */
+  [POST_EVENTS.JOIN]: (
+    data: JoinPostPayload,
+    callback: (
+      response: SocketResponse<{ postId: string; userId: string }>
+    ) => void
+  ) => void;
 }
 
 /**
@@ -406,4 +421,11 @@ export interface ServerToClientEvents {
    * @param data - PostData - The updated post
    */
   [POST_EVENTS.UPDATED]: (data: PostData) => void;
+
+  /**
+   * JOINED: A user joined a post (stored in history)
+   * @emitted_to All users (posts are public)
+   * @param data - { postId: string, userId: string } - Post ID and user ID who joined
+   */
+  [POST_EVENTS.JOINED]: (data: { postId: string; userId: string }) => void;
 }

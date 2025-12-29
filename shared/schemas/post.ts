@@ -82,10 +82,18 @@ export const UpdatePostPayloadSchema = z
     }
   );
 
+// Join Post Payload Schema (for socket events)
+export const JoinPostPayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();
+
 export type PostAttachment = z.infer<typeof PostAttachmentSchema>;
 export type PostData = z.infer<typeof PostSchema>;
 export type CreatePostPayload = z.infer<typeof CreatePostPayloadSchema>;
 export type UpdatePostPayload = z.infer<typeof UpdatePostPayloadSchema>;
+export type JoinPostPayload = z.infer<typeof JoinPostPayloadSchema>;
 
 // Post with user info (for feed display)
 export type PostWithUser = PostData & {
