@@ -276,6 +276,16 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
+   * GET_RECENT_POSTS: Get recent posts from the user's RecentPosts with pagination
+   * @param data - { take?: number; offset?: number } - take: number of posts (default 5, max 20), offset: skip count (default 0)
+   * @param callback - SocketResponse<PostWithUser[]> - Returns array of recent posts with user info
+   */
+  [POST_EVENTS.GET_RECENT_POSTS]: (
+    data: { take?: number; offset?: number },
+    callback: (response: SocketResponse<PostWithUser[]>) => void
+  ) => void;
+
+  /**
    * ADD_RECENT_POST: Add a post to the user's RecentPosts
    * @param data - { postId: string }
    * @param callback - SocketResponse<{ postId: string, userId: string }> - Returns post ID and user ID

@@ -89,11 +89,31 @@ export const JoinPostPayloadSchema = z
   })
   .strict();
 
+// Get Recent Posts Payload Schema (for socket events)
+export const GetRecentPostsPayloadSchema = z
+  .object({
+    take: z
+      .number()
+      .int()
+      .min(1, "Take must be at least 1")
+      .max(20, "Take cannot exceed 20")
+      .optional()
+      .default(5),
+    offset: z
+      .number()
+      .int()
+      .min(0, "Offset must be at least 0")
+      .optional()
+      .default(0),
+  })
+  .strict();
+
 export type PostAttachment = z.infer<typeof PostAttachmentSchema>;
 export type PostData = z.infer<typeof PostSchema>;
 export type CreatePostPayload = z.infer<typeof CreatePostPayloadSchema>;
 export type UpdatePostPayload = z.infer<typeof UpdatePostPayloadSchema>;
 export type JoinPostPayload = z.infer<typeof JoinPostPayloadSchema>;
+export type GetRecentPostsPayload = z.infer<typeof GetRecentPostsPayloadSchema>;
 
 // Post with user info (for feed display)
 export type PostWithUser = PostData & {

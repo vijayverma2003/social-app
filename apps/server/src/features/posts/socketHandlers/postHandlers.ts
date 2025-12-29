@@ -8,7 +8,9 @@ import { AuthenticatedSocket } from "../../../socketHandlers";
 import {
   CreatePostPayloadSchema,
   UpdatePostPayloadSchema,
+  GetRecentPostsPayloadSchema,
   PostData,
+  PostWithUser,
 } from "@shared/schemas/post";
 import prisma from "@database/postgres";
 
@@ -34,6 +36,13 @@ type GetFeedCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.GET_FEED]
 >[1];
 
+type GetRecentPostsData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.GET_RECENT_POSTS]
+>[0];
+type GetRecentPostsCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.GET_RECENT_POSTS]
+>[1];
+
 export class PostHandlers {
   private io: Server<ClientToServerEvents, ServerToClientEvents>;
 
@@ -52,6 +61,10 @@ export class PostHandlers {
 
     socket.on(POST_EVENTS.GET_FEED, (data, callback) =>
       this.getFeed(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.GET_RECENT_POSTS, (data, callback) =>
+      this.getRecentPosts(socket, data, callback)
     );
   }
 
@@ -450,6 +463,107 @@ export class PostHandlers {
       console.error("Error getting feed:", error);
       callback({
         error: error instanceof Error ? error.message : "Failed to get feed",
+      });
+    }
+  }
+
+  private async getRecentPosts(
+    socket: AuthenticatedSocket,
+    data: GetRecentPostsData,
+    callback: GetRecentPostsCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = GetRecentPostsPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { take, offset } = validation.data;
+
+      // Get recent posts from RecentPosts table for the authenticated user
+      const recentPosts = await prisma.recentPosts.findMany({
+        where: {
+          userId: socket.userId,
+        },
+        take,
+        skip: offset,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          post: {
+            include: {
+              attachments: {
+                include: {
+                  storageObject: true,
+                },
+              },
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  discriminator: true,
+                  profile: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Format posts for response with user info
+      const postsData: PostWithUser[] = recentPosts.map((recentPost) => {
+        const post = recentPost.post;
+        const attachments = post.attachments.map((attachment) => ({
+          id: attachment.id,
+          storageObjectId: attachment.storageObjectId,
+          url: attachment.storageObject.url || "",
+          fileName: attachment.storageObject.filename,
+          contentType: attachment.storageObject.mimeType,
+          size: attachment.storageObject.size,
+          hash: attachment.storageObject.hash,
+          storageKey: attachment.storageObject.storageKey,
+          width: attachment.storageObject.width ?? null,
+          height: attachment.storageObject.height ?? null,
+          createdAt: attachment.createdAt,
+          updatedAt: attachment.updatedAt,
+        }));
+
+        return {
+          id: post.id,
+          userId: post.userId,
+          channelId: post.channelId || undefined,
+          content: post.content,
+          attachments,
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt,
+          user: {
+            id: post.user.id,
+            username: post.user.username,
+            discriminator: post.user.discriminator,
+            profile: post.user.profile,
+          },
+        };
+      });
+
+      callback({
+        success: true,
+        data: postsData,
+      });
+    } catch (error) {
+      console.error("Error getting recent posts:", error);
+      callback({
+        error:
+          error instanceof Error ? error.message : "Failed to get recent posts",
       });
     }
   }
