@@ -1,5 +1,5 @@
 import prisma from "@database/postgres";
-import { CHANNEL_EVENTS } from "@shared/socketEvents";
+import { CHANNEL_EVENTS, POST_EVENTS } from "@shared/socketEvents";
 import { Server } from "socket.io";
 import {
   ClientToServerEvents,
@@ -285,6 +285,40 @@ export class ChannelHandlers {
           },
           update: {},
         });
+
+        // Find the post associated with this channel
+        const post = await prisma.post.findFirst({
+          where: { channelId },
+          select: { id: true },
+        });
+
+        // Create RecentPosts record if post exists and user hasn't joined before
+        if (post) {
+          const existingHistory = await prisma.recentPosts.findUnique({
+            where: {
+              postId_userId: {
+                postId: post.id,
+                userId: socket.userId,
+              },
+            },
+          });
+
+          // Only create history record if it doesn't exist
+          if (!existingHistory) {
+            await prisma.recentPosts.create({
+              data: {
+                postId: post.id,
+                userId: socket.userId,
+              },
+            });
+
+            // Broadcast that post was added to user's RecentPosts
+            this.io.emit(POST_EVENTS.RECENT_POST_ADDED, {
+              postId: post.id,
+              userId: socket.userId,
+            });
+          }
+        }
       }
 
       // Join socket room for broadcasting based on channel type

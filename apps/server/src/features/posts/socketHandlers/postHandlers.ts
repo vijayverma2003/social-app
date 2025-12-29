@@ -8,7 +8,6 @@ import { AuthenticatedSocket } from "../../../socketHandlers";
 import {
   CreatePostPayloadSchema,
   UpdatePostPayloadSchema,
-  JoinPostPayloadSchema,
   PostData,
 } from "@shared/schemas/post";
 import prisma from "@database/postgres";
@@ -35,13 +34,6 @@ type GetFeedCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.GET_FEED]
 >[1];
 
-type JoinPostData = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.JOIN]
->[0];
-type JoinPostCallback = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.JOIN]
->[1];
-
 export class PostHandlers {
   private io: Server<ClientToServerEvents, ServerToClientEvents>;
 
@@ -60,10 +52,6 @@ export class PostHandlers {
 
     socket.on(POST_EVENTS.GET_FEED, (data, callback) =>
       this.getFeed(socket, data, callback)
-    );
-
-    socket.on(POST_EVENTS.JOIN, (data, callback) =>
-      this.joinPost(socket, data, callback)
     );
   }
 
@@ -462,90 +450,6 @@ export class PostHandlers {
       console.error("Error getting feed:", error);
       callback({
         error: error instanceof Error ? error.message : "Failed to get feed",
-      });
-    }
-  }
-
-  private async joinPost(
-    socket: AuthenticatedSocket,
-    data: JoinPostData,
-    callback: JoinPostCallback
-  ) {
-    try {
-      if (!socket.userId) {
-        return callback({
-          error: "Unauthorized",
-        });
-      }
-
-      // Validate payload
-      const validation = JoinPostPayloadSchema.safeParse(data);
-      if (!validation.success) {
-        return callback({
-          error: validation.error.message || "Invalid payload",
-        });
-      }
-
-      const { postId } = validation.data;
-
-      // Verify post exists
-      const post = await prisma.post.findUnique({
-        where: { id: postId },
-      });
-
-      if (!post) {
-        return callback({
-          error: "Post not found",
-        });
-      }
-
-      // Check if user has already joined (history record already exists)
-      const existingJoin = await prisma.joinedPostsHistory.findUnique({
-        where: {
-          postId_userId: {
-            postId,
-            userId: socket.userId,
-          },
-        },
-      });
-
-      if (existingJoin) {
-        // User already joined, return success
-        callback({
-          success: true,
-          data: {
-            postId,
-            userId: socket.userId,
-          },
-        });
-        return;
-      }
-
-      // Create join record
-      await prisma.joinedPostsHistory.create({
-        data: {
-          postId,
-          userId: socket.userId,
-        },
-      });
-
-      // Broadcast to all users
-      this.io.emit(POST_EVENTS.JOINED, {
-        postId,
-        userId: socket.userId,
-      });
-
-      callback({
-        success: true,
-        data: {
-          postId,
-          userId: socket.userId,
-        },
-      });
-    } catch (error) {
-      console.error("Error joining post:", error);
-      callback({
-        error: error instanceof Error ? error.message : "Failed to join post",
       });
     }
   }

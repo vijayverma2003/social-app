@@ -57,12 +57,12 @@ export const POST_EVENTS = {
   CREATE: "post:create",
   UPDATE: "post:update",
   GET_FEED: "post:get_feed",
-  JOIN: "post:join",
+  RECENT_POST_ADD: "post:recent_post_add",
 
   // Server -> Client events (notifications)
   CREATED: "post:created",
   UPDATED: "post:updated",
-  JOINED: "post:joined",
+  RECENT_POST_ADDED: "post:recent_post_added",
 } as const;
 
 export type FriendRequestEvent =

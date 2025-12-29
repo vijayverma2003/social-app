@@ -276,13 +276,13 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
-   * JOIN: Join a post (mark user as participating in the post - stored in history)
+   * ADD_RECENT_POST: Add a post to the user's RecentPosts
    * @param data - { postId: string }
    * @param callback - SocketResponse<{ postId: string, userId: string }> - Returns post ID and user ID
-   * @broadcasts JOINED to all users
-   * @note This creates a permanent history record - users cannot leave posts
+   * @broadcasts RECENT_POST_ADDED to all users
+   * @note This creates a permanent RecentPosts record - users cannot leave posts
    */
-  [POST_EVENTS.JOIN]: (
+  [POST_EVENTS.RECENT_POST_ADD]: (
     data: JoinPostPayload,
     callback: (
       response: SocketResponse<{ postId: string; userId: string }>
@@ -423,9 +423,12 @@ export interface ServerToClientEvents {
   [POST_EVENTS.UPDATED]: (data: PostData) => void;
 
   /**
-   * JOINED: A user joined a post (stored in history)
+   * RECENT_POST_ADDED: A post was added to the user's RecentPosts
    * @emitted_to All users (posts are public)
-   * @param data - { postId: string, userId: string } - Post ID and user ID who joined
+   * @param data - { postId: string, userId: string } - Post ID and user ID added to RecentPosts
    */
-  [POST_EVENTS.JOINED]: (data: { postId: string; userId: string }) => void;
+  [POST_EVENTS.RECENT_POST_ADDED]: (data: {
+    postId: string;
+    userId: string;
+  }) => void;
 }

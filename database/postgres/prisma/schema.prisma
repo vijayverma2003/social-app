@@ -26,7 +26,7 @@ model User {
   receivedRequests FriendRequest[] @relation("FriendRequestReceiver")
   channelUsers     ChannelUser[]
   posts            Post[]
-  joinedPosts      JoinedPostsHistory[]
+  joinedPosts      RecentPosts[]
   likes            PostLikes[]
 
   @@unique([username, discriminator])
@@ -144,7 +144,7 @@ model Post {
   user        User             @relation(fields: [userId], references: [id])
   channel     Channel?         @relation(fields: [channelId], references: [id])
   attachments PostAttachment[]
-  joinedPosts JoinedPostsHistory[]
+  joinedPosts RecentPosts[]
   likes       PostLikes[]
 
   @@index([userId])
@@ -163,7 +163,7 @@ model PostAttachment {
   @@unique([postId, storageObjectId])
 }
 
-model JoinedPostsHistory {
+model RecentPosts {
   id        String   @id @default(cuid())
   postId    String
   userId    String
