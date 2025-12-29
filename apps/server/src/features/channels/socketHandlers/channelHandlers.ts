@@ -294,17 +294,8 @@ export class ChannelHandlers {
 
         // Create RecentPosts record if post exists and user hasn't joined before
         if (post) {
-          const existingHistory = await prisma.recentPosts.findUnique({
-            where: {
-              postId_userId: {
-                postId: post.id,
-                userId: socket.userId,
-              },
-            },
-          });
-
-          // Only create history record if it doesn't exist
-          if (!existingHistory) {
+          try {
+            // Try to create the record - will fail if it already exists (unique constraint)
             await prisma.recentPosts.create({
               data: {
                 postId: post.id,
@@ -312,11 +303,18 @@ export class ChannelHandlers {
               },
             });
 
-            // Broadcast that post was added to user's RecentPosts
+            // Only broadcast if we successfully created a new record
             this.io.emit(POST_EVENTS.RECENT_POST_ADDED, {
               postId: post.id,
               userId: socket.userId,
             });
+          } catch (error: any) {
+            // Handle unique constraint violation (P2002) - record already exists
+            // This can happen due to race conditions when multiple requests try to create the same record
+            if (error?.code === "P2002") {
+              // Record already exists, which is fine - no need to broadcast or error
+              // Continue with channel join flow
+            } else console.error("Error adding recent post:", error);
           }
         }
       }

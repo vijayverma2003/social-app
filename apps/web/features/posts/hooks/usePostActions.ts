@@ -24,6 +24,10 @@ type GetFeedCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.GET_FEED]
 >[1];
 
+type GetRecentPostsCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.GET_RECENT_POSTS]
+>[1];
+
 export const usePostActions = () => {
   const { emit } = useSocket();
   const { setPosts, setPostsWithUser, prependPost, updatePost } =
@@ -74,8 +78,30 @@ export const usePostActions = () => {
     [emit, setPosts, setPostsWithUser]
   );
 
+  const getRecentPosts = useCallback(
+    (
+      payload: { take?: number; offset?: number } = {},
+      onComplete?: (posts: PostWithUser[] | null) => void
+    ) => {
+      emit(POST_EVENTS.GET_RECENT_POSTS, payload, ((response) => {
+        if (response.error) {
+          toast.error("Failed to load recent posts", {
+            description: response.error,
+          });
+          onComplete?.(null);
+        } else if (response.success && response.data) {
+          onComplete?.(response.data);
+        } else {
+          onComplete?.(null);
+        }
+      }) as GetRecentPostsCallback);
+    },
+    [emit]
+  );
+
   return {
     createPost,
     getFeed,
+    getRecentPosts,
   };
 };

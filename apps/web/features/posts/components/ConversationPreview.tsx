@@ -67,7 +67,7 @@ export const ConversationPreview = ({
   if (!channelId) return null;
 
   return (
-    <div className="flex flex-col h-[50vh] bg-secondary/50 rounded-2xl w-full">
+    <div className="flex flex-col bg-secondary/50 rounded-2xl w-full max-h-[500px] h-full">
       <div className="flex items-center justify-between p-4">
         <h2 className="text-lg font-semibold">{title}</h2>
         {onClose && (

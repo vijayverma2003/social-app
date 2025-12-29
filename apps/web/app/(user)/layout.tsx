@@ -15,11 +15,11 @@ const Layout = ({ children }: PropsWithChildren) => {
   usePostChannelsBootstrap();
 
   return (
-    <div className="flex max-h-screen">
+    <div className="flex h-screen">
       <Navbar />
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col overflow-y-auto">
         <MainHeader />
-        <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        <div className="flex-1 p-4">{children}</div>
       </main>
     </div>
   );
