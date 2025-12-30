@@ -15,6 +15,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
 import ChannelNavigation from "./ChannelNavigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useUser } from "@/providers/UserContextProvider";
 
 interface NavItem {
   href: string;
@@ -30,6 +32,7 @@ const Navbar = () => {
     (state) => state.received.length
   );
   const hasIncoming = incomingCount > 0;
+  const { user } = useUser();
 
   const navItems: NavItem[] = [
     {
@@ -46,60 +49,76 @@ const Navbar = () => {
   ];
 
   return (
-    <aside className="min-h-screen w-64 bg-background p-4 flex flex-col gap-4 overflow-y-scroll">
-      <div className="mb-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <span>Social App</span>
-        </Link>
-      </div>
-
-      <nav className="flex flex-col gap-2 flex-1 bg-secondary/50 p-4 rounded-2xl max-h-fit">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          const showNotificationBadge = item.showBadge && hasIncoming;
-
-          return (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant={isActive ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start gap-3",
-                  showNotificationBadge && "relative",
-                  isActive && "bg-secondary"
-                )}
-              >
-                <Icon className="size-5" />
-                <span>{item.label}</span>
-                {showNotificationBadge && (
-                  <NotificationBadge count={incomingCount} />
-                )}
-              </Button>
-            </Link>
-          );
-        })}
-
-        <Popover open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-          <PopoverTrigger
-            className={cn(
-              buttonVariants({ variant: "default" }),
-              "w-full justify-start gap-3 mb-2"
-            )}
-          >
-            <Plus className="size-5" />
-            <span>Create Post</span>
-          </PopoverTrigger>
-          <PopoverContent className="w-96" align="start">
-            <CreatePostForm
-              onSuccess={() => setIsCreatePostOpen(false)}
-              onCancel={() => setIsCreatePostOpen(false)}
-            />
-          </PopoverContent>
-        </Popover>
-      </nav>
-
-      <ChannelNavigation />
-    </aside>
+    <div className="rounded-2xl bg-secondary/50 overflow-hidden m-4">
+      <aside className="h-screen w-64 p-4 flex flex-col gap-4 overflow-y-auto no-scrollbar relative">
+        <div className="mb-4">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+            <span>Social App</span>
+          </Link>
+        </div>
+        <nav className="flex flex-col gap-2 flex-1 rounded-2xl max-h-fit">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            const showNotificationBadge = item.showBadge && hasIncoming;
+            return (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3",
+                    showNotificationBadge && "relative",
+                    isActive && "bg-secondary"
+                  )}
+                >
+                  <Icon className="size-5" />
+                  <span>{item.label}</span>
+                  {showNotificationBadge && (
+                    <NotificationBadge count={incomingCount} />
+                  )}
+                </Button>
+              </Link>
+            );
+          })}
+          <Popover open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+            <PopoverTrigger
+              className={cn(
+                buttonVariants({ variant: "default" }),
+                "w-full justify-start gap-3 mb-2"
+              )}
+            >
+              <Plus className="size-5" />
+              <span>Create Post</span>
+            </PopoverTrigger>
+            <PopoverContent className="w-96" align="start">
+              <CreatePostForm
+                onSuccess={() => setIsCreatePostOpen(false)}
+                onCancel={() => setIsCreatePostOpen(false)}
+              />
+            </PopoverContent>
+          </Popover>
+        </nav>
+        <div className="flex-1">
+          <ChannelNavigation />
+        </div>
+      </aside>
+      <Link href="/settings/profile">
+        <div className="bg-secondary/50 backdrop-blur-2xl w-full p-4 flex gap-4 items-center sticky bottom-0">
+          <Avatar>
+            <AvatarImage src={user?.profile?.avatarURL || undefined} />
+            <AvatarFallback>
+              {user?.profile?.displayName?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium">{user?.profile?.displayName}</p>
+            <p className="text-xs text-muted-foreground">
+              {user?.username + "#" + user?.discriminator}
+            </p>
+          </div>
+        </div>
+      </Link>
+    </div>
   );
 };
 

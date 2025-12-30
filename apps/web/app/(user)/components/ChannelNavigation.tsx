@@ -58,7 +58,7 @@ const ChannelNavigation = () => {
   };
 
   return (
-    <nav className="flex flex-col gap-2 flex-1 bg-secondary/50 p-4 rounded-2xl max-h-fit overflow-y-auto">
+    <nav className="flex flex-col gap-2 flex-1 rounded-2xl max-h-fit overflow-y-auto">
       {/* DM Channels */}
       {
         <div className="mb-2">

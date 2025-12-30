@@ -30,30 +30,6 @@ const MainHeader = () => {
               <Bell className="size-5" />
             </Button>
           </Link>
-
-          {isSignedIn ? (
-            <Link href="/settings/profile">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar className="size-8">
-                  <AvatarImage
-                    src={user?.imageUrl}
-                    alt={user?.firstName || "User"}
-                  />
-                  <AvatarFallback>
-                    {user?.firstName?.[0] ||
-                      user?.emailAddresses[0]?.emailAddress?.[0] ||
-                      "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </Link>
-          ) : (
-            <Link href="/profile">
-              <Button variant="ghost" size="icon">
-                <User className="size-5" />
-              </Button>
-            </Link>
-          )}
         </div>
       </div>
     </header>
