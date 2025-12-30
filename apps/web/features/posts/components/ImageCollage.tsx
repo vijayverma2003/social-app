@@ -76,10 +76,6 @@ export const ImageCollage = ({
           {displayImages.map((attachment, index) => {
             const isFourth = index === 3;
             const shouldBlur = totalImages > 4 && isFourth;
-            const aspectRatio =
-              attachment.width && attachment.height
-                ? attachment.width / attachment.height
-                : 1;
 
             // For 3 images, make the last one span full width
             const spanClass =
@@ -89,7 +85,7 @@ export const ImageCollage = ({
               <div
                 key={attachment.id}
                 className={cn(
-                  "relative overflow-hidden bg-muted cursor-pointer transition-opacity hover:opacity-90",
+                  "relative overflow-hidden cursor-pointer transition-opacity hover:opacity-90",
                   spanClass
                 )}
                 onClick={(e) => {

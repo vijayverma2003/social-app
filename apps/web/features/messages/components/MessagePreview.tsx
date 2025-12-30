@@ -1,7 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageData } from "@shared/schemas/messages";
 import { Profile } from "@shared/types/responses";
-import Image from "next/image";
 import { useMemo, memo } from "react";
 import {
   ContextMenu,
@@ -14,6 +13,7 @@ import { useUser } from "@/providers/UserContextProvider";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Loader2 } from "lucide-react";
+import { ImageCollage } from "@/features/posts/components/ImageCollage";
 
 const MessagePreview = memo(
   ({
@@ -140,36 +140,60 @@ const MessagePreview = memo(
               {/* Show uploading files */}
               {uploadingFiles.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {uploadingFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-sm"
-                    >
-                      <Loader2 className="size-3 animate-spin" />
-                      <span className="truncate max-w-[200px]">
-                        {file.name}
-                      </span>
-                    </div>
-                  ))}
+                  {uploadingFiles.map(
+                    (file: { id: string; name: string; size: number }) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-sm"
+                      >
+                        <Loader2 className="size-3 animate-spin" />
+                        <span className="truncate max-w-[200px]">
+                          {file.name}
+                        </span>
+                      </div>
+                    )
+                  )}
                 </div>
               )}
               {/* Show uploaded attachments */}
               {message.attachments && message.attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {message.attachments.map((attachment) => (
-                    <div
-                      key={attachment.url}
-                      className="rounded-lg overflow-hidden"
-                    >
-                      <Image
-                        src={attachment.url}
-                        alt={attachment.fileName}
-                        width={200}
-                        height={200}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <>
+                  {/* Image collage */}
+                  <ImageCollage
+                    images={message.attachments.map((attachment) => ({
+                      id: attachment.storageObjectId,
+                      url: attachment.url,
+                      fileName: attachment.fileName,
+                      contentType: attachment.contentType,
+                      width: null,
+                      height: null,
+                    }))}
+                    className="mb-2"
+                  />
+
+                  {/* Non-image attachments */}
+                  {message.attachments
+                    .filter(
+                      (att) => !(att.contentType?.startsWith("image/") ?? false)
+                    )
+                    .map((attachment) => (
+                      <div
+                        key={attachment.storageObjectId}
+                        className="p-4 rounded-2xl flex items-center gap-2 mb-2"
+                      >
+                        <span className="text-sm">{attachment.fileName}</span>
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View
+                        </a>
+                      </div>
+                    ))}
+                </>
               )}
               <div className="flex items-center gap-2">
                 <p
