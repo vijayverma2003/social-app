@@ -1,20 +1,21 @@
 "use client";
 
+import { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { updateUserProfile } from "@/services/users";
 import { useAuth } from "@clerk/nextjs";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { UserWithProfile } from "@shared/types";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   updateUserProfileSchema,
   type UpdateUserProfileSchema,
 } from "@shared/schemas/user";
-import { UserWithProfile } from "@shared/types";
-import { AxiosError } from "axios";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
 
 interface ProfileSettingsFormProps {
   user: UserWithProfile;
@@ -46,13 +47,28 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
   const onSubmitForm = async (data: UpdateUserProfileSchema) => {
     setSubmitError(null);
     setSubmitSuccess(false);
+
     try {
       const token = await getToken();
       if (!token) {
         throw new Error("Not authenticated");
       }
 
-      await updateUserProfile(data, token);
+      // Upload images first if they were selected
+      let avatarURL = data.avatarURL;
+      let bannerURL = data.bannerURL;
+
+      // Update profile with the final URLs
+      await updateUserProfile(
+        {
+          ...data,
+          avatarURL: avatarURL || "",
+          bannerURL: bannerURL || "",
+        },
+        token
+      );
+
+      // Clear selected files after successful submission
       setSubmitSuccess(true);
       router.refresh();
     } catch (error) {
@@ -62,16 +78,17 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
             "Failed to update profile. Please try again."
         );
       } else {
-        setSubmitError("Failed to update profile. Please try again.");
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "Failed to update profile. Please try again."
+        );
       }
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmitForm)}
-      className="mt-4 space-y-4 max-w-lg"
-    >
+    <form onSubmit={handleSubmit(onSubmitForm)} className="mt-4 space-y-4">
       <div className="space-y-2">
         <Label htmlFor="displayName">Display Name</Label>
         <Input
@@ -87,41 +104,17 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           </p>
         )}
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="bio">Bio</Label>
-        <textarea
-          id="bio"
-          rows={4}
-          placeholder="Tell us about yourself..."
-          {...register("bio")}
-          disabled={isSubmitting}
-          className="w-full min-h-[100px] rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
-        />
-        {errors.bio && (
-          <p className="text-sm text-destructive">{errors.bio.message}</p>
-        )}
-      </div>
-
       <div className="space-y-2">
         <Label htmlFor="pronouns">Pronouns</Label>
-        <Input
-          id="pronouns"
-          type="text"
-          placeholder="e.g., they/them, she/her, he/him"
-          {...register("pronouns")}
-          disabled={isSubmitting}
-        />
+        <Input type="text" {...register("pronouns")} disabled={isSubmitting} />
         {errors.pronouns && (
           <p className="text-sm text-destructive">{errors.pronouns.message}</p>
         )}
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="bannerColor">Banner Color</Label>
         <div className="flex gap-2 items-center">
           <Input
-            id="bannerColor"
             type="color"
             {...register("bannerColor")}
             disabled={isSubmitting}
@@ -141,37 +134,15 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           </p>
         )}
       </div>
-
       <div className="space-y-2">
-        <Label htmlFor="avatarURL">Avatar URL</Label>
-        <Input
-          id="avatarURL"
-          type="url"
-          placeholder="https://example.com/avatar.jpg"
-          {...register("avatarURL")}
-          disabled={isSubmitting}
-        />
-        {errors.avatarURL && (
-          <p className="text-sm text-destructive">{errors.avatarURL.message}</p>
+        <Label htmlFor="bio">Bio</Label>
+        <Textarea {...register("bio")} disabled={isSubmitting} />
+        {errors.bio && (
+          <p className="text-sm text-destructive">{errors.bio.message}</p>
         )}
       </div>
-
       <div className="space-y-2">
-        <Label htmlFor="bannerURL">Banner URL</Label>
-        <Input
-          id="bannerURL"
-          type="url"
-          placeholder="https://example.com/banner.jpg"
-          {...register("bannerURL")}
-          disabled={isSubmitting}
-        />
-        {errors.bannerURL && (
-          <p className="text-sm text-destructive">{errors.bannerURL.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="profileGradientStart">Profile Gradient Start</Label>
+        <Label htmlFor="profileGradientStart">Profile Gradient</Label>
         <div className="flex gap-2 items-center">
           <Input
             id="profileGradientStart"
@@ -181,11 +152,11 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
             className="w-20 h-10 cursor-pointer"
           />
           <Input
-            type="text"
-            placeholder="#4e83d9"
-            {...register("profileGradientStart")}
+            id="profileGradientEnd"
+            type="color"
+            {...register("profileGradientEnd")}
             disabled={isSubmitting}
-            className="flex-1"
+            className="w-20 h-10 cursor-pointer"
           />
         </div>
         {errors.profileGradientStart && (
@@ -193,39 +164,17 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
             {errors.profileGradientStart.message}
           </p>
         )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="profileGradientEnd">Profile Gradient End</Label>
-        <div className="flex gap-2 items-center">
-          <Input
-            id="profileGradientEnd"
-            type="color"
-            {...register("profileGradientEnd")}
-            disabled={isSubmitting}
-            className="w-20 h-10 cursor-pointer"
-          />
-          <Input
-            type="text"
-            placeholder="#8b5cf6"
-            {...register("profileGradientEnd")}
-            disabled={isSubmitting}
-            className="flex-1"
-          />
-        </div>
         {errors.profileGradientEnd && (
           <p className="text-sm text-destructive">
             {errors.profileGradientEnd.message}
           </p>
         )}
       </div>
-
       {submitError && (
         <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
           <p className="text-sm text-destructive">{submitError}</p>
         </div>
       )}
-
       {submitSuccess && (
         <div className="p-3 rounded-md bg-green-500/10 border border-green-500/20">
           <p className="text-sm text-green-600 dark:text-green-400">
@@ -233,7 +182,6 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           </p>
         </div>
       )}
-
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Saving..." : "Save Changes"}
       </Button>

@@ -16,7 +16,7 @@ export const FileAttachmentSchema = z
     expectedHash: z.string().trim().min(1), // SHA hash from client
     actualHash: z.string().trim().optional(), // SHA hash after upload verification
     status: FileAttachmentStatusSchema,
-    url: z.url().optional(), // Final URL after upload
+    url: z.string().url().optional(), // Final URL after upload
     userId: z.string().trim().min(1),
     key: z.string().trim().min(1), // R2 storage key
     createdAt: z.date(),
@@ -46,7 +46,7 @@ export const UploadCompletePayloadSchema = z
 export const UploadInitialisedResponseSchema = z
   .object({
     storageObjectId: z.string().trim(), // StorageObject ID (always present)
-    presignedUrl: z.url().optional(), // Only present if file needs to be uploaded
+    presignedUrl: z.string().url().optional(), // Only present if file needs to be uploaded
     url: z.string().url().optional(), // URL (present if file already exists)
   })
   .strict();
@@ -55,7 +55,7 @@ export const UploadInitialisedResponseSchema = z
 export const UploadCompletedResponseSchema = z
   .object({
     storageObjectId: z.string().trim(),
-    url: z.url(),
+    url: z.string().url(),
     status: z.enum(["done"]),
   })
   .strict();

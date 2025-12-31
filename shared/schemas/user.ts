@@ -49,19 +49,28 @@ export const updateUserSchema = z
 
 export const updateUserProfileSchema = z
   .object({
-    displayName: z.string().trim().max(100).optional().or(z.literal("")),
-    avatarURL: z.url("Invalid avatar URL").optional().or(z.literal("")),
-    bannerURL: z.url("Invalid banner URL").optional().or(z.literal("")),
+    displayName: z
+      .union([z.string().trim().max(100), z.literal("")])
+      .optional(),
+    avatarURL: z
+      .union([z.string().url("Invalid avatar URL"), z.literal("")])
+      .optional(),
+    bannerURL: z
+      .union([z.string().url("Invalid banner URL"), z.literal("")])
+      .optional(),
     bannerColor: z
-      .string()
-      .trim()
-      .regex(/^#([0-9a-fA-F]{3}){1,2}$/, "Invalid hex color code")
-      .optional()
-      .or(z.literal("")),
-    bio: z.string().trim().max(400).optional().or(z.literal("")),
-    pronouns: z.string().trim().max(20).optional().or(z.literal("")),
-    profileGradientStart: z.string().optional().or(z.literal("")),
-    profileGradientEnd: z.string().optional().or(z.literal("")),
+      .union([
+        z
+          .string()
+          .trim()
+          .regex(/^#([0-9a-fA-F]{3}){1,2}$/, "Invalid hex color code"),
+        z.literal(""),
+      ])
+      .optional(),
+    bio: z.union([z.string().trim().max(400), z.literal("")]).optional(),
+    pronouns: z.union([z.string().trim().max(20), z.literal("")]).optional(),
+    profileGradientStart: z.union([z.string(), z.literal("")]).optional(),
+    profileGradientEnd: z.union([z.string(), z.literal("")]).optional(),
   })
   .strict();
 

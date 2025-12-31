@@ -85,10 +85,12 @@ export const UploadButton = ({
                 }
 
                 // File needs to be uploaded - upload to R2 using presigned URL
-                if (!response.presignedUrl || !response.storageObjectId)
+                if (!response.presignedUrl || !response.storageObjectId) {
                   throw new Error("Missing presigned URL or storage object ID");
+                }
 
-                const uploadResponse = await fetch(response.presignedUrl, {
+                const presignedUrl: string = response.presignedUrl;
+                const uploadResponse = await fetch(presignedUrl, {
                   method: "PUT",
                   body: selectedFile.file,
                   headers: {

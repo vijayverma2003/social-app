@@ -115,7 +115,10 @@ export class UsersController {
 
       const validation = updateUserSchema.safeParse(req.body);
       if (!validation.success) {
-        throw new BadRequestError(z.treeifyError(validation.error).errors[0]);
+        const firstError = validation.error.issues[0];
+        throw new BadRequestError(
+          firstError?.message || "Invalid request data"
+        );
       }
 
       const { username, dob } = validation.data;
