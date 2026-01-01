@@ -1,14 +1,15 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import React, { useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
-import { useAuth } from "@clerk/nextjs";
-import {
-  ServerToClientEvents,
-  ClientToServerEvents,
-} from "@shared/types/socket";
-import { socketService } from "@/services/socket";
+
 import { SocketContext } from "@/contexts/socket";
+import { socketService } from "@/services/socket";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/types/socket";
 
 interface SocketProviderProps {
   children: React.ReactNode;

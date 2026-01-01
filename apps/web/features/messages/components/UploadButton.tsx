@@ -3,19 +3,8 @@
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
-import { useUploadActions } from "../hooks/useUploadActions";
 import { toast } from "sonner";
-
-// Helper function to calculate SHA256 hash
-const calculateFileHash = async (file: File): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return hashHex;
-};
+import uploadFilesService from "@/services/uploadService";
 
 export interface SelectedFile {
   file: File;
@@ -43,7 +32,6 @@ export const UploadButton = ({
   onUploadFilesReady,
 }: UploadButtonProps) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-  const { initUpload, completeUpload } = useUploadActions();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Upload files function - exposed to parent
@@ -51,109 +39,30 @@ export const UploadButton = ({
     async (files: SelectedFile[]): Promise<SelectedFile[]> => {
       if (files.length === 0) return [];
 
-      // Upload all files in parallel
-      const uploadPromises = files.map(async (selectedFile) => {
-        return new Promise<SelectedFile>((resolveFile, rejectFile) => {
-          // Initialize upload
-          initUpload(
-            {
-              fileName: selectedFile.file.name,
-              contentType: selectedFile.file.type || "application/octet-stream",
-              size: selectedFile.file.size,
-              hash: selectedFile.hash,
-            },
-            async (response) => {
-              if (!response) {
-                console.error(
-                  "Failed to initialize upload for file:",
-                  selectedFile.file.name
-                );
-                rejectFile(new Error("Failed to initialize upload"));
-                return;
-              }
-
-              try {
-                // If file already exists, we have url, no need to upload
-                if (response.url) {
-                  const doneFile: SelectedFile = {
-                    ...selectedFile,
-                    url: response.url,
-                    storageObjectId: response.storageObjectId,
-                  };
-                  resolveFile(doneFile);
-                  return;
-                }
-
-                // File needs to be uploaded - upload to R2 using presigned URL
-                if (!response.presignedUrl || !response.storageObjectId) {
-                  throw new Error("Missing presigned URL or storage object ID");
-                }
-
-                const presignedUrl: string = response.presignedUrl;
-                const uploadResponse = await fetch(presignedUrl, {
-                  method: "PUT",
-                  body: selectedFile.file,
-                  headers: {
-                    "Content-Type":
-                      selectedFile.file.type || "application/octet-stream",
-                  },
-                });
-
-                if (!uploadResponse.ok) {
-                  console.error(
-                    "Failed to upload file:",
-                    selectedFile.file.name,
-                    uploadResponse.statusText
-                  );
-                  throw new Error("Failed to upload file");
-                }
-
-                // Complete upload (verify hash)
-                completeUpload(
-                  {
-                    storageObjectId: response.storageObjectId,
-                    hash: selectedFile.hash,
-                  },
-                  (completeResponse) => {
-                    if (!completeResponse) {
-                      console.error(
-                        "Hash verification failed for file:",
-                        selectedFile.file.name
-                      );
-                      rejectFile(new Error("Hash verification failed"));
-                      return;
-                    }
-
-                    const doneFile: SelectedFile = {
-                      ...selectedFile,
-                      url: completeResponse.url,
-                      storageObjectId: completeResponse.storageObjectId,
-                    };
-                    resolveFile(doneFile);
-                  }
-                );
-              } catch (error) {
-                console.error(
-                  "Error uploading file:",
-                  selectedFile.file.name,
-                  error
-                );
-                rejectFile(error);
-              }
-            }
-          );
-        });
-      });
-
       try {
-        const results = await Promise.all(uploadPromises);
-        return results;
+        const fileArray = files.map((selectedFile) => selectedFile.file);
+        const results = await uploadFilesService.uploadFiles(fileArray);
+
+        const uploadedFiles: SelectedFile[] = results.map((result, index) => {
+          const originalFile = files[index];
+          return {
+            ...originalFile,
+            url: result.url,
+            storageObjectId: result.storageObjectId,
+          };
+        });
+
+        return uploadedFiles;
       } catch (error) {
         console.error("Error uploading files:", error);
+        toast.error("Failed to upload files", {
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        });
         throw error;
       }
     },
-    [initUpload, completeUpload]
+    []
   );
 
   // Expose uploadFiles function to parent
@@ -178,7 +87,7 @@ export const UploadButton = ({
     // Calculate hash for each file and add to selected files
     const newFiles: SelectedFile[] = await Promise.all(
       files.map(async (file) => {
-        const hash = await calculateFileHash(file);
+        const hash = await uploadFilesService.calculateFileHash(file);
         return {
           file,
           id: `${Date.now()}-${Math.random()}`,
