@@ -10,26 +10,40 @@ import { useAuth } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { UserWithProfile } from "@shared/types";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   updateUserProfileSchema,
   type UpdateUserProfileSchema,
 } from "@shared/schemas/user";
+import {
+  UploadButton,
+  type SelectedFile,
+} from "@/features/messages/components/UploadButton";
+import { toast } from "sonner";
 
 interface ProfileSettingsFormProps {
   user: UserWithProfile;
 }
 
 const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [avatarFiles, setAvatarFiles] = useState<SelectedFile[]>([]);
+  const [bannerFiles, setBannerFiles] = useState<SelectedFile[]>([]);
+  const avatarUploadFnRef = useRef<
+    ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
+  >(null);
+  const bannerUploadFnRef = useRef<
+    ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
+  >(null);
   const { getToken } = useAuth();
   const router = useRouter();
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    setValue,
+    formState: { errors },
   } = useForm<UpdateUserProfileSchema>({
     resolver: zodResolver(updateUserProfileSchema),
     defaultValues: {
@@ -44,9 +58,83 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     },
   });
 
+  const uploadImage = async (
+    files: SelectedFile[],
+    uploadFn: ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null,
+    setValue: (name: "avatarURL" | "bannerURL", value: string) => void,
+    fieldName: "avatarURL" | "bannerURL"
+  ): Promise<string> => {
+    if (files.length === 0 || !uploadFn) {
+      throw new Error(
+        `No ${
+          fieldName === "avatarURL" ? "avatar" : "banner"
+        } file selected or upload function not available`
+      );
+    }
+
+    try {
+      const uploadedFiles = await uploadFn(files);
+      if (uploadedFiles.length > 0 && uploadedFiles[0].url) {
+        const imageURL = uploadedFiles[0].url;
+        setValue(fieldName, imageURL);
+        return imageURL;
+      } else {
+        throw new Error(
+          `Failed to upload ${
+            fieldName === "avatarURL" ? "avatar" : "banner"
+          } image`
+        );
+      }
+    } catch (error) {
+      throw new Error(
+        `${fieldName === "avatarURL" ? "Avatar" : "Banner"} upload failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  };
+
+  const handleAvatarFilesChange = (files: SelectedFile[]) => {
+    // Validate that only image files are selected
+    const imageFiles = files.filter((f) => f.file.type.startsWith("image/"));
+    if (imageFiles.length !== files.length) {
+      toast.error("Invalid file type", {
+        description: "Avatar must be an image file",
+      });
+      setAvatarFiles(imageFiles);
+    } else {
+      setAvatarFiles(files);
+    }
+  };
+
+  const handleAvatarUploadReady = (
+    uploadFn: (files: SelectedFile[]) => Promise<SelectedFile[]>
+  ) => {
+    avatarUploadFnRef.current = uploadFn;
+  };
+
+  const handleBannerFilesChange = (files: SelectedFile[]) => {
+    // Validate that only image files are selected
+    const imageFiles = files.filter((f) => f.file.type.startsWith("image/"));
+    if (imageFiles.length !== files.length) {
+      toast.error("Invalid file type", {
+        description: "Banner must be an image file",
+      });
+      setBannerFiles(imageFiles);
+    } else {
+      setBannerFiles(files);
+    }
+  };
+
+  const handleBannerUploadReady = (
+    uploadFn: (files: SelectedFile[]) => Promise<SelectedFile[]>
+  ) => {
+    bannerUploadFnRef.current = uploadFn;
+  };
+
   const onSubmitForm = async (data: UpdateUserProfileSchema) => {
-    setSubmitError(null);
-    setSubmitSuccess(false);
+    setError(null);
+    setIsSaving(true);
 
     try {
       const token = await getToken();
@@ -57,6 +145,26 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
       // Upload images first if they were selected
       let avatarURL = data.avatarURL;
       let bannerURL = data.bannerURL;
+
+      // Upload avatar if files were selected
+      if (avatarFiles.length > 0) {
+        avatarURL = await uploadImage(
+          avatarFiles,
+          avatarUploadFnRef.current,
+          setValue,
+          "avatarURL"
+        );
+      }
+
+      // Upload banner if files were selected
+      if (bannerFiles.length > 0) {
+        bannerURL = await uploadImage(
+          bannerFiles,
+          bannerUploadFnRef.current,
+          setValue,
+          "bannerURL"
+        );
+      }
 
       // Update profile with the final URLs
       await updateUserProfile(
@@ -69,21 +177,24 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
       );
 
       // Clear selected files after successful submission
-      setSubmitSuccess(true);
+      setAvatarFiles([]);
+      setBannerFiles([]);
       router.refresh();
     } catch (error) {
       if (error instanceof AxiosError) {
-        setSubmitError(
+        setError(
           error.response?.data?.error ||
             "Failed to update profile. Please try again."
         );
       } else {
-        setSubmitError(
+        setError(
           error instanceof Error
             ? error.message
             : "Failed to update profile. Please try again."
         );
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -96,7 +207,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           type="text"
           placeholder="Your display name"
           {...register("displayName")}
-          disabled={isSubmitting}
+          disabled={isSaving}
         />
         {errors.displayName && (
           <p className="text-sm text-destructive">
@@ -106,7 +217,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
       </div>
       <div className="space-y-2">
         <Label htmlFor="pronouns">Pronouns</Label>
-        <Input type="text" {...register("pronouns")} disabled={isSubmitting} />
+        <Input type="text" {...register("pronouns")} disabled={isSaving} />
         {errors.pronouns && (
           <p className="text-sm text-destructive">{errors.pronouns.message}</p>
         )}
@@ -117,14 +228,14 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           <Input
             type="color"
             {...register("bannerColor")}
-            disabled={isSubmitting}
+            disabled={isSaving}
             className="w-20 h-10 cursor-pointer"
           />
           <Input
             type="text"
             placeholder="#4e83d9"
             {...register("bannerColor")}
-            disabled={isSubmitting}
+            disabled={isSaving}
             className="flex-1"
           />
         </div>
@@ -135,8 +246,34 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         )}
       </div>
       <div className="space-y-2">
+        <Label>Avatar</Label>
+        <UploadButton
+          maxFiles={1}
+          onFilesChange={handleAvatarFilesChange}
+          onUploadFilesReady={handleAvatarUploadReady}
+          disabled={isSaving}
+          showPreviews={true}
+        />
+        {errors.avatarURL && (
+          <p className="text-sm text-destructive">{errors.avatarURL.message}</p>
+        )}
+      </div>
+      <div className="space-y-2">
+        <Label>Banner</Label>
+        <UploadButton
+          maxFiles={1}
+          onFilesChange={handleBannerFilesChange}
+          onUploadFilesReady={handleBannerUploadReady}
+          disabled={isSaving}
+          showPreviews={true}
+        />
+        {errors.bannerURL && (
+          <p className="text-sm text-destructive">{errors.bannerURL.message}</p>
+        )}
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="bio">Bio</Label>
-        <Textarea {...register("bio")} disabled={isSubmitting} />
+        <Textarea {...register("bio")} disabled={isSaving} />
         {errors.bio && (
           <p className="text-sm text-destructive">{errors.bio.message}</p>
         )}
@@ -148,14 +285,14 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
             id="profileGradientStart"
             type="color"
             {...register("profileGradientStart")}
-            disabled={isSubmitting}
+            disabled={isSaving}
             className="w-20 h-10 cursor-pointer"
           />
           <Input
             id="profileGradientEnd"
             type="color"
             {...register("profileGradientEnd")}
-            disabled={isSubmitting}
+            disabled={isSaving}
             className="w-20 h-10 cursor-pointer"
           />
         </div>
@@ -170,20 +307,13 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           </p>
         )}
       </div>
-      {submitError && (
+      {error && (
         <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-          <p className="text-sm text-destructive">{submitError}</p>
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
-      {submitSuccess && (
-        <div className="p-3 rounded-md bg-green-500/10 border border-green-500/20">
-          <p className="text-sm text-green-600 dark:text-green-400">
-            Profile updated successfully!
-          </p>
-        </div>
-      )}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Saving..." : "Save Changes"}
+      <Button type="submit" className="w-full" disabled={isSaving}>
+        {isSaving ? "Saving..." : "Save Changes"}
       </Button>
     </form>
   );
