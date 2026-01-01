@@ -1,7 +1,7 @@
 "use client";
 
 import { CHANNEL_EVENTS } from "@shared/socketEvents";
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useSocket } from "@/contexts/socket";
 import { useCallback, useEffect, useRef } from "react";
 import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { toast } from "sonner";

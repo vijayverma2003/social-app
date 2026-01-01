@@ -1,6 +1,6 @@
 "use client";
 
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useSocket } from "@/contexts/socket";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useMessagesStore } from "../store/messagesStore";

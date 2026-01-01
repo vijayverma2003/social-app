@@ -1,36 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import React, { useEffect, useState } from "react";
+import { Socket } from "socket.io-client";
 import { useAuth } from "@clerk/nextjs";
 import {
-  ClientToServerEvents,
   ServerToClientEvents,
+  ClientToServerEvents,
 } from "@shared/types/socket";
-
-interface SocketContextType {
-  socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
-  isConnected: boolean;
-  emit: <K extends keyof ClientToServerEvents>(
-    event: K,
-    data: Parameters<ClientToServerEvents[K]>[0],
-    callback: Parameters<ClientToServerEvents[K]>[1]
-  ) => void;
-}
-
-const SocketContext = createContext<SocketContextType>({
-  socket: null,
-  isConnected: false,
-  emit: () => {},
-});
-
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error("useSocket must be used within a SocketProvider");
-  }
-  return context;
-};
+import { socketService } from "@/services/socket";
+import { SocketContext } from "@/contexts/socket";
 
 interface SocketProviderProps {
   children: React.ReactNode;
@@ -55,20 +33,7 @@ export const SocketContextProvider: React.FC<SocketProviderProps> = ({
         return;
       }
 
-      const serverUrl =
-        process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3001";
-
-      const socketInstance: Socket<ServerToClientEvents, ClientToServerEvents> =
-        io(serverUrl, {
-          extraHeaders: {
-            Authorization: `Bearer ${token}`,
-          },
-          autoConnect: true,
-          reconnection: true,
-          reconnectionDelay: 1000,
-          reconnectionDelayMax: 5000,
-          reconnectionAttempts: 5,
-        });
+      const socketInstance = socketService.initialize(token);
 
       socketInstance.on("connect", () => {
         console.log("Socket connected:", socketInstance.id);
@@ -93,11 +58,9 @@ export const SocketContextProvider: React.FC<SocketProviderProps> = ({
 
   useEffect(() => {
     if (!isSignedIn) {
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-        setIsConnected(false);
-      }
+      socketService.disconnect();
+      setSocket(null);
+      setIsConnected(false);
       return;
     }
 
@@ -106,38 +69,14 @@ export const SocketContextProvider: React.FC<SocketProviderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]);
 
-  const emit = <K extends keyof ClientToServerEvents>(
-    event: K,
-    data: Parameters<ClientToServerEvents[K]>[0],
-    callback: Parameters<ClientToServerEvents[K]>[1]
-  ): void => {
-    if (!socket) return;
-
-    if (!isConnected) {
-      const timeout = setTimeout(() => {
-        callback({ error: "Socket connection timeout" });
-      }, 30_000);
-
-      console.log(`Calling ${event} with data:`, data);
-
-      socket.once("connect", () => {
-        clearTimeout(timeout);
-        (socket.emit as any)(event, data, callback);
-      });
-
-      socket.once("connect_error", () => {
-        clearTimeout(timeout);
-        callback({ error: "Socket connection failed" });
-      });
-
-      return;
-    }
-
-    (socket.emit as any)(event, data, callback);
-  };
-
   return (
-    <SocketContext.Provider value={{ socket, isConnected, emit }}>
+    <SocketContext.Provider
+      value={{
+        socket,
+        isConnected,
+        emit: socketService.emit.bind(socketService),
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );

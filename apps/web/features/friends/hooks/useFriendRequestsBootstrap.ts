@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { getFriendRequests } from "@/features/friends/services/friends";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useSocket } from "@/contexts/socket";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { toast } from "sonner";

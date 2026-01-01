@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useSocket } from "@/contexts/socket";
 import { useChannelActions } from "@/features/dms/hooks/useChannelActions";
 import { CHANNEL_EVENTS, MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";

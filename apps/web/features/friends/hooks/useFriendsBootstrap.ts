@@ -2,7 +2,7 @@
 
 import { getFriends } from "@/features/friends/services/friends";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useSocket } from "@/contexts/socket";
 import { useAuth } from "@clerk/nextjs";
 import { FRIEND_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";

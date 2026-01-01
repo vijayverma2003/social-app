@@ -1,7 +1,7 @@
 "use client";
 
 import { FRIEND_REQUEST_EVENTS, FRIEND_EVENTS } from "@shared/socketEvents";
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useSocket } from "@/contexts/socket";
 import { useCallback } from "react";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { toast } from "sonner";

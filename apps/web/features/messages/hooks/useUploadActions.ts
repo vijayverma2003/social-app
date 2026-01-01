@@ -1,9 +1,12 @@
 "use client";
 
 import { UPLOAD_EVENTS } from "@shared/socketEvents";
-import { useSocket } from "@/providers/SocketContextProvider";
+import { useSocket } from "@/contexts/socket";
 import { useCallback, useEffect } from "react";
-import { ClientToServerEvents, ServerToClientEvents } from "@shared/types/socket";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@shared/types/socket";
 import {
   UploadInitPayload,
   UploadCompletePayload,
@@ -110,4 +113,3 @@ export const useUploadActions = () => {
     useUploadEvents,
   };
 };
-
