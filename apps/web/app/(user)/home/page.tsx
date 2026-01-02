@@ -3,34 +3,42 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePostActions } from "@/features/posts/hooks/usePostActions";
 import { usePostsStore } from "@/features/posts/store/postsStore";
-import { usePostsBootstrap } from "@/features/posts/hooks/usePostsBootstrap";
+import { useProfilesStore } from "@/stores/profilesStore";
 import { PostCard } from "@/features/posts/components/PostCard";
 import { ConversationPreview } from "@/features/posts/components/ConversationPreview";
 import { useShallow } from "zustand/react/shallow";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import MainHeader from "../components/MainHeader";
+import { getFeed } from "@/services/postsService";
 import { PostResponse } from "@shared/types";
 
 const HomePage = () => {
-  const { getFeed, getRecentPosts } = usePostActions();
+  const { getRecentPosts } = usePostActions();
+  const { setPosts } = usePostsStore();
 
   // Use shallow comparison to prevent unnecessary re-renders
   const posts = usePostsStore(useShallow((state) => state.posts));
+  const getProfile = useProfilesStore((state) => state.getProfile);
 
   const [previewedPost, setPreviewedPost] = useState<PostResponse | null>(null);
   const [recentPosts, setRecentPosts] = useState<PostResponse[]>([]);
 
-  // Set up bootstrap to listen for new posts
-  usePostsBootstrap();
+  const fetchFeed = useCallback(async () => {
+    try {
+      const posts = await getFeed();
+      if (posts) setPosts(posts);
+    } catch (error) {
+      console.error("Failed to fetch feed:", error);
+    }
+  }, [getFeed, setPosts]);
 
+  // Set up bootstrap to listen for new posts
   useEffect(() => {
-    getFeed();
+    fetchFeed();
     // Fetch 5 most recent posts for the current user
     getRecentPosts({ take: 5, offset: 0 }, (posts) => {
-      if (posts) {
-        setRecentPosts(posts);
-      }
+      if (posts) setRecentPosts(posts);
     });
   }, [getFeed, getRecentPosts]);
 
@@ -59,6 +67,7 @@ const HomePage = () => {
                   <PostCard
                     key={post.id}
                     post={post}
+                    userId={post.userId}
                     onPreviewChat={handlePreviewChat}
                   />
                 ))}
@@ -90,39 +99,43 @@ const HomePage = () => {
                 No recent posts yet.
               </p>
             ) : (
-              recentPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="p-4 rounded-3xl bg-secondary/50 flex flex-col gap-2"
-                >
-                  <header className="flex items-start gap-2">
-                    {/* <Avatar size="sm">
-                      <AvatarImage
-                        src={post.user.profile?.avatarURL || undefined}
-                      />
-                      <AvatarFallback>
-                        {post.user.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+              recentPosts.map((post) => {
+                const profile = getProfile(post.userId);
+                const username = profile?.username || "Unknown";
+                const discriminator = profile?.discriminator || "";
+                return (
+                  <div
+                    key={post.id}
+                    className="p-4 rounded-3xl bg-secondary/50 flex flex-col gap-2"
+                  >
+                    <header className="flex items-start gap-2">
+                      <Avatar className="size-8">
+                        <AvatarImage src={profile?.avatarURL || undefined} />
+                        <AvatarFallback>
+                          {username.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          {username}
+                          {discriminator ? `#${discriminator}` : ""}
+                        </p>
+                      </div>
+                    </header>
+                    <div>
+                      <p className="text-xs">
+                        {post.content.slice(0, 100) +
+                          (post.content.length > 100 ? "..." : "")}
+                      </p>
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">
-                        {post.user.username}#{post.user.discriminator}
+                        {formatDistanceToNow(post.createdAt)} ago
                       </p>
-                    </div> */}
-                  </header>
-                  <div>
-                    <p className="text-xs">
-                      {post.content.slice(0, 100) +
-                        (post.content.length > 100 ? "..." : "")}
-                    </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(post.createdAt)} ago
-                    </p>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

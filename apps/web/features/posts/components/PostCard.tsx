@@ -6,50 +6,34 @@ import { PostResponse } from "@shared/types";
 import { formatDistanceToNow } from "date-fns";
 import { useMemo } from "react";
 import { ImageCollage } from "./ImageCollage";
+import { useProfilesStore } from "@/stores/profilesStore";
 
 interface PostCardProps {
   post: PostResponse;
-  authorUsername?: string;
-  authorDiscriminator?: string;
-  authorAvatarUrl?: string | null;
+  userId: string;
   onPreviewChat?: (post: PostResponse) => void;
 }
 
-export const PostCard = ({
-  post,
-  authorUsername,
-  authorDiscriminator,
-  authorAvatarUrl,
-  onPreviewChat,
-}: PostCardProps) => {
+export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
+  const profile = useProfilesStore((state) => state.profiles[userId]);
+
+  console.log(profile);
+
   const timeAgo = useMemo(() => {
     return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
   }, [post.createdAt]);
 
-  const displayName = authorUsername
-    ? `${authorUsername}${authorDiscriminator ? `#${authorDiscriminator}` : ""}`
-    : "Unknown user";
-
-  const initials = useMemo(() => {
-    return authorUsername ? authorUsername.charAt(0).toUpperCase() : "U";
-  }, [authorUsername]);
-
-  // Memoize avatar URL to prevent flickering
-  const avatarUrl = useMemo(() => {
-    return authorAvatarUrl || undefined;
-  }, [authorAvatarUrl]);
-
-  const channelHref = post.channelId
-    ? `/channels/${post.id}/${post.channelId}`
-    : undefined;
+  const displayName = profile.displayName || "Unknown";
 
   return (
     <div className="p-4 rounded-3xl bg-secondary/50">
       <div className="flex flex-col items-start gap-3">
         <div className="flex items-center gap-2">
           <Avatar className="size-10">
-            <AvatarImage src={avatarUrl} />
-            <AvatarFallback>{initials}</AvatarFallback>
+            <AvatarImage src={profile.avatarURL || undefined} />
+            <AvatarFallback>
+              {displayName.charAt(0).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">

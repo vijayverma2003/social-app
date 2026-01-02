@@ -1,25 +1,22 @@
 "use client";
 
-import { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateUserProfile } from "@/services/users";
-import { useAuth } from "@clerk/nextjs";
-import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import { UserWithProfile } from "@shared/types";
-import { useState, useRef } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  updateUserProfileSchema,
-  type UpdateUserProfileSchema,
-} from "@shared/schemas/user";
 import {
   UploadButton,
   type SelectedFile,
 } from "@/features/messages/components/UploadButton";
+import { updateUserProfile } from "@/services/users";
+import { useAuth } from "@clerk/nextjs";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { UpdateUserProfilePayloadSchema } from "@shared/schemas";
+import { UpdateUserProfilePayload, UserWithProfile } from "@shared/types";
+import { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 interface ProfileSettingsFormProps {
@@ -44,8 +41,8 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<UpdateUserProfileSchema>({
-    resolver: zodResolver(updateUserProfileSchema),
+  } = useForm<UpdateUserProfilePayload>({
+    resolver: zodResolver(UpdateUserProfilePayloadSchema),
     defaultValues: {
       bio: user.profile?.bio || "",
       pronouns: user.profile?.pronouns || "",
@@ -132,7 +129,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     bannerUploadFnRef.current = uploadFn;
   };
 
-  const onSubmitForm = async (data: UpdateUserProfileSchema) => {
+  const onSubmitForm = async (data: UpdateUserProfilePayload) => {
     setError(null);
     setIsSaving(true);
 

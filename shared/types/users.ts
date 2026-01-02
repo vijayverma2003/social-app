@@ -6,9 +6,9 @@ import {
 } from "../schemas/users";
 import { z } from "zod";
 
-export type CreateUserSchema = z.infer<typeof CreateUserPayloadSchema>;
-export type UpdateUserSchema = z.infer<typeof UpdateUserPayloadSchema>;
-export type UpdateUserProfileSchema = z.infer<
+export type CreateUserPayload = z.infer<typeof CreateUserPayloadSchema>;
+export type UpdateUserPayload = z.infer<typeof UpdateUserPayloadSchema>;
+export type UpdateUserProfilePayload = z.infer<
   typeof UpdateUserProfilePayloadSchema
 >;
 export type GetUserProfilesPayload = z.infer<

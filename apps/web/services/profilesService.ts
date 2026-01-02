@@ -10,12 +10,13 @@ type GetUserProfilesCallback = Parameters<
 >[1];
 
 /**
- * Get user profiles by user IDs
+ * Fetch user profiles by user IDs
  * Checks the store for existing profiles and only fetches missing ones
+ * On success, updates the profilesStore with newly fetched profiles
  * @param payload - { userIds: string[] } - Array of user IDs (max 100)
  * @returns Promise that resolves with array of user profiles or rejects with error
  */
-export const getUserProfiles = (
+export const fetchUserProfiles = (
   payload: GetUserProfilesPayload
 ): Promise<Profile[]> => {
   const store = useProfilesStore.getState();
@@ -23,7 +24,6 @@ export const getUserProfiles = (
 
   const existingProfiles = store.getProfiles(userIds);
   const existingUserIds = new Set(existingProfiles.map((p) => p.userId));
-
   const missingUserIds = userIds.filter((id) => !existingUserIds.has(id));
 
   if (missingUserIds.length === 0) return Promise.resolve(existingProfiles);
@@ -37,6 +37,9 @@ export const getUserProfiles = (
         reject(new Error(response.error));
       } else if (response.success && response.data) {
         const fetchedProfiles = response.data;
+
+        // Update the store with newly fetched profiles
+        store.addProfiles(fetchedProfiles);
 
         // Combine existing and newly fetched profiles
         const allProfiles: Profile[] = [

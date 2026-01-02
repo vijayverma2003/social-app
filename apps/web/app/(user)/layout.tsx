@@ -1,18 +1,19 @@
 "use client";
 
 import { PropsWithChildren } from "react";
-import MainHeader from "./components/MainHeader";
 import Navbar from "./components/Navbar";
 import { useFriendRequestsBootstrap } from "@/features/friends/hooks/useFriendRequestsBootstrap";
 import { useFriendsBootstrap } from "@/features/friends/hooks/useFriendsBootstrap";
 import { useChannelsBootstrap } from "@/features/dms/hooks/useChannelsBootstrap";
 import { usePostChannelsBootstrap } from "@/features/posts/hooks/usePostChannelsBootstrap";
+import { usePostsBootstrap } from "@/features/posts/hooks/usePostsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
   useFriendsBootstrap();
   useChannelsBootstrap();
   usePostChannelsBootstrap();
+  usePostsBootstrap();
 
   return (
     <div className="flex h-screen">
