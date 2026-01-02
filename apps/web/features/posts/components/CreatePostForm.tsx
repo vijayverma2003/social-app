@@ -7,10 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
-import {
-  CreatePostPayloadSchema,
-  type CreatePostPayload,
-} from "@shared/schemas/post";
+import { CreatePostPayloadSchema } from "@shared/schemas/post";
+import { CreatePostPayload } from "@shared/types";
 import { usePostActions } from "../hooks/usePostActions";
 import {
   UploadButton,

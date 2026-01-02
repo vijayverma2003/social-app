@@ -10,20 +10,20 @@ export default function Home() {
   const { isLoaded, getToken } = useAuth();
   const router = useRouter();
 
+  const userExists = async () => {
+    const token = await getToken();
+    if (!token) return;
+
+    const result = await checkUserExists(token);
+    if (result.error) {
+      // TODO: Show error toast
+    } else if (result.success) router.push("/home");
+    else router.push("/onboarding");
+  };
+
   useEffect(() => {
-    async function userExists() {
-      const token = await getToken();
-      if (!token) return;
-
-      const result = await checkUserExists(token);
-      if (result.error) {
-        // TODO: Show error toast
-      } else if (result.success) router.push("/home");
-      else router.push("/onboarding");
-    }
-
     if (isLoaded) userExists();
-  }, [isLoaded, getToken, router]);
+  }, [isLoaded]);
 
   return (
     <main className="flex h-screen items-center justify-center">

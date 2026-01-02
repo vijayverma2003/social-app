@@ -2,17 +2,17 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { PostData } from "@shared/schemas/post";
+import { PostResponse } from "@shared/types";
 import { formatDistanceToNow } from "date-fns";
 import { useMemo } from "react";
 import { ImageCollage } from "./ImageCollage";
 
 interface PostCardProps {
-  post: PostData;
+  post: PostResponse;
   authorUsername?: string;
   authorDiscriminator?: string;
   authorAvatarUrl?: string | null;
-  onPreviewChat?: (post: PostData) => void;
+  onPreviewChat?: (post: PostResponse) => void;
 }
 
 export const PostCard = ({
@@ -68,21 +68,31 @@ export const PostCard = ({
         {post.attachments && post.attachments.length > 0 && (
           <>
             {/* Image collage */}
-            <ImageCollage images={post.attachments} />
+            <ImageCollage
+              images={post.attachments.map((att) => ({
+                id: att.id,
+                url: att.storageObject.url || "",
+                fileName: att.storageObject.filename,
+                contentType: att.storageObject.mimeType,
+              }))}
+            />
 
             {/* Non-image attachments */}
             {post.attachments
               .filter(
-                (att) => !(att.contentType?.startsWith("image/") ?? false)
+                (att) =>
+                  !(att.storageObject.mimeType?.startsWith("image/") ?? false)
               )
               .map((attachment) => (
                 <div
                   key={attachment.id}
                   className="p-4 bg-muted rounded-2xl flex items-center gap-2 mb-2"
                 >
-                  <span className="text-sm">{attachment.fileName}</span>
+                  <span className="text-sm">
+                    {attachment.storageObject.filename}
+                  </span>
                   <a
-                    href={attachment.url}
+                    href={attachment.storageObject.url || undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-primary hover:underline"

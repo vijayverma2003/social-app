@@ -7,7 +7,7 @@ import Link from "next/link";
 
 const MainHeader = () => {
   return (
-    <header className="sticky top-0 z-50 w-full bg-background mb-4">
+    <header className="sticky top-0 z-50 w-full bg-background backdrop-blur-sm mb-4 py-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 max-w-2xl">
           <div className="relative">
@@ -20,7 +20,7 @@ const MainHeader = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 px-4">
           <Link href="/notifications">
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="size-5" />

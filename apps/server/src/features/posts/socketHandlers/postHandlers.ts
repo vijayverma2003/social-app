@@ -9,12 +9,9 @@ import {
   CreatePostPayloadSchema,
   UpdatePostPayloadSchema,
   GetRecentPostsPayloadSchema,
-  PostData,
-  PostWithUser,
 } from "@shared/schemas/post";
 import prisma from "@database/postgres";
 
-// Extract types from ClientToServerEvents for type safety
 type CreatePostData = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.CREATE]
 >[0];
@@ -156,52 +153,18 @@ export class PostHandlers {
                 storageObject: true,
               },
             },
-            user: {
-              select: {
-                id: true,
-                username: true,
-                discriminator: true,
-                profile: true,
-              },
-            },
           },
         });
 
         return { post: createdPost };
       });
 
-      // Format attachments for response
-      const attachments = post.attachments.map((attachment) => ({
-        id: attachment.id,
-        storageObjectId: attachment.storageObjectId,
-        url: attachment.storageObject.url || "",
-        fileName: attachment.storageObject.filename,
-        contentType: attachment.storageObject.mimeType,
-        size: attachment.storageObject.size,
-        hash: attachment.storageObject.hash,
-        storageKey: attachment.storageObject.storageKey,
-        width: attachment.storageObject.width ?? null,
-        height: attachment.storageObject.height ?? null,
-        createdAt: attachment.createdAt,
-        updatedAt: attachment.updatedAt,
-      }));
-
-      // Format post data for response
-      const postData: PostData = {
-        id: post.id,
-        userId: post.userId,
-        content: post.content,
-        attachments,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-      };
-
       // Broadcast to all users (posts are public)
-      this.io.emit(POST_EVENTS.CREATED, postData);
+      this.io.emit(POST_EVENTS.CREATED, post);
 
       callback({
         success: true,
-        data: postData,
+        data: post,
       });
     } catch (error) {
       console.error("Error creating post:", error);
@@ -334,49 +297,16 @@ export class PostHandlers {
               storageObject: true,
             },
           },
-          user: {
-            select: {
-              id: true,
-              username: true,
-              discriminator: true,
-            },
-          },
         },
       });
 
-      // Format attachments for response
-      const attachments = post.attachments.map((attachment) => ({
-        id: attachment.id,
-        storageObjectId: attachment.storageObjectId,
-        url: attachment.storageObject.url || "",
-        fileName: attachment.storageObject.filename,
-        contentType: attachment.storageObject.mimeType,
-        size: attachment.storageObject.size,
-        hash: attachment.storageObject.hash,
-        storageKey: attachment.storageObject.storageKey,
-        width: attachment.storageObject.width ?? null,
-        height: attachment.storageObject.height ?? null,
-        createdAt: attachment.createdAt,
-        updatedAt: attachment.updatedAt,
-      }));
-
       // Format post data for response
-      const postData: PostData = {
-        id: post.id,
-        userId: post.userId,
-        channelId: post.channelId || undefined,
-        content: post.content,
-        attachments,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-      };
-
       // Broadcast to all users (posts are public)
-      this.io.emit(POST_EVENTS.UPDATED, postData);
+      this.io.emit(POST_EVENTS.UPDATED, post);
 
       callback({
         success: true,
-        data: postData,
+        data: post,
       });
     } catch (error) {
       console.error("Error updating post:", error);
@@ -422,42 +352,9 @@ export class PostHandlers {
       });
 
       // Format posts for response with user info
-      const postsData = posts.map((post) => {
-        const attachments = post.attachments.map((attachment) => ({
-          id: attachment.id,
-          storageObjectId: attachment.storageObjectId,
-          url: attachment.storageObject.url || "",
-          fileName: attachment.storageObject.filename,
-          contentType: attachment.storageObject.mimeType,
-          size: attachment.storageObject.size,
-          hash: attachment.storageObject.hash,
-          storageKey: attachment.storageObject.storageKey,
-          width: attachment.storageObject.width ?? null,
-          height: attachment.storageObject.height ?? null,
-          createdAt: attachment.createdAt,
-          updatedAt: attachment.updatedAt,
-        }));
-
-        return {
-          id: post.id,
-          userId: post.userId,
-          channelId: post.channelId || undefined,
-          content: post.content,
-          attachments,
-          createdAt: post.createdAt,
-          updatedAt: post.updatedAt,
-          user: {
-            id: post.user.id,
-            username: post.user.username,
-            discriminator: post.user.discriminator,
-            profile: post.user.profile,
-          },
-        };
-      });
-
       callback({
         success: true,
-        data: postsData,
+        data: posts,
       });
     } catch (error) {
       console.error("Error getting feed:", error);
@@ -520,44 +417,9 @@ export class PostHandlers {
         },
       });
 
-      // Format posts for response with user info
-      const postsData: PostWithUser[] = recentPosts.map((recentPost) => {
-        const post = recentPost.post;
-        const attachments = post.attachments.map((attachment) => ({
-          id: attachment.id,
-          storageObjectId: attachment.storageObjectId,
-          url: attachment.storageObject.url || "",
-          fileName: attachment.storageObject.filename,
-          contentType: attachment.storageObject.mimeType,
-          size: attachment.storageObject.size,
-          hash: attachment.storageObject.hash,
-          storageKey: attachment.storageObject.storageKey,
-          width: attachment.storageObject.width ?? null,
-          height: attachment.storageObject.height ?? null,
-          createdAt: attachment.createdAt,
-          updatedAt: attachment.updatedAt,
-        }));
-
-        return {
-          id: post.id,
-          userId: post.userId,
-          channelId: post.channelId || undefined,
-          content: post.content,
-          attachments,
-          createdAt: post.createdAt,
-          updatedAt: post.updatedAt,
-          user: {
-            id: post.user.id,
-            username: post.user.username,
-            discriminator: post.user.discriminator,
-            profile: post.user.profile,
-          },
-        };
-      });
-
       callback({
         success: true,
-        data: postsData,
+        data: recentPosts.map((recentPost) => recentPost.post),
       });
     } catch (error) {
       console.error("Error getting recent posts:", error);

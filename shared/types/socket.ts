@@ -35,9 +35,9 @@ import {
   CreatePostPayload,
   UpdatePostPayload,
   JoinPostPayload,
-  PostData,
-  PostWithUser,
-} from "../schemas/post";
+  GetRecentPostsPayload,
+} from "./posts";
+import { PostResponse } from "./posts";
 
 /**
  * Socket Data Interface
@@ -250,7 +250,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.CREATE]: (
     data: CreatePostPayload,
-    callback: (response: SocketResponse<PostData>) => void
+    callback: (response: SocketResponse<PostResponse>) => void
   ) => void;
 
   /**
@@ -262,27 +262,27 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.UPDATE]: (
     data: UpdatePostPayload,
-    callback: (response: SocketResponse<PostData>) => void
+    callback: (response: SocketResponse<PostResponse>) => void
   ) => void;
 
   /**
    * GET_FEED: Get the 20 most recent posts
    * @param data - {} (no payload needed)
-   * @param callback - SocketResponse<PostWithUser[]> - Returns array of 20 most recent posts with user info
+   * @param callback - SocketResponse<PostResponse[]> - Returns array of 20 most recent posts with user info
    */
   [POST_EVENTS.GET_FEED]: (
     data: {},
-    callback: (response: SocketResponse<PostWithUser[]>) => void
+    callback: (response: SocketResponse<PostResponse[]>) => void
   ) => void;
 
   /**
    * GET_RECENT_POSTS: Get recent posts from the user's RecentPosts with pagination
    * @param data - { take?: number; offset?: number } - take: number of posts (default 5, max 20), offset: skip count (default 0)
-   * @param callback - SocketResponse<PostWithUser[]> - Returns array of recent posts with user info
+   * @param callback - SocketResponse<PostResponse[]> - Returns array of recent posts with user info
    */
   [POST_EVENTS.GET_RECENT_POSTS]: (
-    data: { take?: number; offset?: number },
-    callback: (response: SocketResponse<PostWithUser[]>) => void
+    data: GetRecentPostsPayload,
+    callback: (response: SocketResponse<PostResponse[]>) => void
   ) => void;
 
   /**
@@ -421,16 +421,16 @@ export interface ServerToClientEvents {
   /**
    * CREATED: A new post was created
    * @emitted_to All users (posts are public)
-   * @param data - PostData - The created post
+   * @param data - PostResponse - The created post
    */
-  [POST_EVENTS.CREATED]: (data: PostData) => void;
+  [POST_EVENTS.CREATED]: (data: PostResponse) => void;
 
   /**
    * UPDATED: A post was updated
    * @emitted_to All users (posts are public)
-   * @param data - PostData - The updated post
+   * @param data - PostResponse - The updated post
    */
-  [POST_EVENTS.UPDATED]: (data: PostData) => void;
+  [POST_EVENTS.UPDATED]: (data: PostResponse) => void;
 
   /**
    * RECENT_POST_ADDED: A post was added to the user's RecentPosts

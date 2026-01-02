@@ -30,7 +30,7 @@ const FriendsPage = () => {
         <TabsContent value="friends" className="mt-4">
           {friends.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              You don't have any friends yet. Send a friend request to get
+              You don&apos;t have any friends yet. Send a friend request to get
               started!
             </p>
           ) : (

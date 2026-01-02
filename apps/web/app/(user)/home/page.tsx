@@ -6,22 +6,20 @@ import { usePostsStore } from "@/features/posts/store/postsStore";
 import { usePostsBootstrap } from "@/features/posts/hooks/usePostsBootstrap";
 import { PostCard } from "@/features/posts/components/PostCard";
 import { ConversationPreview } from "@/features/posts/components/ConversationPreview";
-import { PostData, PostWithUser } from "@shared/schemas/post";
 import { useShallow } from "zustand/react/shallow";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import MainHeader from "../components/MainHeader";
+import { PostResponse } from "@shared/types";
 
 const HomePage = () => {
   const { getFeed, getRecentPosts } = usePostActions();
 
   // Use shallow comparison to prevent unnecessary re-renders
-  const postsWithUser = usePostsStore(
-    useShallow((state) => state.postsWithUser)
-  );
+  const posts = usePostsStore(useShallow((state) => state.posts));
 
-  const [previewedPost, setPreviewedPost] = useState<PostData | null>(null);
-  const [recentPosts, setRecentPosts] = useState<PostWithUser[]>([]);
+  const [previewedPost, setPreviewedPost] = useState<PostResponse | null>(null);
+  const [recentPosts, setRecentPosts] = useState<PostResponse[]>([]);
 
   // Set up bootstrap to listen for new posts
   usePostsBootstrap();
@@ -37,7 +35,7 @@ const HomePage = () => {
   }, [getFeed, getRecentPosts]);
 
   // Memoize handlers to prevent creating new functions on every render
-  const handlePreviewChat = useCallback((post: PostData) => {
+  const handlePreviewChat = useCallback((post: PostResponse) => {
     setPreviewedPost(post);
   }, []);
 
@@ -51,19 +49,16 @@ const HomePage = () => {
       <div className="flex gap-4 w-full">
         <div className="max-w-2xl w-full">
           <div className="space-y-4">
-            {postsWithUser.length === 0 ? (
+            {posts.length === 0 ? (
               <div className="text-center text-muted-foreground py-12">
                 <p>No posts yet. Be the first to post!</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {postsWithUser.map((post) => (
+                {posts.map((post) => (
                   <PostCard
                     key={post.id}
                     post={post}
-                    authorUsername={post.user.username}
-                    authorDiscriminator={post.user.discriminator}
-                    authorAvatarUrl={post.user.profile?.avatarURL}
                     onPreviewChat={handlePreviewChat}
                   />
                 ))}
@@ -72,7 +67,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 flex-1 min-w-0 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
+        <div className="flex flex-col gap-4 flex-1 min-w-0 sticky h-[calc(100vh-6rem)] overflow-y-auto">
           {/* Conversation Preview */}
           {previewedPost && previewedPost.channelId && (
             <ConversationPreview
@@ -85,7 +80,7 @@ const HomePage = () => {
               }
             />
           )}
-          {/* Recent Posts */}
+
           <div className="space-y-3">
             <p className="text-xs font-semibold text-muted-foreground px-1">
               Recent Posts
@@ -101,7 +96,7 @@ const HomePage = () => {
                   className="p-4 rounded-3xl bg-secondary/50 flex flex-col gap-2"
                 >
                   <header className="flex items-start gap-2">
-                    <Avatar size="sm">
+                    {/* <Avatar size="sm">
                       <AvatarImage
                         src={post.user.profile?.avatarURL || undefined}
                       />
@@ -113,7 +108,7 @@ const HomePage = () => {
                       <p className="text-xs text-muted-foreground">
                         {post.user.username}#{post.user.discriminator}
                       </p>
-                    </div>
+                    </div> */}
                   </header>
                   <div>
                     <p className="text-xs">

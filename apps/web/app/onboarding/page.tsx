@@ -9,7 +9,7 @@ const Onboarding = () => {
         <div className="mb-6">
           <h2 className="text-lg font-bold mb-2">Complete Your Profile</h2>
           <p className="text-xs text-muted-foreground font-semibold">
-            Let's get to know you better
+            Let&apos;s get to know you better
           </p>
         </div>
 

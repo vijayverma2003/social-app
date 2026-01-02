@@ -6,9 +6,9 @@ import { useCallback } from "react";
 import { ClientToServerEvents } from "@shared/types/socket";
 import {
   CreatePostPayload,
-  PostData,
-  PostWithUser,
-} from "@shared/schemas/post";
+  PostResponse,
+  GetRecentPostsPayload,
+} from "@shared/types";
 import { usePostsStore } from "../store/postsStore";
 import { toast } from "sonner";
 
@@ -30,8 +30,7 @@ type GetRecentPostsCallback = Parameters<
 
 export const usePostActions = () => {
   const { emit } = useSocket();
-  const { setPosts, setPostsWithUser, prependPost, updatePost } =
-    usePostsStore();
+  const { setPosts, prependPost, updatePost } = usePostsStore();
 
   const createPost = useCallback(
     (payload: CreatePostPayload, onComplete?: (success: boolean) => void) => {
@@ -54,7 +53,7 @@ export const usePostActions = () => {
   );
 
   const getFeed = useCallback(
-    (onComplete?: (posts: PostWithUser[] | null) => void) => {
+    (onComplete?: (posts: PostResponse[] | null) => void) => {
       emit(POST_EVENTS.GET_FEED, {}, ((response) => {
         if (response.error) {
           toast.error("Failed to load feed", {
@@ -63,25 +62,20 @@ export const usePostActions = () => {
           onComplete?.(null);
         } else if (response.success && response.data) {
           // Store posts with user info for display
-          setPostsWithUser(response.data);
-          // Convert PostWithUser[] to PostData[] for store
-          const postsData: PostData[] = response.data.map(
-            ({ user, ...post }) => post
-          );
-          setPosts(postsData);
+          setPosts(response.data);
           onComplete?.(response.data);
         } else {
           onComplete?.(null);
         }
       }) as GetFeedCallback);
     },
-    [emit, setPosts, setPostsWithUser]
+    [emit, setPosts]
   );
 
   const getRecentPosts = useCallback(
     (
-      payload: { take?: number; offset?: number } = {},
-      onComplete?: (posts: PostWithUser[] | null) => void
+      payload: GetRecentPostsPayload = { take: 5, offset: 0 },
+      onComplete?: (posts: PostResponse[] | null) => void
     ) => {
       emit(POST_EVENTS.GET_RECENT_POSTS, payload, ((response) => {
         if (response.error) {
