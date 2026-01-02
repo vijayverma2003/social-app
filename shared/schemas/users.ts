@@ -12,7 +12,7 @@ const validateAge = (date: Date) => {
   return actualAge >= 13;
 };
 
-export const createUserSchema = z.object({
+export const CreateUserPayloadSchema = z.object({
   username: z
     .string()
     .min(1, "Username is required")
@@ -28,7 +28,7 @@ export const createUserSchema = z.object({
   }),
 });
 
-export const updateUserSchema = z
+export const UpdateUserPayloadSchema = z
   .object({
     username: z
       .string()
@@ -47,7 +47,7 @@ export const updateUserSchema = z
   })
   .strict();
 
-export const updateUserProfileSchema = z
+export const UpdateUserProfilePayloadSchema = z
   .object({
     displayName: z
       .union([z.string().trim().max(100), z.literal("")])
@@ -74,6 +74,12 @@ export const updateUserProfileSchema = z
   })
   .strict();
 
-export type CreateUserSchema = z.infer<typeof createUserSchema>;
-export type UpdateUserSchema = z.infer<typeof updateUserSchema>;
-export type UpdateUserProfileSchema = z.infer<typeof updateUserProfileSchema>;
+// Get User Profiles Payload Schema (for socket events)
+export const GetUserProfilesPayloadSchema = z
+  .object({
+    userIds: z
+      .array(z.string().trim().min(1, "User ID is required"))
+      .min(1, "At least one user ID is required")
+      .max(100, "Cannot request more than 100 profiles at once"),
+  })
+  .strict();

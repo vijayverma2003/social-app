@@ -6,11 +6,8 @@ import {
   SendFriendRequestPayloadSchema,
 } from "@shared/schemas/friends";
 import { FRIEND_REQUEST_EVENTS } from "@shared/socketEvents";
-import {
-  ClientToServerEvents,
-  ServerToClientEvents,
-} from "@shared/types/socket";
-import { Server } from "socket.io";
+import { ClientToServerEvents } from "@shared/types/socket";
+import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
 
 // Extract types from ClientToServerEvents for type safety
@@ -42,13 +39,7 @@ type CancelFriendRequestCallback = Parameters<
   ClientToServerEvents[typeof FRIEND_REQUEST_EVENTS.CANCEL]
 >[1];
 
-export class FriendRequestHandlers {
-  private io: Server<ClientToServerEvents, ServerToClientEvents>;
-
-  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
-    this.io = io;
-  }
-
+export class FriendRequestHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(FRIEND_REQUEST_EVENTS.SEND, (data, callback) =>
       this.sendFriendRequest(socket, data, callback)

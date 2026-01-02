@@ -1,11 +1,8 @@
 import prisma from "@database/postgres";
 import { RemoveFriendPayloadSchema } from "@shared/schemas/friends";
 import { FRIEND_EVENTS } from "@shared/socketEvents";
-import { Server } from "socket.io";
-import {
-  ClientToServerEvents,
-  ServerToClientEvents,
-} from "@shared/types/socket";
+import { ClientToServerEvents } from "@shared/types/socket";
+import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
 
 // Extract types from ClientToServerEvents for type safety
@@ -16,13 +13,7 @@ type RemoveFriendCallback = Parameters<
   ClientToServerEvents[typeof FRIEND_EVENTS.REMOVE]
 >[1];
 
-export class FriendsHandlers {
-  private io: Server<ClientToServerEvents, ServerToClientEvents>;
-
-  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
-    this.io = io;
-  }
-
+export class FriendsHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(FRIEND_EVENTS.REMOVE, (data, callback) =>
       this.removeFriend(socket, data, callback)

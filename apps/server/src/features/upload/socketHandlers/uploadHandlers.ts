@@ -1,10 +1,10 @@
 import { UPLOAD_EVENTS } from "@shared/socketEvents";
-import { Server } from "socket.io";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
 } from "@shared/types/socket";
 import { AuthenticatedSocket } from "../../../socketHandlers";
+import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import {
   UploadInitPayloadSchema,
   UploadCompletePayloadSchema,
@@ -26,6 +26,7 @@ import crypto from "crypto";
 import { randomUUID } from "crypto";
 import prisma from "@database/postgres";
 import imageSize from "image-size";
+import { Server } from "socket.io";
 
 // Extract types from ClientToServerEvents for type safety
 type UploadInitData = Parameters<
@@ -42,12 +43,11 @@ type UploadCompleteCallback = Parameters<
   ClientToServerEvents[typeof UPLOAD_EVENTS.COMPLETE]
 >[1];
 
-export class UploadHandlers {
-  private io: Server<ClientToServerEvents, ServerToClientEvents>;
+export class UploadHandlers extends BaseSocketHandler {
   private r2Client: S3Client;
 
   constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
-    this.io = io;
+    super(io);
 
     // Initialize R2 client for hash verification and deletion
     if (R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY) {

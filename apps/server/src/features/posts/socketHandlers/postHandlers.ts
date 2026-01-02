@@ -1,16 +1,13 @@
-import { POST_EVENTS } from "@shared/socketEvents";
-import { Server } from "socket.io";
-import {
-  ClientToServerEvents,
-  ServerToClientEvents,
-} from "@shared/types/socket";
-import { AuthenticatedSocket } from "../../../socketHandlers";
+import prisma from "@database/postgres";
 import {
   CreatePostPayloadSchema,
-  UpdatePostPayloadSchema,
   GetRecentPostsPayloadSchema,
-} from "@shared/schemas/post";
-import prisma from "@database/postgres";
+  UpdatePostPayloadSchema,
+} from "@shared/schemas";
+import { POST_EVENTS } from "@shared/socketEvents";
+import { ClientToServerEvents } from "@shared/types/socket";
+import { BaseSocketHandler } from "../../../BaseSocketHandler";
+import { AuthenticatedSocket } from "../../../socketHandlers";
 
 type CreatePostData = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.CREATE]
@@ -40,13 +37,7 @@ type GetRecentPostsCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.GET_RECENT_POSTS]
 >[1];
 
-export class PostHandlers {
-  private io: Server<ClientToServerEvents, ServerToClientEvents>;
-
-  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
-    this.io = io;
-  }
-
+export class PostHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(POST_EVENTS.CREATE, (data, callback) =>
       this.createPost(socket, data, callback)

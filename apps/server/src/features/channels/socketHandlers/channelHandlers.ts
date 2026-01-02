@@ -1,20 +1,17 @@
 import prisma from "@database/postgres";
-import { CHANNEL_EVENTS, POST_EVENTS } from "@shared/socketEvents";
-import { Server } from "socket.io";
-import {
-  ClientToServerEvents,
-  ServerToClientEvents,
-} from "@shared/types/socket";
-import { AuthenticatedSocket } from "../../../socketHandlers";
 import {
   JoinChannelPayloadSchema,
   LeaveChannelPayloadSchema,
   MarkChannelAsReadPayloadSchema,
 } from "@shared/schemas/dm";
+import { CHANNEL_EVENTS, POST_EVENTS } from "@shared/socketEvents";
 import {
-  ChannelWithUsers,
   ChannelUserWithProfile,
+  ChannelWithUsers,
 } from "@shared/types/responses";
+import { ClientToServerEvents } from "@shared/types/socket";
+import { BaseSocketHandler } from "../../../BaseSocketHandler";
+import { AuthenticatedSocket } from "../../../socketHandlers";
 
 // Extract types from ClientToServerEvents for type safety
 type GetDMsListData = Parameters<
@@ -52,13 +49,7 @@ type MarkChannelAsReadCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.MARK_AS_READ]
 >[1];
 
-export class ChannelHandlers {
-  private io: Server<ClientToServerEvents, ServerToClientEvents>;
-
-  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
-    this.io = io;
-  }
-
+export class ChannelHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(CHANNEL_EVENTS.GET_DMS_LIST, (data, callback) =>
       this.getDMChannels(socket, data, callback)

@@ -1,13 +1,12 @@
 import { clerkClient, getAuth } from "@clerk/express";
 import prisma from "@database/postgres";
 import {
-  createUserSchema,
-  updateUserProfileSchema,
-  updateUserSchema,
-} from "@shared/schemas/user";
+  CreateUserPayloadSchema,
+  UpdateUserPayloadSchema,
+  UpdateUserProfilePayloadSchema,
+} from "@shared/schemas";
 import { Profile, User, UserWithProfile } from "@shared/types/responses";
 import { NextFunction, Request, Response } from "express";
-import z from "zod";
 import {
   BadRequestError,
   ConflictError,
@@ -40,7 +39,7 @@ export class UsersController {
 
       if (!email) throw new BadRequestError("User must have an email address");
 
-      const validation = createUserSchema.safeParse({
+      const validation = CreateUserPayloadSchema.safeParse({
         ...req.body,
         dob: new Date(req.body.dob),
       });
@@ -113,7 +112,7 @@ export class UsersController {
         throw new NotFoundError("User not found");
       }
 
-      const validation = updateUserSchema.safeParse(req.body);
+      const validation = UpdateUserPayloadSchema.safeParse(req.body);
       if (!validation.success) {
         const firstError = validation.error.issues[0];
         throw new BadRequestError(
@@ -173,7 +172,7 @@ export class UsersController {
 
       if (!existingUser) throw new NotFoundError("User not found");
 
-      const validation = updateUserProfileSchema.safeParse(req.body);
+      const validation = UpdateUserProfilePayloadSchema.safeParse(req.body);
       if (!validation.success)
         throw new BadRequestError(validation.error.message);
 

@@ -1,18 +1,15 @@
 import { Message } from "@database/mongodb";
-import { MESSAGE_EVENTS } from "@shared/socketEvents";
-import { Server } from "socket.io";
-import {
-  ClientToServerEvents,
-  ServerToClientEvents,
-} from "@shared/types/socket";
-import { AuthenticatedSocket } from "../../../socketHandlers";
+import prisma from "@database/postgres";
 import {
   Attachment,
   CreateMessagePayloadSchema,
-  GetMessagesPayloadSchema,
   DeleteMessagePayloadSchema,
+  GetMessagesPayloadSchema,
 } from "@shared/schemas/messages";
-import prisma from "@database/postgres";
+import { MESSAGE_EVENTS } from "@shared/socketEvents";
+import { ClientToServerEvents } from "@shared/types/socket";
+import { BaseSocketHandler } from "../../../BaseSocketHandler";
+import { AuthenticatedSocket } from "../../../socketHandlers";
 
 // Extract types from ClientToServerEvents for type safety
 type CreateMessageData = Parameters<
@@ -36,13 +33,7 @@ type DeleteMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
 >[1];
 
-export class MessageHandlers {
-  private io: Server<ClientToServerEvents, ServerToClientEvents>;
-
-  constructor(io: Server<ClientToServerEvents, ServerToClientEvents>) {
-    this.io = io;
-  }
-
+export class MessageHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(MESSAGE_EVENTS.CREATE, (data, callback) =>
       this.createMessage(socket, data, callback)

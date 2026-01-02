@@ -66,6 +66,11 @@ export const POST_EVENTS = {
   RECENT_POST_ADDED: "post:recent_post_added",
 } as const;
 
+export const USER_EVENTS = {
+  // Client -> Server events (actions)
+  GET_PROFILES: "user:get_profiles",
+} as const;
+
 export type FriendRequestEvent =
   (typeof FRIEND_REQUEST_EVENTS)[keyof typeof FRIEND_REQUEST_EVENTS];
 
@@ -78,3 +83,5 @@ export type MessageEvent = (typeof MESSAGE_EVENTS)[keyof typeof MESSAGE_EVENTS];
 export type UploadEvent = (typeof UPLOAD_EVENTS)[keyof typeof UPLOAD_EVENTS];
 
 export type PostEvent = (typeof POST_EVENTS)[keyof typeof POST_EVENTS];
+
+export type UserEvent = (typeof USER_EVENTS)[keyof typeof USER_EVENTS];

@@ -5,8 +5,14 @@ import {
   MESSAGE_EVENTS,
   UPLOAD_EVENTS,
   POST_EVENTS,
+  USER_EVENTS,
 } from "../socketEvents";
-import { SocketResponse, FriendRequests, ChannelWithUsers } from "./responses";
+import {
+  SocketResponse,
+  FriendRequests,
+  ChannelWithUsers,
+  Profile,
+} from "./responses";
 import {
   SendFriendRequestPayload,
   RemoveFriendPayload,
@@ -38,6 +44,7 @@ import {
   GetRecentPostsPayload,
 } from "./posts";
 import { PostResponse } from "./posts";
+import { GetUserProfilesPayload } from "./users";
 
 /**
  * Socket Data Interface
@@ -297,6 +304,20 @@ export interface ClientToServerEvents {
     callback: (
       response: SocketResponse<{ postId: string; userId: string }>
     ) => void
+  ) => void;
+
+  // ============================================================================
+  // USER EVENTS
+  // ============================================================================
+
+  /**
+   * GET_PROFILES: Get user profiles by user IDs
+   * @param data - { userIds: string[] } - Array of user IDs (max 100)
+   * @param callback - SocketResponse<UserWithProfile[]> - Returns array of user profiles
+   */
+  [USER_EVENTS.GET_PROFILES]: (
+    data: GetUserProfilesPayload,
+    callback: (response: SocketResponse<Profile[]>) => void
   ) => void;
 }
 

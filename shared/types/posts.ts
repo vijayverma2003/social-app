@@ -4,7 +4,7 @@ import {
   GetRecentPostsPayloadSchema,
   JoinPostPayloadSchema,
   UpdatePostPayloadSchema,
-} from "../schemas/post";
+} from "../schemas/posts";
 
 import { z } from "zod";
 
