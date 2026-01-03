@@ -149,7 +149,7 @@ const HomePage = () => {
           </Tabs>
         </div>
 
-        <div className="flex flex-col gap-4 flex-1 min-w-0 sticky h-[calc(100vh-6rem)] overflow-y-auto">
+        <div className="flex flex-col gap-4 flex-1 min-w-0 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
           {/* Conversation Preview */}
           {previewedPost && previewedPost.channelId && (
             <ConversationPreview

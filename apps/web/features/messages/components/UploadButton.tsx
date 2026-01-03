@@ -18,7 +18,6 @@ interface UploadButtonProps {
   maxFiles?: number;
   onFilesChange?: (files: SelectedFile[]) => void;
   disabled?: boolean;
-  showPreviews?: boolean;
   onUploadFilesReady?: (
     uploadFn: (files: SelectedFile[]) => Promise<SelectedFile[]>
   ) => void;
@@ -28,7 +27,6 @@ export const UploadButton = ({
   maxFiles = 10,
   onFilesChange,
   disabled = false,
-  showPreviews = true,
   onUploadFilesReady,
 }: UploadButtonProps) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
@@ -65,11 +63,6 @@ export const UploadButton = ({
     []
   );
 
-  // Expose uploadFiles function to parent
-  useEffect(() => {
-    onUploadFilesReady?.(uploadFiles);
-  }, [uploadFiles, onUploadFilesReady]);
-
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -104,20 +97,15 @@ export const UploadButton = ({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const removeFile = (id: string) => {
-    setSelectedFiles((prev) => {
-      return prev.filter((f) => f.id !== id);
-    });
-  };
+  // Expose uploadFiles function to parent
+  useEffect(() => {
+    onUploadFilesReady?.(uploadFiles);
+  }, [uploadFiles, onUploadFilesReady]);
 
   // Notify parent of file changes after state update
   useEffect(() => {
     onFilesChange?.(selectedFiles);
   }, [selectedFiles, onFilesChange]);
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
 
   return (
     <>
@@ -130,34 +118,9 @@ export const UploadButton = ({
         accept="*/*"
         multiple
       />
-      {showPreviews && selectedFiles.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-2 border-b">
-          {selectedFiles.map((selectedFile) => (
-            <div
-              key={selectedFile.id}
-              className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-sm"
-            >
-              <span className="truncate max-w-[200px]">
-                {selectedFile.file.name}
-              </span>
-              <Button
-                type="button"
-                onClick={() => removeFile(selectedFile.id)}
-                disabled={disabled}
-                size="icon-sm"
-                variant="ghost"
-                className="h-5 w-5"
-                aria-label="Remove file"
-              >
-                <X className="size-3" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
       <Button
         type="button"
-        onClick={handleUploadClick}
+        onClick={() => fileInputRef.current?.click()}
         disabled={disabled || selectedFiles.length >= maxFiles}
         size="icon"
         variant="ghost"

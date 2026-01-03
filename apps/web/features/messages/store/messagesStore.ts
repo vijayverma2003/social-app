@@ -1,6 +1,12 @@
 import { MessageData } from "@shared/schemas/messages";
 import { create } from "zustand";
 
+export interface OptimistcMessageData extends MessageData {
+  _id: string;
+  error?: string;
+  uploadingFiles?: Array<{ id: string; name: string; size: number }>;
+}
+
 interface MessagesState {
   // Channel ID -> Messages array
   messagesByChannel: Record<string, MessageData[]>;
@@ -10,12 +16,7 @@ interface MessagesState {
   addMessage: (channelId: string, message: MessageData) => void;
   addOptimisticMessage: (
     channelId: string,
-    message: MessageData & {
-      _id: string;
-      isOptimistic?: boolean;
-      error?: string;
-      uploadingFiles?: Array<{ id: string; name: string; size: number }>;
-    }
+    message: OptimistcMessageData
   ) => string; // Returns the optimistic message ID
   replaceOptimisticMessage: (
     channelId: string,
@@ -72,8 +73,8 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   addOptimisticMessage: (channelId, message) => {
     const optimisticId = `optimistic-${Date.now()}-${Math.random()
       .toString(36)
-      .substr(2, 9)}`;
-      
+      .substring(2, 10)}`;
+
     const optimisticMessage: MessageData & {
       error?: string;
       uploadingFiles?: Array<{ id: string; name: string; size: number }>;

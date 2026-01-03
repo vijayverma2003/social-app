@@ -17,8 +17,6 @@ interface PostCardProps {
 export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   const profile = useProfilesStore((state) => state.profiles[userId]);
 
-  console.log(profile);
-
   const timeAgo = useMemo(() => {
     return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
   }, [post.createdAt]);
