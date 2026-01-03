@@ -26,13 +26,13 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
     state.getProfile(message.authorId)
   );
 
-  const isOptimistic = message._id.startsWith("optimistic-");
+  const isOptimistic = message.id.startsWith("optimistic-");
   const hasError = !!message.error;
   const uploadingFiles = message.uploadingFiles || [];
 
   const handleRetry = () => {
     if (hasError && user) {
-      const { channelId, channelType, content, attachments, _id } = message;
+      const { channelId, channelType, content, attachments, id } = message;
       const storageObjectIds = attachments?.map((a) => a.storageObjectId) || [];
 
       createMessage(
@@ -41,9 +41,9 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
           channelType,
           content,
           storageObjectIds,
-          optimisticId: _id,
+          optimisticId: id,
         },
-        { optimisticId: _id }
+        { optimisticId: id }
       );
     }
   };
@@ -206,7 +206,7 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
           <ContextMenuItem
             onClick={() =>
               deleteMessage({
-                messageId: message._id,
+                messageId: message.id,
                 channelId: message.channelId,
                 channelType: message.channelType,
               })

@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { usePostsStore } from "@/features/posts/store/postsStore";
-import { useProfilesStore } from "@/stores/profilesStore";
-import { PostCard } from "@/features/posts/components/PostCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConversationPreview } from "@/features/posts/components/ConversationPreview";
-import { useShallow } from "zustand/react/shallow";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
-import MainHeader from "../components/MainHeader";
+import { PostCard } from "@/features/posts/components/PostCard";
+import { usePostsStore } from "@/features/posts/store/postsStore";
+import { useUser } from "@/providers/UserContextProvider";
 import { getFeed, getRecentPosts } from "@/services/postsService";
 import { PostResponse } from "@shared/types";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useUser } from "@/providers/UserContextProvider";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
+import MainHeader from "../components/MainHeader";
 
 type TabValue = "feed" | "recent" | "own";
 
@@ -22,7 +19,6 @@ const HomePage = () => {
 
   // Use shallow comparison to prevent unnecessary re-renders
   const allPosts = usePostsStore(useShallow((state) => state.posts));
-  const getProfile = useProfilesStore((state) => state.getProfile);
 
   const [previewedPost, setPreviewedPost] = useState<PostResponse | null>(null);
   const [recentPosts, setRecentPosts] = useState<PostResponse[]>([]);
@@ -30,7 +26,9 @@ const HomePage = () => {
 
   const fetchFeed = useCallback(async () => {
     try {
+      console.log("Fetching feed...");
       const posts = await getFeed();
+      console.log("Posts:", posts);
       if (posts) setPosts(posts);
     } catch (error) {
       console.error("Failed to fetch feed:", error);

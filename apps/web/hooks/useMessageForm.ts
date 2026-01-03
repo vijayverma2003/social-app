@@ -19,11 +19,11 @@ const createOptimisticMessage = (
   content: string,
   authorId: string,
   files: SelectedFile[]
-): Omit<MessageData, "_id"> & {
-  _id: string;
+): Omit<MessageData, "id"> & {
+  id: string;
   uploadingFiles?: Array<{ id: string; name: string; size: number }>;
 } => ({
-  _id: "", // Will be set by addOptimisticMessage
+  id: "", // Will be set by addOptimisticMessage
   channelId,
   channelType,
   content: content || "",

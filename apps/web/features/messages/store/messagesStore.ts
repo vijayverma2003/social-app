@@ -2,7 +2,7 @@ import { MessageData } from "@shared/schemas/messages";
 import { create } from "zustand";
 
 export interface OptimistcMessageData extends MessageData {
-  _id: string;
+  id: string;
   error?: string;
   uploadingFiles?: Array<{ id: string; name: string; size: number }>;
 }
@@ -59,7 +59,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     set((state) => {
       const existingMessages = state.messagesByChannel[channelId] || [];
       // Check if message already exists (avoid duplicates)
-      if (existingMessages.some((m) => m._id === message._id)) {
+      if (existingMessages.some((m) => m.id === message.id)) {
         return state;
       }
       return {
@@ -80,7 +80,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       uploadingFiles?: Array<{ id: string; name: string; size: number }>;
     } = {
       ...message,
-      _id: optimisticId,
+      id: optimisticId,
       error: message.error,
       uploadingFiles: message.uploadingFiles,
     };
@@ -105,7 +105,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         messagesByChannel: {
           ...state.messagesByChannel,
           [channelId]: messages.map((message) =>
-            message._id === messageId
+            message.id === messageId
               ? ({ ...message, error } as MessageData & { error?: string })
               : message
           ),
@@ -116,7 +116,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   replaceOptimisticMessage: (channelId, optimisticId, realMessage) =>
     set((state) => {
       const messages = state.messagesByChannel[channelId] || [];
-      const messageIndex = messages.findIndex((m) => m._id === optimisticId);
+      const messageIndex = messages.findIndex((m) => m.id === optimisticId);
 
       if (messageIndex === -1) {
         // Optimistic message not found, just add the real message
@@ -144,9 +144,9 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     set((state) => {
       const existingMessages = state.messagesByChannel[channelId] || [];
       // Filter out duplicates
-      const newMessageIds = new Set(messages.map((m) => m._id));
+      const newMessageIds = new Set(messages.map((m) => m.id));
       const filteredExisting = existingMessages.filter(
-        (m) => !newMessageIds.has(m._id)
+        (m) => !newMessageIds.has(m.id)
       );
       return {
         messagesByChannel: {
@@ -163,7 +163,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         messagesByChannel: {
           ...state.messagesByChannel,
           [channelId]: messages.map((message) =>
-            message._id === messageId ? { ...message, ...updates } : message
+            message.id === messageId ? { ...message, ...updates } : message
           ),
         },
       };
@@ -175,7 +175,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       return {
         messagesByChannel: {
           ...state.messagesByChannel,
-          [channelId]: messages.filter((message) => message._id !== messageId),
+          [channelId]: messages.filter((message) => message.id !== messageId),
         },
       };
     }),

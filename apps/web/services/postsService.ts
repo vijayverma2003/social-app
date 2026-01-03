@@ -71,20 +71,25 @@ export const createPost = (
  */
 export const getFeed = (): Promise<PostResponse[]> => {
   return new Promise<PostResponse[]>((resolve, reject) => {
-    socketService.emit(POST_EVENTS.GET_FEED, {}, (async (response) => {
-      if (response.error) {
-        reject(new Error(response.error));
-      } else if (response.success && response.data) {
+    const callback: GetFeedCallback = (response) => {
+      console.log("getFeed callback invoked with response:", response);
+      if (response.error) reject(new Error(response.error));
+      else if (response.success && response.data) {
+        console.log("getFeed success, posts count:", response.data.length);
         const posts = response.data;
 
-        // Fetch profiles for post authors
-        await fetchPostAuthorProfiles(posts);
+        // Fetch profiles for post authors (async, but don't block resolution)
+        fetchPostAuthorProfiles(posts).catch((error) => {
+          console.error("Failed to fetch post author profiles:", error);
+        });
 
         resolve(posts);
       } else {
         reject(new Error("Failed to get feed"));
       }
-    }) as GetFeedCallback);
+    };
+
+    socketService.emit(POST_EVENTS.GET_FEED, {}, callback);
   });
 };
 

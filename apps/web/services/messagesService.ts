@@ -35,26 +35,13 @@ export const createMessage = (
   }
 ): Promise<MessageData> => {
   return new Promise<MessageData>((resolve, reject) => {
-    const { addMessage, replaceOptimisticMessage, markMessageAsError } =
-      useMessagesStore.getState();
+    const { markMessageAsError } = useMessagesStore.getState();
 
     socketService.emit(MESSAGE_EVENTS.CREATE, payload, ((response) => {
       if (response.success && response.data) {
-        // Use optimisticId from response if available, otherwise use the one passed in
-        const idToReplace =
-          (response.data as any).optimisticId || options?.optimisticId;
-        if (idToReplace)
-          replaceOptimisticMessage(
-            payload.channelId,
-            idToReplace,
-            response.data
-          );
-        else addMessage(payload.channelId, response.data);
-
-        options?.onComplete?.(response.data._id);
+        options?.onComplete?.(response.data.id);
         resolve(response.data);
       } else {
-        // Mark optimistic message as error if no data returned
         if (options?.optimisticId) {
           markMessageAsError(
             payload.channelId,

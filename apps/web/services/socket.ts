@@ -84,7 +84,30 @@ class SocketService {
     data: Parameters<ClientToServerEvents[K]>[0],
     callback: Parameters<ClientToServerEvents[K]>[1]
   ): void {
-    if (!this.socket) return;
+    // If socket is not initialized, wait for it to be initialized
+    if (!this.socket) {
+      console.log(`Socket not initialized, waiting for ${event}...`);
+      const timeout = setTimeout(() => {
+        callback({ error: "Socket not initialized" });
+      }, 30_000);
+
+      // Poll for socket initialization (check every 100ms)
+      const checkSocket = setInterval(() => {
+        if (this.socket) {
+          clearInterval(checkSocket);
+          clearTimeout(timeout);
+          // Recursively call emit now that socket exists
+          this.emit(event, data, callback);
+        }
+      }, 100);
+
+      // Clear interval after timeout
+      setTimeout(() => {
+        clearInterval(checkSocket);
+      }, 30_000);
+
+      return;
+    }
 
     const isConnected = this.socket.connected;
 
@@ -92,8 +115,6 @@ class SocketService {
       const timeout = setTimeout(() => {
         callback({ error: "Socket connection timeout" });
       }, 30_000);
-
-      console.log(`Calling ${event} with data:`, data);
 
       this.socket.once("connect", () => {
         clearTimeout(timeout);

@@ -33,6 +33,17 @@ type DeleteMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
 >[1];
 
+/**
+ * Maps MongoDB _id field to id for client-side consumption
+ */
+const mapMessageId = (message: any): any => {
+  const { _id, ...rest } = message;
+  return {
+    ...rest,
+    id: _id,
+  };
+};
+
 export class MessageHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(MESSAGE_EVENTS.CREATE, (data, callback) =>
@@ -143,14 +154,14 @@ export class MessageHandlers extends BaseSocketHandler {
         attachments,
       });
 
-      // Convert MongoDB ObjectId to string
-      const messageData = {
+      // Convert MongoDB ObjectId to string and map _id to id
+      const messageData = mapMessageId({
         ...message,
         _id: message._id.toString(),
         createdAt: message.createdAt,
         updatedAt: message.updatedAt,
         optimisticId, // Return the optimisticId so client can match and replace
-      };
+      });
 
       // Update totalUnreadMessages for DM and post channels
       if (channelType === "dm" || channelType === "post") {
@@ -263,9 +274,12 @@ export class MessageHandlers extends BaseSocketHandler {
         beforeDate
       );
 
+      // Map _id to id for all messages
+      const mappedMessages = messages.map(mapMessageId);
+
       callback({
         success: true,
-        data: messages,
+        data: mappedMessages,
       });
     } catch (error) {
       console.error("Error getting messages:", error);

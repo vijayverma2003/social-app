@@ -72,7 +72,7 @@ export const useMessagesBootstrap = (
               useMessagesStore.getState().messagesByChannel[channelId] || [];
             const optimisticMessage = existingMessages.find(
               (m) =>
-                m._id.startsWith("optimistic-") &&
+                m.id.startsWith("optimistic-") &&
                 m.authorId === message.authorId &&
                 m.content === message.content
             );
@@ -81,7 +81,7 @@ export const useMessagesBootstrap = (
               // Replace optimistic message with real one
               replaceOptimisticMessage(
                 channelId,
-                optimisticMessage._id,
+                optimisticMessage.id,
                 message
               );
             } else {

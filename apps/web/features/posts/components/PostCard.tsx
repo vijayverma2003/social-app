@@ -15,20 +15,20 @@ interface PostCardProps {
 }
 
 export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
-  const profile = useProfilesStore((state) => state.profiles[userId]);
+  const profile = useProfilesStore((state) => state.getProfile(userId));
 
   const timeAgo = useMemo(() => {
     return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
   }, [post.createdAt]);
 
-  const displayName = profile.displayName || "Unknown";
+  const displayName = profile?.displayName || "Unknown";
 
   return (
     <div className="p-4 rounded-3xl bg-secondary/50">
       <div className="flex flex-col items-start gap-3">
         <div className="flex items-center gap-2">
           <Avatar className="size-10">
-            <AvatarImage src={profile.avatarURL || undefined} />
+            <AvatarImage src={profile?.avatarURL || undefined} />
             <AvatarFallback>
               {displayName.charAt(0).toUpperCase()}
             </AvatarFallback>

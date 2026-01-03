@@ -18,7 +18,7 @@ export const AttachmentSchema = z
 // Message Schema
 export const MessageSchema = z
   .object({
-    _id: z.string().trim(),
+    id: z.string().trim(),
     channelId: z.string().trim().min(1),
     channelType: ChannelTypeSchema,
     content: z.string().trim(),
