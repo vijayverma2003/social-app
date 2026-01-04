@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { UserWithProfile } from "@shared/types";
-import { getCurrentUser } from "@/services/users";
+import { getCurrentUser } from "@/services/usersService";
 
 interface UserContextType {
   user: UserWithProfile | null;

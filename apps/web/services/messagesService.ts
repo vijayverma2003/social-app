@@ -1,5 +1,5 @@
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
-import { socketService } from "./socket";
+import { socketService } from "./socketService";
 import {
   CreateMessagePayload,
   GetMessagesPayload,
@@ -57,27 +57,37 @@ export const createMessage = (
 };
 
 /**
- * Get messages from a channel with pagination
+ * Fetch messages from a channel with pagination
+ * Stores messages in the messages store automatically
  * @param payload - { channelId: string, channelType: "dm" | "post", limit?: number, before?: string }
- * @param options - { prepend?: boolean, onSuccess?: () => void }
+ * @param options - { prepend?: boolean, onSuccess?: () => void, onError?: (error: string) => void }
  * @returns Promise that resolves with array of messages or rejects with error
  */
-export const getMessages = (
+export const fetchMessages = (
   payload: GetMessagesPayload,
-  options?: { prepend?: boolean; onSuccess?: () => void }
+  options?: {
+    prepend?: boolean;
+    onSuccess?: () => void;
+    onError?: (error: string) => void;
+  }
 ): Promise<MessageData[]> => {
   return new Promise<MessageData[]>((resolve, reject) => {
     const { setMessages, prependMessages } = useMessagesStore.getState();
 
     socketService.emit(MESSAGE_EVENTS.GET, payload, ((response) => {
       if (response.success && response.data) {
-        if (options?.prepend) prependMessages(payload.channelId, response.data);
-        else setMessages(payload.channelId, response.data);
+        if (options?.prepend) {
+          prependMessages(payload.channelId, response.data);
+        } else {
+          setMessages(payload.channelId, response.data);
+        }
 
         options?.onSuccess?.();
         resolve(response.data);
       } else {
-        reject(new Error(response.error || "Failed to get messages"));
+        const error = response.error || "Failed to fetch messages";
+        options?.onError?.(error);
+        reject(new Error(error));
       }
     }) as GetMessagesCallback);
   });

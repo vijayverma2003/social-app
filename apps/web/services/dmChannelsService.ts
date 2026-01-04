@@ -1,5 +1,5 @@
 import { CHANNEL_EVENTS } from "@shared/socketEvents";
-import { socketService } from "./socket";
+import { socketService } from "./socketService";
 import { ChannelWithUsers } from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";

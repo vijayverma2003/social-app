@@ -1,10 +1,11 @@
 import {
-  CreateUserSchema,
-  UpdateUserProfileSchema,
-} from "@shared/schemas/user";
+  CreateUserPayload,
+  UpdateUserPayload,
+  UpdateUserProfilePayload,
+} from "@shared/types/users";
 import { UserWithProfile } from "@shared/types";
 import { AxiosError, AxiosResponse } from "axios";
-import api from "./api";
+import api from "./apiService";
 
 export async function getCurrentUser(
   token?: string
@@ -15,7 +16,7 @@ export async function getCurrentUser(
 }
 
 export async function createUser(
-  data: CreateUserSchema,
+  data: CreateUserPayload,
   token?: string
 ): Promise<AxiosResponse<UserWithProfile>> {
   return api.post("/users/create", data, {
@@ -24,7 +25,7 @@ export async function createUser(
 }
 
 export async function updateUser(
-  data: UpdateUserProfileSchema,
+  data: UpdateUserPayload,
   token?: string
 ): Promise<AxiosResponse<UserWithProfile>> {
   return api.put("/users/me", data, {
@@ -33,7 +34,7 @@ export async function updateUser(
 }
 
 export async function updateUserProfile(
-  data: UpdateUserProfileSchema,
+  data: UpdateUserProfilePayload,
   token?: string
 ): Promise<AxiosResponse<UserWithProfile>> {
   return api.put("/users/me/profile", data, {

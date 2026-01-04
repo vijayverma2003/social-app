@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AxiosError } from "axios";
-import { getCurrentUser } from "@/services/users";
+import { getCurrentUser } from "@/services/usersService";
 import { UserWithProfile } from "@shared/types";
 
 /**

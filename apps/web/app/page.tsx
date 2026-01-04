@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { checkUserExists } from "@/services/users";
+import { checkUserExists } from "@/services/usersService";
 import { useAuth, SignInButton, SignedOut } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

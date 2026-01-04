@@ -2,7 +2,7 @@ import {
   type FriendsList,
   type IncomingAndOutgoingFriendRequests,
 } from "@shared/types/responses";
-import api from "@/services/api";
+import api from "@/services/apiService";
 
 export async function getFriendRequests(token?: string) {
   return await api.get<IncomingAndOutgoingFriendRequests>("/friends/requests", {

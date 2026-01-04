@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
@@ -28,15 +27,6 @@ export const ConversationPreview = ({
 
   const channelType: ChannelType = "post";
 
-  // Use shallow selector to only subscribe to the specific channel we need
-  const channelUsers = useChannelsStore(
-    useShallow((state) => {
-      return (
-        state.channels.find((channel) => channel.id === channelId)?.users || []
-      );
-    })
-  );
-
   const messagesSelector = useMemo(
     () => (state: ReturnType<typeof useMessagesStore.getState>) =>
       channelId ? state.messagesByChannel[channelId] || [] : [],
@@ -58,7 +48,6 @@ export const ConversationPreview = ({
   );
 
   useEffect(() => {
-    console.log("Calling scrollToBottom");
     scrollToBottom("instant");
   }, [scrollToBottom]);
 

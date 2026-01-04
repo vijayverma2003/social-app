@@ -1,5 +1,5 @@
 import { USER_EVENTS } from "@shared/socketEvents";
-import { socketService } from "./socket";
+import { socketService } from "./socketService";
 import { GetUserProfilesPayload } from "@shared/types/users";
 import { Profile } from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";

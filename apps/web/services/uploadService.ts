@@ -6,7 +6,7 @@ import {
   UploadInitialisedResponse,
   UploadCompletedResponse,
 } from "@shared/schemas/fileAttachment";
-import { socketService } from "./socket";
+import { socketService } from "./socketService";
 import { ClientToServerEvents } from "@shared/types/socket";
 
 type UploadInitCallback = Parameters<

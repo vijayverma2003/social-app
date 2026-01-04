@@ -1,7 +1,6 @@
 "use client";
 
 import MainHeader from "@/app/(user)/components/MainHeader";
-import { useChannelActions } from "@/features/dms/hooks/useChannelActions";
 import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import {
   MessageInput,
@@ -15,20 +14,16 @@ import { ChannelType } from "@shared/schemas/messages";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
+import {
+  startListeningChannelEvents,
+  stopListeningChannelEvents,
+  markChannelAsRead,
+} from "@/services/channelService";
 
 const ChannelPage = () => {
   const params = useParams();
   const postId = params?.postId as string;
   const channelId = params?.channelId as string;
-  const { joinChannel, leaveChannel, markAsRead } = useChannelActions();
-  // Use shallow selector to only subscribe to the specific channel we need
-  const channelUsers = useChannelsStore(
-    useShallow((state) => {
-      return (
-        state.channels.find((channel) => channel.id === channelId)?.users || []
-      );
-    })
-  );
   const { user: currentUser } = useUser();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
@@ -68,11 +63,11 @@ const ChannelPage = () => {
 
   useEffect(() => {
     if (!channelId) return;
-    joinChannel(channelId);
+    startListeningChannelEvents({ channelId });
     hasMarkedAsReadRef.current = false;
 
     return () => {
-      leaveChannel(channelId);
+      stopListeningChannelEvents({ channelId });
     };
   }, [channelId]);
 
@@ -86,7 +81,7 @@ const ChannelPage = () => {
       const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50; // 50px threshold
 
       if (isAtBottom && !hasMarkedAsReadRef.current) {
-        markAsRead(channelId);
+        markChannelAsRead({ channelId });
         hasMarkedAsReadRef.current = true;
       } else if (!isAtBottom) {
         hasMarkedAsReadRef.current = false;

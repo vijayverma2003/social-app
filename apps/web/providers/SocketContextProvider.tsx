@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 
 import { SocketContext } from "@/contexts/socket";
-import { socketService } from "@/services/socket";
+import { socketService } from "@/services/socketService";
 import {
   ClientToServerEvents,
   ServerToClientEvents,

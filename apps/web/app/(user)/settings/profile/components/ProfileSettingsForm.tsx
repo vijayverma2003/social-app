@@ -8,7 +8,7 @@ import {
   UploadButton,
   type SelectedFile,
 } from "@/features/messages/components/UploadButton";
-import { updateUserProfile } from "@/services/users";
+import { updateUserProfile } from "@/services/usersService";
 import { useAuth } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UpdateUserProfilePayloadSchema } from "@shared/schemas";

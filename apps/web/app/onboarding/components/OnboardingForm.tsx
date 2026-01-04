@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/custom/date-picker";
 import { createUserSchema, type CreateUserSchema } from "@shared/schemas/user";
-import { createUser } from "@/services/users";
+import { createUser } from "@/services/usersService";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";

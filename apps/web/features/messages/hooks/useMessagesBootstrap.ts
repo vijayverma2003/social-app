@@ -1,12 +1,13 @@
 "use client";
 
 import { useSocket } from "@/contexts/socket";
+import { ChannelType, MessageData } from "@shared/schemas/messages";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
+import { useEffect, useRef } from "react";
 import { useMessagesStore } from "../store/messagesStore";
-import { useCallback, useEffect, useRef } from "react";
+import { fetchMessages } from "@/services/messagesService";
 import { toast } from "sonner";
-import { ChannelType } from "@shared/schemas/messages";
 
 export const useMessagesBootstrap = (
   channelId: string,
@@ -31,82 +32,64 @@ export const useMessagesBootstrap = (
     onNewMessageRef.current = onNewMessage;
   }, [onNewMessage]);
 
-  const loadMessages = useCallback(
-    (channelId: string, channelType: ChannelType) => {
-      emit(
-        MESSAGE_EVENTS.GET,
-        {
-          channelId,
-          channelType,
-          limit: 100,
-          before: undefined,
-        },
-        (response) => {
-          console.log(response);
-          if (response.error) toast.error("Failed to load messages");
-          else if (response.success && response.data) {
-            setMessages(channelId, response.data);
-            onLoadCompleteRef.current?.();
+  const handleMessageCreated: ServerToClientEvents[typeof MESSAGE_EVENTS.CREATED] =
+    (message) => {
+      if (message.channelId === channelId) {
+        // Check if message has optimisticId (from server response)
+        const optimisticId = (message as any).optimisticId;
+
+        if (optimisticId) {
+          // Replace optimistic message with real one using the optimisticId
+          replaceOptimisticMessage(channelId, optimisticId, message);
+        } else {
+          // Fallback: Check if there's an optimistic message from the same author with similar content
+          const existingMessages =
+            useMessagesStore.getState().messagesByChannel[channelId] || [];
+          const optimisticMessage = existingMessages.find(
+            (m) =>
+              m.id.startsWith("optimistic-") &&
+              m.authorId === message.authorId &&
+              m.content === message.content
+          );
+
+          if (optimisticMessage) {
+            // Replace optimistic message with real one
+            replaceOptimisticMessage(channelId, optimisticMessage.id, message);
+          } else {
+            // No matching optimistic message, just add it
+            addMessage(message.channelId, message);
           }
         }
-      );
-    },
-    [emit, setMessages]
-  );
+        onNewMessageRef.current?.();
+      }
+    };
+
+  const handleMessageDeleted: ServerToClientEvents[typeof MESSAGE_EVENTS.DELETED] =
+    (data) => {
+      if (data.channelId === channelId) {
+        removeMessage(data.channelId, data.messageId);
+      }
+    };
+
+  useEffect(() => {
+    fetchMessages(
+      { channelId, channelType, limit: 100, before: undefined },
+      {
+        onSuccess: () => onLoadCompleteRef.current?.(),
+        onError: (error) => toast.error(error),
+      }
+    );
+  }, [channelId, channelType]);
 
   useEffect(() => {
     if (!socket || !channelId || !channelType) return;
 
-    const handleMessageCreated: ServerToClientEvents[typeof MESSAGE_EVENTS.CREATED] =
-      (message) => {
-        if (message.channelId === channelId) {
-          // Check if message has optimisticId (from server response)
-          const optimisticId = (message as any).optimisticId;
-
-          if (optimisticId) {
-            // Replace optimistic message with real one using the optimisticId
-            replaceOptimisticMessage(channelId, optimisticId, message);
-          } else {
-            // Fallback: Check if there's an optimistic message from the same author with similar content
-            const existingMessages =
-              useMessagesStore.getState().messagesByChannel[channelId] || [];
-            const optimisticMessage = existingMessages.find(
-              (m) =>
-                m.id.startsWith("optimistic-") &&
-                m.authorId === message.authorId &&
-                m.content === message.content
-            );
-
-            if (optimisticMessage) {
-              // Replace optimistic message with real one
-              replaceOptimisticMessage(
-                channelId,
-                optimisticMessage.id,
-                message
-              );
-            } else {
-              // No matching optimistic message, just add it
-              addMessage(message.channelId, message);
-            }
-          }
-          onNewMessageRef.current?.();
-        }
-      };
-
-    const handleMessageDeleted: ServerToClientEvents[typeof MESSAGE_EVENTS.DELETED] =
-      (data) => {
-        if (data.channelId === channelId) {
-          removeMessage(data.channelId, data.messageId);
-        }
-      };
-
     socket.on(MESSAGE_EVENTS.CREATED, handleMessageCreated);
     socket.on(MESSAGE_EVENTS.DELETED, handleMessageDeleted);
-    loadMessages(channelId, channelType);
 
     return () => {
       socket.off(MESSAGE_EVENTS.CREATED, handleMessageCreated);
       socket.off(MESSAGE_EVENTS.DELETED, handleMessageDeleted);
     };
-  }, [socket, channelId, channelType, loadMessages]);
+  }, [socket, channelId, channelType]);
 };

@@ -1,5 +1,5 @@
 import { POST_EVENTS } from "@shared/socketEvents";
-import { socketService } from "./socket";
+import { socketService } from "./socketService";
 import {
   CreatePostPayload,
   PostResponse,
