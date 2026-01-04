@@ -65,27 +65,29 @@ export const ImageCollage = ({
   return (
     <>
       <div
-        className={cn("relative w-full rounded-2xl overflow-hidden", className)}
+        className={cn("relative w-full rounded-lg overflow-hidden", className)}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div
           className={cn("grid gap-1", getGridClasses(displayImages.length))}
-          style={{ maxHeight }}
+          style={{ maxHeight, gridAutoRows: "1fr" }}
         >
           {displayImages.map((attachment, index) => {
             const isFourth = index === 3;
             const shouldBlur = totalImages > 4 && isFourth;
 
-            // For 3 images, make the last one span full width
-            const spanClass =
-              displayImages.length === 3 && index === 2 ? "col-span-2" : "";
+            // For 3 images: first image spans 2 rows in first column,
+            // second and third images in second column
+            let spanClass = "";
+            if (displayImages.length === 3 && index === 0)
+              spanClass = "row-span-2";
 
             return (
               <div
                 key={attachment.id}
                 className={cn(
-                  "relative overflow-hidden cursor-pointer transition-opacity hover:opacity-90",
+                  "relative overflow-hidden cursor-pointer transition-opacity hover:opacity-90 min-h-0",
                   spanClass
                 )}
                 onClick={(e) => {
@@ -96,9 +98,13 @@ export const ImageCollage = ({
                 <Image
                   src={attachment.url}
                   alt={attachment.fileName}
-                  width={400}
-                  height={400}
-                  className={cn("object-cover w-full", shouldBlur && "blur-md")}
+                  width={300}
+                  height={300}
+                  className={cn(
+                    "object-cover w-full h-full",
+                    shouldBlur && "blur-md"
+                  )}
+                  style={{ maxHeight: "100%" }}
                 />
                 {shouldBlur && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">

@@ -1,6 +1,8 @@
 "use client";
 
+import MainHeader from "@/app/(user)/components/MainHeader";
 import { useChannelActions } from "@/features/dms/hooks/useChannelActions";
+import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import {
   MessageInput,
   MessageInputRef,
@@ -8,12 +10,11 @@ import {
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
-import { useChannelsStore } from "@/features/dms/store/channelsStore";
-import { useParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useCallback } from "react";
-import { useShallow } from "zustand/react/shallow";
 import { useUser } from "@/providers/UserContextProvider";
 import { ChannelType } from "@shared/schemas/messages";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 const ChannelPage = () => {
   const params = useParams();
@@ -129,25 +130,29 @@ const ChannelPage = () => {
   if (!channelId) return <div>Invalid channel</div>;
 
   return (
-    <div className="flex flex-col max-h-screen justify-end max-w-2xl rounded-2xl relative overflow-hidden">
+    <section className="h-screen flex flex-col">
+      <MainHeader>
+        {channelType === "dm" ? <div>DM Channel</div> : <div>Post Channel</div>}
+      </MainHeader>
+
       <div
         ref={messagesContainerRef}
-        className="overflow-y-auto p-4 no-scrollbar flex-1"
+        className="overflow-y-auto py-4 space-y-2 relative no-scrollbar flex-1"
       >
-        <p>Conversation started here...</p>
         <MessagesList
           messages={messages}
-          channelUsers={channelUsers}
           emptyMessage="No messages yet. Start a conversation!"
         />
       </div>
-      <MessageInput
-        ref={messageInputRef}
-        channelId={channelId}
-        channelType={channelType}
-        onSend={scrollToBottom}
-      />
-    </div>
+      <div className="p-4">
+        <MessageInput
+          ref={messageInputRef}
+          channelId={channelId}
+          channelType={channelType}
+          onSend={scrollToBottom}
+        />
+      </div>
+    </section>
   );
 };
 

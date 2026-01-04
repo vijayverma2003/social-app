@@ -8,6 +8,7 @@ import { Send } from "lucide-react";
 import { forwardRef, useImperativeHandle } from "react";
 import { MessageFilePreview } from "./MessageFilePreview";
 import { SelectedFile, UploadButton } from "./UploadButton";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MessageInputProps {
   channelId: string;
@@ -27,7 +28,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       setContent,
       selectedFiles,
       setSelectedFiles,
-      inputRef,
+      textareaRef,
       uploadFilesFnRef,
       removeFile,
       handleSubmit,
@@ -35,17 +36,17 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
     } = useMessageForm({ channelId, channelType, onSend });
 
     useImperativeHandle(ref, () => ({
-      focus: () => inputRef.current?.focus(),
+      focus: () => textareaRef.current?.focus(),
       appendText: (text: string) => {
         setContent((prev) => prev + text);
-        inputRef.current?.focus();
+        textareaRef.current?.focus();
       },
     }));
 
     return (
-      <div className="bg-secondary/50 rounded-2xl mb-4">
+      <div className="bg-secondary/50 border border-border rounded-xl">
         {selectedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 p-2 border-b">
+          <div className="flex flex-wrap gap-2 p-2">
             {selectedFiles.map((file: SelectedFile) => (
               <MessageFilePreview
                 key={file.id}
@@ -55,7 +56,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             ))}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="flex items-center p-2">
+        <form onSubmit={handleSubmit} className="flex items-start p-2">
           <UploadButton
             maxFiles={10}
             onFilesChange={setSelectedFiles}
@@ -63,14 +64,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
               uploadFilesFnRef.current = fn;
             }}
           />
-          <Input
-            ref={inputRef}
-            type="text"
+          <Textarea
+            ref={textareaRef}
             placeholder="Type a message..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none"
+            className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none py-2"
             autoComplete="off"
           />
           <Button type="submit" size="icon" aria-label="Send message">

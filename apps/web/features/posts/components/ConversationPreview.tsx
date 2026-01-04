@@ -67,7 +67,7 @@ export const ConversationPreview = ({
   if (!channelId) return null;
 
   return (
-    <div className="flex flex-col bg-secondary/50 rounded-2xl w-full max-h-[500px] h-full">
+    <div className="flex flex-col bg-secondary/50 border border-border rounded-xl w-full max-h-[500px] h-full">
       <div className="flex items-center justify-between p-4">
         <h2 className="text-lg font-semibold">{title}</h2>
         {onClose && (
@@ -91,7 +91,6 @@ export const ConversationPreview = ({
       >
         <MessagesList
           messages={messages}
-          channelUsers={channelUsers}
           emptyMessage="No messages yet. Be the first to comment!"
         />
       </div>

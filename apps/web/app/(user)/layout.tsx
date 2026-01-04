@@ -18,7 +18,7 @@ const Layout = ({ children }: PropsWithChildren) => {
   return (
     <div className="flex h-screen">
       <Navbar />
-      <main className="flex flex-1 flex-col overflow-y-auto">
+      <main className="flex flex-1 flex-col overflow-y-auto border-l border-border bg-background">
         <div className="flex-1">{children}</div>
       </main>
     </div>

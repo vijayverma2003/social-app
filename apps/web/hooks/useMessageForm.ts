@@ -77,7 +77,7 @@ export const useMessageForm = ({
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
   >(null);
   const pendingMessagesRef = useRef<Set<string>>(new Set());
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { addOptimisticMessage, markMessageAsError, updateMessage } =
     useMessagesStore();
@@ -197,7 +197,7 @@ export const useMessageForm = ({
         markMessageAsError(channelId, optimisticId, ERROR_SEND_MESSAGE);
       }
 
-      inputRef.current?.focus();
+      textareaRef.current?.focus();
     },
     [
       content,
@@ -214,7 +214,7 @@ export const useMessageForm = ({
   );
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleSubmit(e as any);
@@ -230,7 +230,7 @@ export const useMessageForm = ({
     selectedFiles,
     setSelectedFiles,
     // Refs
-    inputRef,
+    textareaRef,
     uploadFilesFnRef,
     // Handlers
     removeFile,

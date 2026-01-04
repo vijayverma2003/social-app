@@ -69,7 +69,7 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
       <ContextMenuTrigger>
         <div
           className={cn(
-            "p-0 flex items-center gap-3 hover:bg-accent/40 rounded-sm px-2",
+            "p-0 flex items-start gap-3 hover:bg-accent/15 rounded-sm px-4",
             showAvatar && "mt-4"
           )}
         >
@@ -128,7 +128,7 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
             )}
             {/* Show uploaded attachments */}
             {message.attachments && message.attachments.length > 0 && (
-              <>
+              <div className="max-w-xl">
                 {/* Image collage */}
                 <ImageCollage
                   images={message.attachments.map((attachment) => ({
@@ -164,12 +164,12 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
                       </a>
                     </div>
                   ))}
-              </>
+              </div>
             )}
             <div className="flex items-center gap-2">
               <p
                 className={cn(
-                  "text-sm",
+                  "text-sm whitespace-pre-wrap",
                   isOptimistic && !hasError && "text-muted-foreground",
                   hasError && "text-destructive"
                 )}

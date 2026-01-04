@@ -21,7 +21,8 @@ export const MessagesList = ({
   }
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex flex-col gap-1 ${className} h-full`}>
+      <div className="flex-1" />
       {messages.map((message, index) => {
         const lastMessage = index > 0 ? messages[index - 1] : null;
 

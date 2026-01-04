@@ -10,6 +10,8 @@ import { PostResponse } from "@shared/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import MainHeader from "../components/MainHeader";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 type TabValue = "feed" | "recent" | "own";
 
@@ -74,9 +76,20 @@ const HomePage = () => {
   }, []);
 
   return (
-    <section>
-      <MainHeader />
-      <div className="flex gap-4 w-full">
+    <section className="h-screen flex flex-col">
+      <MainHeader>
+        <div className="flex-1 max-w-2xl">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="pl-10 py-5 border border-border bg-secondary/50 ring-0 focus-visible:ring-0"
+            />
+          </div>
+        </div>
+      </MainHeader>
+      <div className="flex gap-4 w-full p-4 overflow-y-auto">
         <div className="max-w-2xl w-full">
           <Tabs
             value={activeTab}
@@ -85,7 +98,7 @@ const HomePage = () => {
             <TabsList className="mb-4 bg-transparent">
               <TabsTrigger value="feed">Feed</TabsTrigger>
               <TabsTrigger value="recent">Recent Posts</TabsTrigger>
-              <TabsTrigger value="own">Our Posts</TabsTrigger>
+              <TabsTrigger value="own">Your Posts</TabsTrigger>
             </TabsList>
 
             <TabsContent value="feed" className="space-y-4">
@@ -147,7 +160,7 @@ const HomePage = () => {
           </Tabs>
         </div>
 
-        <div className="flex flex-col gap-4 flex-1 min-w-0 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto">
+        <div className="flex flex-col gap-4 flex-1 min-w-0 sticky top-15 h-[calc(100vh-6rem)] overflow-y-auto">
           {/* Conversation Preview */}
           {previewedPost && previewedPost.channelId && (
             <ConversationPreview

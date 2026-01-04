@@ -24,7 +24,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   const displayName = profile?.displayName || "Unknown";
 
   return (
-    <div className="p-4 rounded-3xl bg-secondary/50">
+    <div className="p-4 rounded-xl bg-secondary/50 border border-border">
       <div className="flex flex-col items-start gap-3">
         <div className="flex items-center gap-2">
           <Avatar className="size-10">

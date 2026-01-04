@@ -1,6 +1,7 @@
 "use client";
 
 import { NotificationBadge } from "@/components/custom/notification-badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Popover,
@@ -10,13 +11,12 @@ import {
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
 import { CreatePostForm } from "@/features/posts/components/CreatePostForm";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/providers/UserContextProvider";
 import { Home, LucideIcon, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
 import ChannelNavigation from "./ChannelNavigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUser } from "@/providers/UserContextProvider";
 
 interface NavItem {
   href: string;
@@ -49,7 +49,7 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="rounded-2xl bg-secondary/50 overflow-hidden m-4">
+    <div className="overflow-hidden">
       <aside className="h-screen w-64 p-4 flex flex-col gap-4 overflow-y-auto no-scrollbar relative">
         <div className="mb-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
