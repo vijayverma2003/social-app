@@ -5,10 +5,6 @@ import {
   MarkChannelAsReadPayloadSchema,
 } from "@shared/schemas/dm";
 import { CHANNEL_EVENTS, POST_EVENTS } from "@shared/socketEvents";
-import {
-  ChannelUserWithProfile,
-  ChannelWithUsers,
-} from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
@@ -87,47 +83,16 @@ export class ChannelHandlers extends BaseSocketHandler {
       const channels = await prisma.channel.findMany({
         where: {
           type: "dm",
-          users: {
-            some: {
-              userId: socket.userId,
-            },
-          },
+          users: { some: { userId: socket.userId } },
         },
-        include: {
-          users: {
-            include: {
-              user: {
-                select: {
-                  profile: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
+        include: { users: true },
+        orderBy: { createdAt: "desc" },
         take: 50, // Max 50 items
-      });
-
-      // Transform to match ChannelWithUsers type (flatten user.profile to profile)
-      const channelsWithUsers: ChannelWithUsers[] = channels.map((channel) => {
-        const { users, ...channelData } = channel;
-        return {
-          ...channelData,
-          users: users.map((channelUser) => {
-            const { user, ...channelUserData } = channelUser;
-            return {
-              ...channelUserData,
-              profile: user.profile,
-            } as ChannelUserWithProfile;
-          }),
-        };
       });
 
       cb({
         success: true,
-        data: channelsWithUsers,
+        data: channels,
       });
     } catch (error) {
       console.error("Error getting DM channels list:", error);
@@ -156,57 +121,15 @@ export class ChannelHandlers extends BaseSocketHandler {
             },
           },
         },
-        include: {
-          users: {
-            include: {
-              user: {
-                select: {
-                  profile: true,
-                },
-              },
-            },
-          },
-          posts: {
-            take: 1,
-            orderBy: {
-              createdAt: "desc",
-            },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  username: true,
-                  discriminator: true,
-                  profile: true,
-                },
-              },
-            },
-          },
-        },
         orderBy: {
           createdAt: "desc",
         },
         take: 50, // Max 50 items
       });
 
-      // Transform to match ChannelWithUsers type (flatten user.profile to profile)
-      const channelsWithUsers: ChannelWithUsers[] = channels.map((channel) => {
-        const { users, ...channelData } = channel;
-        return {
-          ...channelData,
-          users: users.map((channelUser) => {
-            const { user, ...channelUserData } = channelUser;
-            return {
-              ...channelUserData,
-              profile: user.profile,
-            } as ChannelUserWithProfile;
-          }),
-        };
-      });
-
       cb({
         success: true,
-        data: channelsWithUsers,
+        data: channels,
       });
     } catch (error) {
       console.error("Error getting post channels list:", error);

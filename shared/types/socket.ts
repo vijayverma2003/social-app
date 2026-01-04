@@ -7,12 +7,7 @@ import {
   POST_EVENTS,
   USER_EVENTS,
 } from "../socketEvents";
-import {
-  SocketResponse,
-  FriendRequests,
-  ChannelWithUsers,
-  Profile,
-} from "./responses";
+import { SocketResponse, FriendRequests, Profile, Channel, ChannelWithUsers } from "./responses";
 import {
   SendFriendRequestPayload,
   RemoveFriendPayload,
@@ -139,11 +134,11 @@ export interface ClientToServerEvents {
   /**
    * GET_POSTS_LIST: Get list of post channels for the authenticated user
    * @param data - {} - No payload required
-   * @param callback - SocketResponse<ChannelWithUsers[]>
+   * @param callback - SocketResponse<Channel[]>
    */
   [CHANNEL_EVENTS.GET_POSTS_LIST]: (
     data: {},
-    callback: (response: SocketResponse<ChannelWithUsers[]>) => void
+    callback: (response: SocketResponse<Channel[]>) => void
   ) => void;
 
   /**

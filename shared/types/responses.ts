@@ -66,10 +66,4 @@ export type IncomingAndOutgoingFriendRequests = {
 // CHANNEL RELATED TYPES
 // ============================================================================
 
-export type ChannelUserWithProfile = ChannelUser & {
-  profile: Profile | null;
-};
-
-export type ChannelWithUsers = Channel & {
-  users: ChannelUserWithProfile[];
-};
+export type ChannelWithUsers = Channel & { users: ChannelUser[] };

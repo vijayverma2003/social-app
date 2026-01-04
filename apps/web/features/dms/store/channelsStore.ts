@@ -1,16 +1,13 @@
-import { ChannelWithUsers } from "@shared/types/responses";
+import { Channel } from "@shared/types/responses";
 import { create } from "zustand";
 
 interface ChannelsState {
-  channels: ChannelWithUsers[];
+  channels: Channel[];
   isLoading: boolean;
   error: string | null;
-  setChannels: (channels: ChannelWithUsers[]) => void;
-  addChannel: (channel: ChannelWithUsers) => void;
-  updateChannel: (
-    channelId: string,
-    updates: Partial<ChannelWithUsers>
-  ) => void;
+  setChannels: (channels: Channel[]) => void;
+  addChannel: (channel: Channel) => void;
+  updateChannel: (channelId: string, updates: Partial<Channel>) => void;
   incrementUnreadCount: (channelId: string, excludeUserId: string) => void;
   resetUnreadCount: (channelId: string, userId: string) => void;
   removeChannel: (channelId: string) => void;
@@ -43,42 +40,17 @@ export const useChannelsStore = create<ChannelsState>((set) => ({
       ),
     })),
 
-  incrementUnreadCount: (channelId, excludeUserId) =>
+  incrementUnreadCount: (channelId) =>
     set((state) => ({
       channels: state.channels.map((channel) =>
-        channel.id === channelId
-          ? {
-              ...channel,
-              users: channel.users.map((user) =>
-                user.userId !== excludeUserId
-                  ? {
-                      ...user,
-                      totalUnreadMessages: user.totalUnreadMessages + 1,
-                    }
-                  : user
-              ),
-            }
-          : channel
+        channel.id === channelId ? { ...channel } : channel
       ),
     })),
 
   resetUnreadCount: (channelId, userId) =>
     set((state) => ({
       channels: state.channels.map((channel) =>
-        channel.id === channelId
-          ? {
-              ...channel,
-              users: channel.users.map((user) =>
-                user.userId === userId
-                  ? {
-                      ...user,
-                      totalUnreadMessages: 0,
-                      lastReadAt: new Date(),
-                    }
-                  : user
-              ),
-            }
-          : channel
+        channel.id === channelId ? { ...channel } : channel
       ),
     })),
 

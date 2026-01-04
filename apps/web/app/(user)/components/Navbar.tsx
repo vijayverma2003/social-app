@@ -16,7 +16,7 @@ import { Home, LucideIcon, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
-import ChannelNavigation from "./ChannelNavigation";
+import DMChannelNavigation from "./DMChannelNavigation";
 
 interface NavItem {
   href: string;
@@ -99,7 +99,7 @@ const Navbar = () => {
           </Popover>
         </nav>
         <div className="flex-1">
-          <ChannelNavigation />
+          <DMChannelNavigation />
         </div>
       </aside>
       <Link href="/settings/profile">
