@@ -15,6 +15,7 @@ export interface SelectedFile {
 }
 
 interface UploadButtonProps {
+  buttonText?: string;
   maxFiles?: number;
   onFilesChange?: (files: SelectedFile[]) => void;
   disabled?: boolean;
@@ -24,6 +25,7 @@ interface UploadButtonProps {
 }
 
 export const UploadButton = ({
+  buttonText,
   maxFiles = 10,
   onFilesChange,
   disabled = false,
@@ -122,8 +124,8 @@ export const UploadButton = ({
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={disabled || selectedFiles.length >= maxFiles}
-        size="icon"
-        variant="ghost"
+        size={buttonText ? "default" : "icon"}
+        variant={buttonText ? "default" : "ghost"}
         aria-label="Upload file"
         title={
           selectedFiles.length >= maxFiles
@@ -131,7 +133,7 @@ export const UploadButton = ({
             : "Upload file"
         }
       >
-        <Plus className="size-4" />
+        {buttonText ? buttonText : <Plus className="size-4" />}
       </Button>
     </>
   );

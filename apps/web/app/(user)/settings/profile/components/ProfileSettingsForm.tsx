@@ -249,7 +249,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           onFilesChange={handleAvatarFilesChange}
           onUploadFilesReady={handleAvatarUploadReady}
           disabled={isSaving}
-          showPreviews={true}
+          buttonText="Upload Avatar"
         />
         {errors.avatarURL && (
           <p className="text-sm text-destructive">{errors.avatarURL.message}</p>
@@ -262,7 +262,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           onFilesChange={handleBannerFilesChange}
           onUploadFilesReady={handleBannerUploadReady}
           disabled={isSaving}
-          showPreviews={true}
+          
         />
         {errors.bannerURL && (
           <p className="text-sm text-destructive">{errors.bannerURL.message}</p>

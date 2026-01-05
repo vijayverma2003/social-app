@@ -146,3 +146,13 @@ body {
 .avatar-gradient {
   background: linear-gradient(#4e9bff, #77ffa2);
 }
+
+/* Profile */
+
+.profile-outer-radius {
+  border-radius: calc(var(--radius) + 0.25rem);
+}
+
+.profile-inner-radius {
+  border-radius: calc(var(--radius));
+}
