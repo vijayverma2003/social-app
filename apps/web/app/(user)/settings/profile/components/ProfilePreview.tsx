@@ -8,20 +8,24 @@ import {
 } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
+import { useProfilesStore } from "@/stores/profilesStore";
 import { UserIcon } from "lucide-react";
 import Image from "next/image";
 
 const ProfilePreview = ({ userId }: { userId?: string }) => {
   const { user } = useUser();
-  const bannerColor = user?.profile?.bannerColor || "#4e83d9";
-  //   const bannerURL = "";
-  const bannerURL = user?.profile?.bannerURL || "";
-  const avatarURL = user?.profile?.avatarURL || "";
-  const displayName = user?.profile?.displayName || "";
-  const pronouns = user?.profile?.pronouns || "";
-  const bio = user?.profile?.bio || "";
-  const profileGradientStart = user?.profile?.profileGradientStart || "#e60000";
-  const profileGradientEnd = user?.profile?.profileGradientEnd || "#000000";
+  const profile = useProfilesStore((state) =>
+    state.getProfile(userId || user?.id || "")
+  );
+
+  const bannerColor = profile?.bannerColor || "#4e83d9";
+  const bannerURL = profile?.bannerURL || "";
+  const avatarURL = profile?.avatarURL || "";
+  const displayName = profile?.displayName || "";
+  const pronouns = profile?.pronouns || "";
+  const bio = profile?.bio || "";
+  const profileGradientStart = profile?.profileGradientStart || "#000000";
+  const profileGradientEnd = profile?.profileGradientEnd || "#000000";
 
   const outerProfileGradient = `linear-gradient(to bottom,
             color-mix(in oklab, hsl(from ${profileGradientStart} h s l) 50%, #000000),
@@ -35,7 +39,7 @@ const ProfilePreview = ({ userId }: { userId?: string }) => {
   return (
     <div
       style={{ background: outerProfileGradient }}
-      className="max-h-[600px] h-full w-full z-40 profile-outer-radius overflow-hidden bg-secondary p-1 shadow-sm shadow-muted flex-1 border-0 border-muted"
+      className="h-full w-full z-40 profile-outer-radius overflow-hidden bg-secondary p-1 shadow-sm shadow-muted flex-1"
     >
       <div
         className="border-0 border-transparent h-full overflow-hidden profile-inner-radius flex flex-col gap-4 mb-4"

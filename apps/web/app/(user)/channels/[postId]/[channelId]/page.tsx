@@ -19,6 +19,8 @@ import {
   stopListeningChannelEvents,
   markChannelAsRead,
 } from "@/services/channelService";
+import ProfilePreview from "@/app/(user)/settings/profile/components/ProfilePreview";
+import { useDMChannelsStore } from "@/stores/dmChannelStore";
 
 const ChannelPage = () => {
   const params = useParams();
@@ -28,6 +30,9 @@ const ChannelPage = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
   const hasMarkedAsReadRef = useRef(false);
+  const dmChannel = useDMChannelsStore((state) => state.dmChannels[channelId]);
+  const otherUserId =
+    dmChannel?.users.find((u) => u.userId !== currentUser?.id)?.userId || "";
 
   // Determine channel type: if postId is "@me", it's a DM channel, otherwise it's a post channel
   const channelType: ChannelType = postId === "%40me" ? "dm" : "post";
@@ -125,27 +130,36 @@ const ChannelPage = () => {
   if (!channelId) return <div>Invalid channel</div>;
 
   return (
-    <section className="h-screen flex flex-col">
+    <section className="h-screen overflow-hidden flex flex-col">
       <MainHeader>
         {channelType === "dm" ? <div>DM Channel</div> : <div>Post Channel</div>}
       </MainHeader>
 
-      <div
-        ref={messagesContainerRef}
-        className="overflow-y-auto py-4 space-y-2 relative no-scrollbar flex-1"
-      >
-        <MessagesList
-          messages={messages}
-          emptyMessage="No messages yet. Start a conversation!"
-        />
-      </div>
-      <div className="p-4">
-        <MessageInput
-          ref={messageInputRef}
-          channelId={channelId}
-          channelType={channelType}
-          onSend={scrollToBottom}
-        />
+      <div className="flex w-full">
+        <div className="h-[calc(100vh-48px)] flex flex-col w-full border-r">
+          <div
+            ref={messagesContainerRef}
+            className="overflow-y-auto py-4 space-y-2 relative no-scrollbar flex-1 min-w-[400px]"
+          >
+            <MessagesList
+              messages={messages}
+              emptyMessage="No messages yet. Start a conversation!"
+            />
+          </div>
+          <div className="p-4">
+            <MessageInput
+              ref={messageInputRef}
+              channelId={channelId}
+              channelType={channelType}
+              onSend={scrollToBottom}
+            />
+          </div>
+        </div>
+        {channelType === "dm" && (
+          <div className="min-w-[400px]">
+            <ProfilePreview userId={otherUserId} />
+          </div>
+        )}
       </div>
     </section>
   );
