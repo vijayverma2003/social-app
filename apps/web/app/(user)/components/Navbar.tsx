@@ -12,11 +12,12 @@ import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsS
 import { CreatePostForm } from "@/features/posts/components/CreatePostForm";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
-import { Home, LucideIcon, Plus, Users } from "lucide-react";
+import { Home, LucideIcon, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
 import DMChannelNavigation from "./DMChannelNavigation";
+import { ProfilePopover } from "./ProfilePopover";
 
 interface NavItem {
   href: string;
@@ -102,22 +103,30 @@ const Navbar = () => {
           <DMChannelNavigation />
         </div>
       </aside>
-      <Link href="/settings/profile">
-        <div className="bg-secondary/50 backdrop-blur-2xl w-full p-4 flex gap-4 items-center sticky bottom-0">
-          <Avatar>
+      <ProfilePopover className="bg-secondary/50 backdrop-blur-2xl w-full px-2 py-2 flex items-center justify-between gap-4 sticky bottom-0 border-none">
+        <div className="flex items-center gap-2">
+          <Avatar className="size-12 border-2 border-muted">
             <AvatarImage src={user?.profile?.avatarURL || undefined} />
             <AvatarFallback>
               {user?.profile?.displayName?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div>
+          <div className="flex flex-col items-start">
             <p className="text-sm font-medium">{user?.profile?.displayName}</p>
             <p className="text-xs text-muted-foreground">
               {user?.username + "#" + user?.discriminator}
             </p>
           </div>
         </div>
-      </Link>
+        <Link
+          onClick={(e) => e.stopPropagation()}
+          href="/settings/profile"
+          className={buttonVariants({ variant: "ghost", size: "icon" })}
+          aria-label="Open profile preview"
+        >
+          <Settings color="var(--muted-foreground)" className="size-5" />
+        </Link>
+      </ProfilePopover>
     </div>
   );
 };
