@@ -67,4 +67,22 @@ export const GetRecentPostsPayloadSchema = z
   })
   .strict();
 
-
+// Get Feed Payload Schema (for socket events)
+// Mirrors GetRecentPostsPayloadSchema but is used for the main feed
+export const GetFeedPayloadSchema = z
+  .object({
+    take: z
+      .number()
+      .int()
+      .min(1, "Take must be at least 1")
+      .max(20, "Take cannot exceed 20")
+      .optional()
+      .default(4),
+    offset: z
+      .number()
+      .int()
+      .min(0, "Offset must be at least 0")
+      .optional()
+      .default(0),
+  })
+  .strict();

@@ -2,10 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupSeparator,
-} from "@/components/ui/button-group";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { useProfilesStore } from "@/stores/profilesStore";

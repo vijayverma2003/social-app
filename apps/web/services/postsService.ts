@@ -2,8 +2,9 @@ import { POST_EVENTS } from "@shared/socketEvents";
 import { socketService } from "./socketService";
 import {
   CreatePostPayload,
-  PostResponse,
+  GetFeedPayload,
   GetRecentPostsPayload,
+  PostResponse,
 } from "@shared/types";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { fetchUserProfiles } from "./profilesService";
@@ -65,17 +66,25 @@ export const createPost = (
 };
 
 /**
- * Get the 20 most recent posts (feed)
+ * Get recent posts for the main feed with pagination
  * Also fetches profiles of post authors and stores them
+ * @param payload - { take?: number; offset?: number } - take: number of posts (default 4, max 20), offset: skip count (default 0)
  * @returns Promise that resolves with array of posts or rejects with error
  */
-export const getFeed = (): Promise<PostResponse[]> => {
+export const getFeed = (
+  payload: GetFeedPayload = { take: 4, offset: 0 }
+): Promise<PostResponse[]> => {
+  console.log("Get Feed", payload);
   return new Promise<PostResponse[]>((resolve, reject) => {
     const callback: GetFeedCallback = (response) => {
       console.log("getFeed callback invoked with response:", response);
       if (response.error) reject(new Error(response.error));
       else if (response.success && response.data) {
-        console.log("getFeed success, posts count:", response.data.length);
+        console.log(
+          "getFeed success, posts count:",
+          response.data.length,
+          payload.offset
+        );
         const posts = response.data;
 
         // Fetch profiles for post authors (async, but don't block resolution)
@@ -89,7 +98,7 @@ export const getFeed = (): Promise<PostResponse[]> => {
       }
     };
 
-    socketService.emit(POST_EVENTS.GET_FEED, {}, callback);
+    socketService.emit(POST_EVENTS.GET_FEED, payload, callback);
   });
 };
 

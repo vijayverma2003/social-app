@@ -7,7 +7,7 @@ import { usePostsStore } from "@/features/posts/store/postsStore";
 import { useUser } from "@/providers/UserContextProvider";
 import { getFeed, getRecentPosts } from "@/services/postsService";
 import { PostResponse } from "@shared/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import MainHeader from "../components/MainHeader";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ type TabValue = "feed" | "recent" | "own";
 
 const HomePage = () => {
   const { user } = useUser();
-  const { setPosts } = usePostsStore();
+  const { setPosts, appendPosts } = usePostsStore();
 
   // Use shallow comparison to prevent unnecessary re-renders
   const allPosts = usePostsStore(useShallow((state) => state.posts));
@@ -25,17 +25,38 @@ const HomePage = () => {
   const [previewedPost, setPreviewedPost] = useState<PostResponse | null>(null);
   const [recentPosts, setRecentPosts] = useState<PostResponse[]>([]);
   const [activeTab, setActiveTab] = useState<TabValue>("feed");
+  const [feedOffset, setFeedOffset] = useState(0);
+  const [isFeedLoading, setIsFeedLoading] = useState(false);
+  const [hasMoreFeed, setHasMoreFeed] = useState(true);
+  const hasLoadedInitialFeedRef = useRef(false);
 
-  const fetchFeed = useCallback(async () => {
-    try {
-      console.log("Fetching feed...");
-      const posts = await getFeed();
-      console.log("Posts:", posts);
-      if (posts) setPosts(posts);
-    } catch (error) {
-      console.error("Failed to fetch feed:", error);
-    }
-  }, [setPosts]);
+  const fetchFeedPage = useCallback(
+    async (offset: number) => {
+      // Avoid duplicate requests
+      if (isFeedLoading || !hasMoreFeed) return;
+
+      try {
+        setIsFeedLoading(true);
+        const take = 4;
+        const posts = await getFeed({ take, offset });
+
+        if (offset === 0) setPosts(posts);
+        else appendPosts(posts);
+
+        if (!posts || posts.length < take) setHasMoreFeed(false);
+
+        setFeedOffset((prev) => {
+          console.log(prev, prev + posts.length);
+          return prev + posts.length;
+        });
+      } catch (error) {
+        console.error("Failed to fetch feed:", error);
+      } finally {
+        setIsFeedLoading(false);
+      }
+    },
+    [appendPosts, hasMoreFeed, isFeedLoading, setPosts]
+  );
 
   const fetchRecentPosts = useCallback(async () => {
     try {
@@ -46,11 +67,47 @@ const HomePage = () => {
     }
   }, []);
 
-  // Set up bootstrap to listen for new posts
+  // Initial load for feed and recent posts (guarded against React StrictMode double-invoke)
   useEffect(() => {
-    fetchFeed();
+    if (hasLoadedInitialFeedRef.current) return;
+    hasLoadedInitialFeedRef.current = true;
+    console.log("Fetching data from useEffect");
+    fetchFeedPage(0);
     fetchRecentPosts();
-  }, [fetchFeed, fetchRecentPosts]);
+  }, [fetchFeedPage, fetchRecentPosts]);
+
+  // Infinite scroll using IntersectionObserver
+  useEffect(() => {
+    if (activeTab !== "feed") return;
+
+    const sentinel = document.getElementById("feed-infinite-scroll-sentinel");
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (
+          entry.isIntersecting &&
+          hasMoreFeed &&
+          !isFeedLoading &&
+          hasLoadedInitialFeedRef.current
+        ) {
+          fetchFeedPage(feedOffset);
+        }
+      },
+      {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [activeTab, fetchFeedPage, feedOffset, hasMoreFeed, isFeedLoading]);
 
   // Filter posts based on active tab
   const displayedPosts = useMemo(() => {
@@ -107,16 +164,29 @@ const HomePage = () => {
                   <p>No posts yet. Be the first to post!</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {allPosts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      userId={post.userId}
-                      onPreviewChat={handlePreviewChat}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-4">
+                    {allPosts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        userId={post.userId}
+                        onPreviewChat={handlePreviewChat}
+                      />
+                    ))}
+                  </div>
+
+                  <div
+                    id="feed-infinite-scroll-sentinel"
+                    className="h-8 flex items-center justify-center text-xs text-muted-foreground"
+                  >
+                    {isFeedLoading
+                      ? "Loading more..."
+                      : hasMoreFeed
+                      ? "Scroll to load more"
+                      : "No more posts"}
+                  </div>
+                </>
               )}
             </TabsContent>
 

@@ -1,6 +1,7 @@
 import prisma from "@database/postgres";
 import {
   CreatePostPayloadSchema,
+  GetFeedPayloadSchema,
   GetRecentPostsPayloadSchema,
   UpdatePostPayloadSchema,
 } from "@shared/schemas";
@@ -319,9 +320,20 @@ export class PostHandlers extends BaseSocketHandler {
         });
       }
 
-      // Get 20 most recent posts ordered by createdAt descending
+      // Validate payload
+      const validation = GetFeedPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { take, offset } = validation.data;
+
+      // Get most recent posts ordered by createdAt descending with pagination
       const posts = await prisma.post.findMany({
-        take: 20,
+        take,
+        skip: offset,
         orderBy: {
           createdAt: "desc",
         },

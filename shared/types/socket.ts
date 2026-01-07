@@ -7,7 +7,13 @@ import {
   POST_EVENTS,
   USER_EVENTS,
 } from "../socketEvents";
-import { SocketResponse, FriendRequests, Profile, Channel, ChannelWithUsers } from "./responses";
+import {
+  SocketResponse,
+  FriendRequests,
+  Profile,
+  Channel,
+  ChannelWithUsers,
+} from "./responses";
 import {
   SendFriendRequestPayload,
   RemoveFriendPayload,
@@ -32,13 +38,14 @@ import {
   UploadInitialisedResponse,
   UploadCompletedResponse,
 } from "../schemas/fileAttachment";
+import { PostResponse } from "./posts";
 import {
   CreatePostPayload,
-  UpdatePostPayload,
-  JoinPostPayload,
+  GetFeedPayload,
   GetRecentPostsPayload,
+  JoinPostPayload,
+  UpdatePostPayload,
 } from "./posts";
-import { PostResponse } from "./posts";
 import { GetUserProfilesPayload } from "./users";
 
 /**
@@ -268,12 +275,12 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
-   * GET_FEED: Get the 20 most recent posts
-   * @param data - {} (no payload needed)
-   * @param callback - SocketResponse<PostResponse[]> - Returns array of 20 most recent posts with user info
+   * GET_FEED: Get recent posts for the main feed with pagination
+   * @param data - { take?: number; offset?: number } - take: number of posts (default 4, max 20), offset: skip count (default 0)
+   * @param callback - SocketResponse<PostResponse[]> - Returns array of recent posts with user info
    */
   [POST_EVENTS.GET_FEED]: (
-    data: {},
+    data: GetFeedPayload,
     callback: (response: SocketResponse<PostResponse[]>) => void
   ) => void;
 

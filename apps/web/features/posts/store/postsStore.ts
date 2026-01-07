@@ -6,6 +6,7 @@ import { PostResponse } from "@shared/types";
 interface PostsState {
   posts: PostResponse[];
   setPosts: (posts: PostResponse[]) => void;
+  appendPosts: (posts: PostResponse[]) => void;
   addPost: (post: PostResponse) => void;
   updatePost: (post: PostResponse) => void;
   removePost: (postId: string) => void;
@@ -16,6 +17,14 @@ export const usePostsStore = create<PostsState>((set) => ({
   posts: [],
 
   setPosts: (posts) => set({ posts }),
+
+  appendPosts: (posts) =>
+    set((state) => {
+      // Avoid duplicates when appending
+      const existingIds = new Set(state.posts.map((p) => p.id));
+      const newPosts = posts.filter((p) => !existingIds.has(p.id));
+      return { posts: [...state.posts, ...newPosts] };
+    }),
 
   addPost: (post) =>
     set((state) => {
