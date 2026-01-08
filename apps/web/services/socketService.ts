@@ -84,6 +84,7 @@ class SocketService {
     data: Parameters<ClientToServerEvents[K]>[0],
     callback: Parameters<ClientToServerEvents[K]>[1]
   ): void {
+    console.log("Event Emitted:", event);
     // If socket is not initialized, wait for it to be initialized
     if (!this.socket) {
       console.log(`Socket not initialized, waiting for ${event}...`);
