@@ -3,6 +3,7 @@ import prisma from "@database/postgres";
 import {
   Attachment,
   CreateMessagePayloadSchema,
+  EditMessagePayloadSchema,
   DeleteMessagePayloadSchema,
   GetMessagesPayloadSchema,
 } from "@shared/schemas/messages";
@@ -24,6 +25,13 @@ type GetMessagesData = Parameters<
 >[0];
 type GetMessagesCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.GET]
+>[1];
+
+type EditMessageData = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.EDIT]
+>[0];
+type EditMessageCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.EDIT]
 >[1];
 
 type DeleteMessageData = Parameters<
@@ -52,6 +60,10 @@ export class MessageHandlers extends BaseSocketHandler {
 
     socket.on(MESSAGE_EVENTS.GET, (data, callback) =>
       this.getMessages(socket, data, callback)
+    );
+
+    socket.on(MESSAGE_EVENTS.EDIT, (data, callback) =>
+      this.editMessage(socket, data, callback)
     );
 
     socket.on(MESSAGE_EVENTS.DELETE, (data, callback) =>
@@ -286,6 +298,119 @@ export class MessageHandlers extends BaseSocketHandler {
       callback({
         error:
           error instanceof Error ? error.message : "Failed to get messages",
+      });
+    }
+  }
+
+  private async editMessage(
+    socket: AuthenticatedSocket,
+    data: EditMessageData,
+    callback: EditMessageCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = EditMessagePayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { messageId, channelId, channelType, content } = validation.data;
+
+      // Find the message
+      const message = await Message.findById(messageId);
+      if (!message) {
+        return callback({
+          error: "Message not found",
+        });
+      }
+
+      // Verify the message belongs to the channel
+      if (
+        message.channelId !== channelId ||
+        message.channelType !== channelType
+      ) {
+        return callback({
+          error: "Message does not belong to this channel",
+        });
+      }
+
+      // Verify the user is the author of the message
+      if (message.authorId !== socket.userId) {
+        return callback({
+          error: "You can only edit your own messages",
+        });
+      }
+
+      // Verify user is a member of the channel
+      if (channelType === "dm") {
+        const channelUser = await prisma.channelUser.findUnique({
+          where: {
+            channelId_userId: {
+              channelId,
+              userId: socket.userId,
+            },
+          },
+        });
+
+        if (!channelUser) {
+          return callback({
+            error: "You are not a member of this channel",
+          });
+        }
+      }
+
+      // Update the message
+      const updated = await Message.update(messageId, {
+        messageId,
+        content,
+      });
+
+      if (!updated) {
+        return callback({
+          error: "Failed to update message",
+        });
+      }
+
+      // Fetch the updated message
+      const updatedMessage = await Message.findById(messageId);
+      if (!updatedMessage) {
+        return callback({
+          error: "Failed to retrieve updated message",
+        });
+      }
+
+      // Convert MongoDB ObjectId to string and map _id to id
+      const messageData = mapMessageId({
+        ...updatedMessage,
+        _id: updatedMessage._id.toString(),
+        createdAt: updatedMessage.createdAt,
+        updatedAt: updatedMessage.updatedAt,
+      });
+
+      // Broadcast to channel room based on channel type
+      const roomName =
+        channelType === "dm"
+          ? `dm_channel:${channelId}`
+          : `channel:${channelId}`;
+      this.io.to(roomName).emit(MESSAGE_EVENTS.EDITED, messageData);
+
+      callback({
+        success: true,
+        data: messageData,
+      });
+    } catch (error) {
+      console.error("Error editing message:", error);
+      callback({
+        error:
+          error instanceof Error ? error.message : "Failed to edit message",
       });
     }
   }

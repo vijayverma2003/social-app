@@ -29,6 +29,7 @@ import {
 import {
   CreateMessagePayload,
   GetMessagesPayload,
+  EditMessagePayload,
   DeleteMessagePayload,
   MessageData,
 } from "../schemas/messages";
@@ -209,6 +210,18 @@ export interface ClientToServerEvents {
   [MESSAGE_EVENTS.GET]: (
     data: GetMessagesPayload,
     callback: (response: SocketResponse<MessageData[]>) => void
+  ) => void;
+
+  /**
+   * EDIT: Edit a message in a channel
+   * @param data - { messageId: string, channelId: string, channelType: "dm" | "post", content: string }
+   * @param callback - SocketResponse<MessageData> - Returns the updated message
+   * @requires User must be the author of the message and a member of the channel
+   * @broadcasts EDITED to channel room
+   */
+  [MESSAGE_EVENTS.EDIT]: (
+    data: EditMessagePayload,
+    callback: (response: SocketResponse<MessageData>) => void
   ) => void;
 
   /**
@@ -418,6 +431,13 @@ export interface ServerToClientEvents {
    * @param data - MessageData - The created message
    */
   [MESSAGE_EVENTS.CREATED]: (data: MessageData) => void;
+
+  /**
+   * EDITED: A message was edited in a channel
+   * @emitted_to All users in the channel socket room (via channel:channelId room)
+   * @param data - MessageData - The edited message
+   */
+  [MESSAGE_EVENTS.EDITED]: (data: MessageData) => void;
 
   /**
    * DELETED: A message was deleted from a channel

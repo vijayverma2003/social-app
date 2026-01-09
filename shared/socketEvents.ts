@@ -35,10 +35,12 @@ export const MESSAGE_EVENTS = {
   // Client -> Server events (actions)
   CREATE: "message:create",
   GET: "message:get",
+  EDIT: "message:edit",
   DELETE: "message:delete",
 
   // Server -> Client events (notifications)
   CREATED: "message:created",
+  EDITED: "message:edited",
   DELETED: "message:deleted",
 } as const;
 

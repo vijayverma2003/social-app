@@ -103,6 +103,16 @@ export const CreateMessagePayloadSchema = z
     }
   );
 
+// Edit Message Payload Schema (for socket events)
+export const EditMessagePayloadSchema = z
+  .object({
+    messageId: z.string().trim().min(1, "Message ID is required"),
+    channelId: z.string().trim().min(1, "Channel ID is required"),
+    channelType: ChannelTypeSchema,
+    content: z.string().trim().min(1, "Content is required"),
+  })
+  .strict();
+
 // Delete Message Payload Schema (for socket events)
 export const DeleteMessagePayloadSchema = z
   .object({
@@ -119,4 +129,5 @@ export type CreateMessageData = z.infer<typeof CreateMessageSchema>;
 export type UpdateMessageData = z.infer<typeof UpdateMessageSchema>;
 export type GetMessagesPayload = z.infer<typeof GetMessagesPayloadSchema>;
 export type CreateMessagePayload = z.infer<typeof CreateMessagePayloadSchema>;
+export type EditMessagePayload = z.infer<typeof EditMessagePayloadSchema>;
 export type DeleteMessagePayload = z.infer<typeof DeleteMessagePayloadSchema>;
