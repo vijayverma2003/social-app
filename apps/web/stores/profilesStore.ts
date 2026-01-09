@@ -8,6 +8,7 @@ interface ProfilesState {
   profiles: Record<string, Profile>;
   addProfile: (userId: string, profile: Profile) => void;
   addProfiles: (profiles: Profile[]) => void;
+  updateProfile: (profile: Profile) => void;
   getProfile: (userId: string) => Profile | undefined;
   getProfiles: (userIds: string[]) => Profile[];
 }
@@ -31,6 +32,17 @@ export const useProfilesStore = create<ProfilesState>((set, get) => ({
       });
       return {
         profiles: { ...state.profiles, ...profilesMap },
+      };
+    }),
+
+  updateProfile: (profile) =>
+    set((state) => {
+      if (!state.profiles[profile.userId]) return state;
+      return {
+        profiles: {
+          ...state.profiles,
+          [profile.userId]: profile,
+        },
       };
     }),
 

@@ -8,12 +8,10 @@ import {
   UploadButton,
   type SelectedFile,
 } from "@/features/messages/components/UploadButton";
-import { updateUserProfile } from "@/services/usersService";
-import { useAuth } from "@clerk/nextjs";
+import { updateProfile } from "@/services/profilesService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UpdateUserProfilePayloadSchema } from "@shared/schemas";
 import { UpdateUserProfilePayload, UserWithProfile } from "@shared/types";
-import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -34,7 +32,6 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
   const bannerUploadFnRef = useRef<
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
   >(null);
-  const { getToken } = useAuth();
   const router = useRouter();
   const {
     register,
@@ -134,11 +131,6 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     setIsSaving(true);
 
     try {
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-
       // Upload images first if they were selected
       let avatarURL = data.avatarURL;
       let bannerURL = data.bannerURL;
@@ -163,33 +155,28 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         );
       }
 
-      // Update profile with the final URLs
-      await updateUserProfile(
-        {
-          ...data,
-          avatarURL: avatarURL || "",
-          bannerURL: bannerURL || "",
-        },
-        token
-      );
+      // Update profile with the final URLs via socket
+      await updateProfile({
+        ...data,
+        avatarURL: avatarURL || "",
+        bannerURL: bannerURL || "",
+      });
 
       // Clear selected files after successful submission
       setAvatarFiles([]);
       setBannerFiles([]);
+
+      toast.success("Profile updated successfully");
       router.refresh();
     } catch (error) {
-      if (error instanceof AxiosError) {
-        setError(
-          error.response?.data?.error ||
-            "Failed to update profile. Please try again."
-        );
-      } else {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to update profile. Please try again."
-        );
-      }
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to update profile. Please try again.";
+      setError(errorMessage);
+      toast.error("Failed to update profile", {
+        description: errorMessage,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -262,7 +249,6 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           onFilesChange={handleBannerFilesChange}
           onUploadFilesReady={handleBannerUploadReady}
           disabled={isSaving}
-          
         />
         {errors.bannerURL && (
           <p className="text-sm text-destructive">{errors.bannerURL.message}</p>

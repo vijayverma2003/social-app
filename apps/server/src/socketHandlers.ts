@@ -14,6 +14,7 @@ import {
   ServerToClientEvents,
   SocketData,
 } from "@shared/types/socket";
+import { Profile } from "@shared/types/responses";
 
 export interface AuthenticatedSocket
   extends Socket<
@@ -109,5 +110,13 @@ export class SocketHandlers {
         console.log(`User disconnected: ${socket.id}`);
       });
     });
+  }
+
+  /**
+   * Emit a profile update event to notify clients that a profile has been updated
+   * @param profile - The updated profile
+   */
+  public emitProfileUpdated(profile: Profile): void {
+    this.userHandlers.emitProfileUpdated(profile);
   }
 }

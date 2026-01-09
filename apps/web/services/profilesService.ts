@@ -1,12 +1,18 @@
 import { USER_EVENTS } from "@shared/socketEvents";
 import { socketService } from "./socketService";
-import { GetUserProfilesPayload } from "@shared/types/users";
+import {
+  GetUserProfilesPayload,
+  UpdateUserProfilePayload,
+} from "@shared/types/users";
 import { Profile } from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { useProfilesStore } from "@/stores/profilesStore";
 
 type GetUserProfilesCallback = Parameters<
   ClientToServerEvents[typeof USER_EVENTS.GET_PROFILES]
+>[1];
+type UpdateProfileCallback = Parameters<
+  ClientToServerEvents[typeof USER_EVENTS.UPDATE_PROFILE]
 >[1];
 
 /**
@@ -52,5 +58,26 @@ export const fetchUserProfiles = (
         reject(new Error("Failed to get user profiles"));
       }
     }) as GetUserProfilesCallback);
+  });
+};
+
+/**
+ * Update the current user's profile via socket
+ * On success, updates the profilesStore with the updated profile
+ * @param payload - UpdateUserProfilePayload - Profile fields to update
+ * @returns Promise that resolves with the updated profile or rejects with error
+ */
+export const updateProfile = (
+  payload: UpdateUserProfilePayload
+): Promise<Profile> => {
+  const store = useProfilesStore.getState();
+
+  return new Promise<Profile>((resolve, reject) => {
+    socketService.emit(USER_EVENTS.UPDATE_PROFILE, payload, ((response) => {
+      if (response.error) {
+        reject(new Error(response.error));
+      } else if (response.success && response.data) resolve(response.data);
+      else reject(new Error("Failed to update profile"));
+    }) as UpdateProfileCallback);
   });
 };

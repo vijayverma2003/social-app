@@ -69,6 +69,10 @@ export const POST_EVENTS = {
 export const USER_EVENTS = {
   // Client -> Server events (actions)
   GET_PROFILES: "user:get_profiles",
+  UPDATE_PROFILE: "user:update_profile",
+
+  // Server -> Client events (notifications)
+  PROFILE_UPDATED: "user:profile_updated",
 } as const;
 
 export type FriendRequestEvent =

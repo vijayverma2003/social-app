@@ -46,7 +46,7 @@ import {
   JoinPostPayload,
   UpdatePostPayload,
 } from "./posts";
-import { GetUserProfilesPayload } from "./users";
+import { GetUserProfilesPayload, UpdateUserProfilePayload } from "./users";
 
 /**
  * Socket Data Interface
@@ -315,11 +315,22 @@ export interface ClientToServerEvents {
   /**
    * GET_PROFILES: Get user profiles by user IDs
    * @param data - { userIds: string[] } - Array of user IDs (max 100)
-   * @param callback - SocketResponse<UserWithProfile[]> - Returns array of user profiles
+   * @param callback - SocketResponse<Profile[]> - Returns array of user profiles
    */
   [USER_EVENTS.GET_PROFILES]: (
     data: GetUserProfilesPayload,
     callback: (response: SocketResponse<Profile[]>) => void
+  ) => void;
+
+  /**
+   * UPDATE_PROFILE: Update the current user's profile
+   * @param data - UpdateUserProfilePayload - Profile fields to update
+   * @param callback - SocketResponse<Profile> - Returns the updated profile
+   * @broadcasts PROFILE_UPDATED to all users
+   */
+  [USER_EVENTS.UPDATE_PROFILE]: (
+    data: UpdateUserProfilePayload,
+    callback: (response: SocketResponse<Profile>) => void
   ) => void;
 }
 
@@ -464,4 +475,15 @@ export interface ServerToClientEvents {
     postId: string;
     userId: string;
   }) => void;
+
+  // ============================================================================
+  // USER EVENTS
+  // ============================================================================
+
+  /**
+   * PROFILE_UPDATED: A user profile was updated
+   * @emitted_to All users who have this profile in their store (via user:userId room)
+   * @param data - Profile - The updated profile
+   */
+  [USER_EVENTS.PROFILE_UPDATED]: (data: Profile) => void;
 }
