@@ -17,14 +17,9 @@ interface ImageAttachment {
 interface ImageCollageProps {
   images: ImageAttachment[];
   className?: string;
-  maxHeight?: number;
 }
 
-export const ImageCollage = ({
-  images,
-  className = "",
-  maxHeight = 600,
-}: ImageCollageProps) => {
+export const ImageCollage = ({ images, className = "" }: ImageCollageProps) => {
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [initialImageIndex, setInitialImageIndex] = useState(0);
 
@@ -47,11 +42,6 @@ export const ImageCollage = ({
     switch (count) {
       case 1:
         return "grid-cols-1";
-      case 2:
-        return "grid-cols-2";
-      case 3:
-        return "grid-cols-2";
-      case 4:
       default:
         return "grid-cols-2";
     }
@@ -65,29 +55,25 @@ export const ImageCollage = ({
   return (
     <>
       <div
-        className={cn("relative w-full rounded-lg overflow-hidden", className)}
+        className={cn("relative w-full rounded-2xl overflow-hidden", className)}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div
-          className={cn("grid gap-1", getGridClasses(displayImages.length))}
-          style={{ maxHeight, gridAutoRows: "1fr" }}
-        >
+        <div className={cn("grid gap-1", getGridClasses(displayImages.length))}>
           {displayImages.map((attachment, index) => {
             const isFourth = index === 3;
             const shouldBlur = totalImages > 4 && isFourth;
 
-            // For 3 images: first image spans 2 rows in first column,
-            // second and third images in second column
             let spanClass = "";
-            if (displayImages.length === 3 && index === 0)
-              spanClass = "row-span-2";
+            if (displayImages.length === 3 && index === 2)
+              spanClass = "col-span-3";
 
             return (
               <div
                 key={attachment.id}
                 className={cn(
                   "relative overflow-hidden cursor-pointer transition-opacity hover:opacity-90 min-h-0",
+                  spanClass ? "aspect-video" : "aspect-landscape",
                   spanClass
                 )}
                 onClick={(e) => {

@@ -1,12 +1,30 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { useUser } from "@/providers/UserContextProvider";
+import { useProfilesStore } from "@/stores/profilesStore";
 import { PostResponse } from "@shared/types";
 import { formatDistanceToNow } from "date-fns";
+import {
+  Dot,
+  EllipsisVerticalIcon,
+  Eye,
+  HeartIcon,
+  MessageCircle,
+  StarIcon,
+} from "lucide-react";
+import Link from "next/link";
 import { useMemo } from "react";
 import { ImageCollage } from "./ImageCollage";
-import { useProfilesStore } from "@/stores/profilesStore";
 
 interface PostCardProps {
   post: PostResponse;
@@ -15,6 +33,7 @@ interface PostCardProps {
 }
 
 export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
+  const { user } = useUser();
   const profile = useProfilesStore((state) => state.getProfile(userId));
 
   const timeAgo = useMemo(() => {
@@ -22,86 +41,148 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   }, [post.createdAt]);
 
   const displayName = profile?.displayName || "Unknown";
+  const isLiked = false; // TODO: Implement like functionality
+  const isBookmarked = false; // TODO: Implement bookmark functionality
 
   return (
-    <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-      <div className="flex flex-col items-start gap-3">
-        <div className="flex items-center gap-2">
-          <Avatar className="size-10">
+    <div className="w-full max-w-2xl bg-background rounded-2xl p-8 shadow-md shadow-background/30 border border-border space-y-6">
+      {/* Header */}
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Avatar size="lg" className="border border-foreground/40">
             <AvatarImage src={profile?.avatarURL || undefined} />
             <AvatarFallback>
               {displayName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <p className="text-sm font-semibold">{displayName}</p>
-              <p className="text-xs text-muted-foreground">{timeAgo}</p>
-            </div>
+          <div className="flex gap-1 items-center">
+            <p className="text-sm font-medium">{displayName}</p>
+            <Dot color="var(--muted-foreground)" />
+            <p className="text-xs text-muted-foreground">{timeAgo}</p>
           </div>
         </div>
-
-        {post.content && (
-          <p className="text-sm mb-3 whitespace-pre-wrap wrap-break-word">
-            {post.content}
-          </p>
-        )}
-
-        {post.attachments && post.attachments.length > 0 && (
-          <>
-            {/* Image collage */}
-            <ImageCollage
-              images={post.attachments.map((att) => ({
-                id: att.id,
-                url: att.storageObject.url || "",
-                fileName: att.storageObject.filename,
-                contentType: att.storageObject.mimeType,
-              }))}
-            />
-
-            {/* Non-image attachments */}
-            {post.attachments
-              .filter(
-                (att) =>
-                  !(att.storageObject.mimeType?.startsWith("image/") ?? false)
-              )
-              .map((attachment) => (
-                <div
-                  key={attachment.id}
-                  className="p-4 bg-muted rounded-2xl flex items-center gap-2 mb-2"
-                >
-                  <span className="text-sm">
-                    {attachment.storageObject.filename}
-                  </span>
-                  <a
-                    href={attachment.storageObject.url || undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    View
-                  </a>
-                </div>
-              ))}
-          </>
-        )}
-
-        {/* Chat preview button - shown for all posts with channelId */}
-        {post.channelId && (
-          <div className="flex justify-end w-full">
-            <Button
-              variant="secondary"
-              className="cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPreviewChat?.(post);
-              }}
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "cursor-pointer hover:text-amber-500",
+              isBookmarked && "text-amber-500 bg-amber-500/10"
+            )}
+          >
+            <StarIcon />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={cn(
+                buttonVariants({ size: "icon", variant: "ghost" }),
+                "cursor-pointer"
+              )}
             >
-              Preview Chat
-            </Button>
+              <EllipsisVerticalIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem>View Author</DropdownMenuItem>
+              <DropdownMenuItem>Like Post</DropdownMenuItem>
+              <DropdownMenuItem>Save Post</DropdownMenuItem>
+              <DropdownMenuItem>Copy Link</DropdownMenuItem>
+              <DropdownMenuItem>Preview Chat</DropdownMenuItem>
+              <DropdownMenuItem>Join Chat</DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                Delete
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      {/* Content */}
+      <div className="flex flex-col gap-4">
+        {post.content && (
+          <div>
+            <p className="text-md whitespace-pre-wrap wrap-break-word leading-relaxed">
+              {post.content}
+            </p>
           </div>
         )}
+
+        {/* Attachments */}
+        {post.attachments && post.attachments.length > 0 && (
+          <ImageCollage
+            images={post.attachments.map((att) => ({
+              id: att.id,
+              url: att.storageObject.url || "",
+              fileName: att.storageObject.filename,
+              contentType: att.storageObject.mimeType,
+            }))}
+          />
+        )}
+
+        <div className="flex gap-1 items-center">
+          <div className="*:data-[slot=avatar]:ring-background flex -space-x-3 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale">
+            <Avatar size="sm">
+              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarFallback>CN</AvatarFallback>
+            </Avatar>
+            <Avatar size="sm">
+              <AvatarImage
+                src="https://github.com/maxleiter.png"
+                alt="@maxleiter"
+              />
+              <AvatarFallback>LR</AvatarFallback>
+            </Avatar>
+            <Avatar size="sm">
+              <AvatarImage
+                src="https://github.com/evilrabbit.png"
+                alt="@evilrabbit"
+              />
+              <AvatarFallback>ER</AvatarFallback>
+            </Avatar>
+          </div>
+          <p className="text-sm text-muted-foreground">Friends yapping here</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="secondary"
+            className={cn(
+              "cursor-pointer",
+              isLiked ? "text-red-500 bg-red-500/10" : "hover:text-red-500"
+            )}
+          >
+            <HeartIcon className={isLiked ? "fill-red-500" : ""} /> {12}
+          </Button>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="secondary"
+            className={cn("cursor-pointer")}
+          >
+            <Eye />
+          </Button>
+
+          {post.channelId && (
+            <Link
+              href={`/channels/${post.id}/${post.channelId}`}
+              className={cn(
+                "cursor-pointer",
+                buttonVariants({ variant: "secondary" })
+              )}
+            >
+              <MessageCircle />
+              Join
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
