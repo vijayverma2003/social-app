@@ -55,15 +55,22 @@ const fetchPostAuthorProfiles = async (
  * @returns Promise that resolves with the created post or rejects with error
  */
 export const createPost = (
-  payload: CreatePostPayload
+  payload: CreatePostPayload,
+  options?: {
+    onComplete?: (post: PostResponse) => void;
+    onError?: (error: string) => void;
+  }
 ): Promise<PostResponse> => {
   return new Promise<PostResponse>((resolve, reject) => {
     socketService.emit(POST_EVENTS.CREATE, payload, ((response) => {
       if (response.error) {
+        options?.onError?.(response.error);
         reject(new Error(response.error));
       } else if (response.success && response.data) {
+        options?.onComplete?.(response.data);
         resolve(response.data);
       } else {
+        options?.onError?.("Failed to create post");
         reject(new Error("Failed to create post"));
       }
     }) as CreatePostCallback);
@@ -139,20 +146,28 @@ export const getRecentPosts = (
 /**
  * Delete a post
  * @param payload - { postId: string }
+ * @param options - Optional callbacks for success and error handling
  * @returns Promise that resolves with the deleted post ID or rejects with error
  */
 export const deletePost = (
-  payload: DeletePostPayload
+  payload: DeletePostPayload,
+  options?: {
+    onComplete?: (data: { postId: string }) => void;
+    onError?: (error: string) => void;
+  }
 ): Promise<{ postId: string }> => {
   return new Promise<{ postId: string }>((resolve, reject) => {
-    socketService.emit(POST_EVENTS.DELETE, payload, ((response) => {
+    socketService.emit(POST_EVENTS.DELETE, payload, (response) => {
       if (response.error) {
+        options?.onError?.(response.error);
         reject(new Error(response.error));
       } else if (response.success && response.data) {
+        options?.onComplete?.(response.data);
         resolve(response.data);
       } else {
+        options?.onError?.("Failed to delete post");
         reject(new Error("Failed to delete post"));
       }
-    }) as DeletePostCallback);
+    });
   });
 };

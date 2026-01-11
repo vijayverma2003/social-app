@@ -1,4 +1,5 @@
 import prisma from "@database/postgres";
+import { Message } from "@database/mongodb";
 import {
   CreatePostPayloadSchema,
   GetFeedPayloadSchema,
@@ -497,7 +498,9 @@ export class PostHandlers extends BaseSocketHandler {
         (att) => att.storageObjectId
       );
 
-      // Delete the post and handle refCount decrements in a transaction
+      const channelId = existingPost.channelId;
+
+      // Delete the post, channel, and related data in a transaction
       await prisma.$transaction(async (tx) => {
         // Decrement refCount for storageObjects used in attachments
         if (storageObjectIds.length > 0) {
@@ -513,11 +516,31 @@ export class PostHandlers extends BaseSocketHandler {
           });
         }
 
-        // Delete the post (cascades will handle PostAttachment, RecentPosts, and PostLikes)
+        // Delete the post (cascades will handle PostAttachments, RecentPosts, and PostLikes)
         await tx.post.delete({
           where: { id: postId },
         });
+
+        // Delete the channel if it exists (cascades will handle ChannelUsers)
+        if (channelId) {
+          await tx.channel.delete({
+            where: { id: channelId },
+          });
+        }
       });
+
+      // Delete all messages from the channel in MongoDB (if channel existed)
+      if (channelId) {
+        try {
+          const deletedMessages = await Message.deleteByChannelId(channelId);
+          console.log(
+            `Deleted ${deletedMessages} messages from channel ${channelId} for post ${postId}`
+          );
+        } catch (error) {
+          console.error("Error deleting messages from MongoDB:", error);
+          // Continue even if message deletion fails - channel and post are already deleted
+        }
+      }
 
       // Broadcast to all users (posts are public)
       this.io.emit(POST_EVENTS.DELETED, { postId });

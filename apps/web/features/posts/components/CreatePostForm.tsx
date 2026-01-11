@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
 import { CreatePostPayloadSchema } from "@shared/schemas";
-import { CreatePostPayload } from "@shared/types";
-import { usePostActions } from "../hooks/usePostActions";
+import { CreatePostPayload, PostResponse } from "@shared/types";
+
 import {
   UploadButton,
   SelectedFile,
 } from "@/features/messages/components/UploadButton";
+import { createPost } from "@/services/postsService";
 
 interface CreatePostFormProps {
   onSuccess?: () => void;
@@ -30,7 +31,6 @@ export const CreatePostForm = ({
   const uploadFilesFnRef = useRef<
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
   >(null);
-  const { createPost } = usePostActions();
 
   const {
     register,
@@ -84,21 +84,23 @@ export const CreatePostForm = ({
         return;
       }
 
+      const onComplete = (post: PostResponse) => {
+        setIsUploading(false);
+        setIsSubmitting(false);
+        if (post) {
+          reset();
+          setSelectedFiles([]);
+          onSuccess?.();
+        }
+      };
+
       // Create post with storageObjectIds
       createPost(
         {
           content: trimmedContent || "",
           storageObjectIds,
         },
-        (success) => {
-          setIsUploading(false);
-          setIsSubmitting(false);
-          if (success) {
-            reset();
-            setSelectedFiles([]);
-            onSuccess?.();
-          }
-        }
+        { onComplete }
       );
     } catch (error) {
       console.error("Error uploading files:", error);
@@ -170,7 +172,6 @@ export const CreatePostForm = ({
           maxFiles={10}
           onFilesChange={setSelectedFiles}
           disabled={isSubmitting || isUploading}
-          showPreviews={false}
           onUploadFilesReady={(fn) => {
             uploadFilesFnRef.current = fn;
           }}

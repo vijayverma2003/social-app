@@ -133,7 +133,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <section className="h-screen flex flex-col bg-secondary/20">
+    <section className="h-screen flex flex-col">
       <MainHeader>
         <div className="flex-1 max-w-2xl">
           <div className="relative">

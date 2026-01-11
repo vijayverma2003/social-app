@@ -157,8 +157,8 @@ model PostAttachment {
   storageObjectId String
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  post            Post          @relation(fields: [postId], references: [id])
-  storageObject   StorageObject @relation(fields: [storageObjectId], references: [id])
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  storageObject   StorageObject @relation(fields: [storageObjectId], references: [id], onDelete: Cascade)
 
   @@unique([postId, storageObjectId])
 }
