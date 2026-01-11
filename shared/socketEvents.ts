@@ -58,6 +58,7 @@ export const POST_EVENTS = {
   // Client -> Server events (actions)
   CREATE: "post:create",
   UPDATE: "post:update",
+  DELETE: "post:delete",
   GET_FEED: "post:get_feed",
   GET_RECENT_POSTS: "post:get_recent_posts",
   RECENT_POST_ADD: "post:recent_post_add",
@@ -65,6 +66,7 @@ export const POST_EVENTS = {
   // Server -> Client events (notifications)
   CREATED: "post:created",
   UPDATED: "post:updated",
+  DELETED: "post:deleted",
   RECENT_POST_ADDED: "post:recent_post_added",
 } as const;
 

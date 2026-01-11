@@ -8,7 +8,7 @@ import { useEffect } from "react";
 
 export const usePostsBootstrap = () => {
   const { socket } = useSocket();
-  const { prependPost, updatePost } = usePostsStore();
+  const { prependPost, updatePost, removePost } = usePostsStore();
 
   useEffect(() => {
     if (!socket) return;
@@ -25,12 +25,20 @@ export const usePostsBootstrap = () => {
       updatePost(post);
     };
 
+    const handlePostDeleted = (
+      data: Parameters<ServerToClientEvents[typeof POST_EVENTS.DELETED]>[0]
+    ) => {
+      removePost(data.postId);
+    };
+
     socket.on(POST_EVENTS.CREATED, handlePostCreated);
     socket.on(POST_EVENTS.UPDATED, handlePostUpdated);
+    socket.on(POST_EVENTS.DELETED, handlePostDeleted);
 
     return () => {
       socket.off(POST_EVENTS.CREATED, handlePostCreated);
       socket.off(POST_EVENTS.UPDATED, handlePostUpdated);
+      socket.off(POST_EVENTS.DELETED, handlePostDeleted);
     };
-  }, [socket, prependPost, updatePost]);
+  }, [socket, prependPost, updatePost, removePost]);
 };

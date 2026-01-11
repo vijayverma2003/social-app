@@ -86,3 +86,10 @@ export const GetFeedPayloadSchema = z
       .default(0),
   })
   .strict();
+
+// Delete Post Payload Schema (for socket events)
+export const DeletePostPayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();

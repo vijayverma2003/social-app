@@ -4,6 +4,7 @@ import {
   GetFeedPayloadSchema,
   GetRecentPostsPayloadSchema,
   UpdatePostPayloadSchema,
+  DeletePostPayloadSchema,
 } from "@shared/schemas";
 import { POST_EVENTS } from "@shared/socketEvents";
 import { ClientToServerEvents } from "@shared/types/socket";
@@ -38,6 +39,13 @@ type GetRecentPostsCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.GET_RECENT_POSTS]
 >[1];
 
+type DeletePostData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.DELETE]
+>[0];
+type DeletePostCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.DELETE]
+>[1];
+
 export class PostHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(POST_EVENTS.CREATE, (data, callback) =>
@@ -54,6 +62,10 @@ export class PostHandlers extends BaseSocketHandler {
 
     socket.on(POST_EVENTS.GET_RECENT_POSTS, (data, callback) =>
       this.getRecentPosts(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.DELETE, (data, callback) =>
+      this.deletePost(socket, data, callback)
     );
   }
 
@@ -429,6 +441,95 @@ export class PostHandlers extends BaseSocketHandler {
       callback({
         error:
           error instanceof Error ? error.message : "Failed to get recent posts",
+      });
+    }
+  }
+
+  private async deletePost(
+    socket: AuthenticatedSocket,
+    data: DeletePostData,
+    callback: DeletePostCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = DeletePostPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { postId } = validation.data;
+
+      // Find the post
+      const existingPost = await prisma.post.findUnique({
+        where: { id: postId },
+        include: {
+          attachments: {
+            select: {
+              storageObjectId: true,
+            },
+          },
+        },
+      });
+
+      if (!existingPost) {
+        return callback({
+          error: "Post not found",
+        });
+      }
+
+      // Verify the user is the author of the post
+      if (existingPost.userId !== socket.userId) {
+        return callback({
+          error: "You can only delete your own posts",
+        });
+      }
+
+      // Get storage object IDs to decrement refCount
+      const storageObjectIds = existingPost.attachments.map(
+        (att) => att.storageObjectId
+      );
+
+      // Delete the post and handle refCount decrements in a transaction
+      await prisma.$transaction(async (tx) => {
+        // Decrement refCount for storageObjects used in attachments
+        if (storageObjectIds.length > 0) {
+          await tx.storageObject.updateMany({
+            where: {
+              id: { in: storageObjectIds },
+            },
+            data: {
+              refCount: {
+                decrement: 1,
+              },
+            },
+          });
+        }
+
+        // Delete the post (cascades will handle PostAttachment, RecentPosts, and PostLikes)
+        await tx.post.delete({
+          where: { id: postId },
+        });
+      });
+
+      // Broadcast to all users (posts are public)
+      this.io.emit(POST_EVENTS.DELETED, { postId });
+
+      callback({
+        success: true,
+        data: { postId },
+      });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      callback({
+        error: error instanceof Error ? error.message : "Failed to delete post",
       });
     }
   }

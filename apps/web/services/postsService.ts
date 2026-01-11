@@ -4,6 +4,7 @@ import {
   CreatePostPayload,
   GetFeedPayload,
   GetRecentPostsPayload,
+  DeletePostPayload,
   PostResponse,
 } from "@shared/types";
 import { ClientToServerEvents } from "@shared/types/socket";
@@ -19,6 +20,10 @@ type GetFeedCallback = Parameters<
 
 type GetRecentPostsCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.GET_RECENT_POSTS]
+>[1];
+
+type DeletePostCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.DELETE]
 >[1];
 
 /**
@@ -128,5 +133,26 @@ export const getRecentPosts = (
         reject(new Error("Failed to get recent posts"));
       }
     }) as GetRecentPostsCallback);
+  });
+};
+
+/**
+ * Delete a post
+ * @param payload - { postId: string }
+ * @returns Promise that resolves with the deleted post ID or rejects with error
+ */
+export const deletePost = (
+  payload: DeletePostPayload
+): Promise<{ postId: string }> => {
+  return new Promise<{ postId: string }>((resolve, reject) => {
+    socketService.emit(POST_EVENTS.DELETE, payload, ((response) => {
+      if (response.error) {
+        reject(new Error(response.error));
+      } else if (response.success && response.data) {
+        resolve(response.data);
+      } else {
+        reject(new Error("Failed to delete post"));
+      }
+    }) as DeletePostCallback);
   });
 };

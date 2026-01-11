@@ -46,6 +46,7 @@ import {
   GetRecentPostsPayload,
   JoinPostPayload,
   UpdatePostPayload,
+  DeletePostPayload,
 } from "./posts";
 import { GetUserProfilesPayload, UpdateUserProfilePayload } from "./users";
 
@@ -288,6 +289,18 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
+   * DELETE: Delete an existing post
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<{ postId: string }> - Returns the deleted post ID
+   * @requires User must be the author of the post
+   * @broadcasts DELETED to all users
+   */
+  [POST_EVENTS.DELETE]: (
+    data: DeletePostPayload,
+    callback: (response: SocketResponse<{ postId: string }>) => void
+  ) => void;
+
+  /**
    * GET_FEED: Get recent posts for the main feed with pagination
    * @param data - { take?: number; offset?: number } - take: number of posts (default 4, max 20), offset: skip count (default 0)
    * @param callback - SocketResponse<PostResponse[]> - Returns array of recent posts with user info
@@ -485,6 +498,13 @@ export interface ServerToClientEvents {
    * @param data - PostResponse - The updated post
    */
   [POST_EVENTS.UPDATED]: (data: PostResponse) => void;
+
+  /**
+   * DELETED: A post was deleted
+   * @emitted_to All users (posts are public)
+   * @param data - { postId: string } - The deleted post ID
+   */
+  [POST_EVENTS.DELETED]: (data: { postId: string }) => void;
 
   /**
    * RECENT_POST_ADDED: A post was added to the user's RecentPosts
