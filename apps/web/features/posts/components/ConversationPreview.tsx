@@ -1,11 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
+import { cn } from "@/lib/utils";
 import { ChannelType } from "@shared/schemas/messages";
-import { X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -21,7 +22,7 @@ export const ConversationPreview = ({
   channelId,
   postId,
   onClose,
-  title = "Conversation",
+  title = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.",
 }: ConversationPreviewProps) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -56,44 +57,43 @@ export const ConversationPreview = ({
   if (!channelId) return null;
 
   return (
-    <div className="flex flex-col bg-secondary/50 border border-border rounded-xl w-full max-h-[500px] h-full">
-      <div className="flex items-center justify-between p-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
+    <div className="flex flex-col bg-secondary/50 rounded-2xl w-full max-h-[500px] h-full overflow-hidden justify-between relative">
+      <div className="flex items-center justify-between gap-4 px-4 py-2">
+        <p className="text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden">
+          {title}
+        </p>
         {onClose && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={onClose}
-            className="h-6 w-6"
-          >
-            <X className="size-4" />
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
+            <X />
           </Button>
         )}
       </div>
 
-      <div className="flex-1" />
-
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="overflow-y-auto p-4 space-y-2 relative no-scrollbar"
+        className="overflow-y-auto space-y-2 relative no-scrollbar mb-16"
       >
-        <MessagesList
-          messages={messages}
-          emptyMessage="No messages yet. Be the first to comment!"
-        />
+        {messages.length > 0 && (
+          <div className="my-4">
+            <p className="text-muted-foreground text-xs text-center">
+              Join the conversation to see the full conversation
+            </p>
+          </div>
+        )}
+        <MessagesList messages={messages} />
       </div>
 
-      {/* Join Chat Button */}
-      <div className="p-4">
+      <div className="px-4 pb-4 absolute bottom-0 left-0 w-full">
         <Link
           href={`/channels/${postId}/${channelId}`}
-          className="block"
-          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            buttonVariants({ variant: "secondary" }),
+            "w-full font-medium cursor-pointer"
+          )}
         >
-          <Button className="w-full font-medium cursor-pointer">
-            Join Chat
-          </Button>
+          <MessageCircle />
+          Join Chat
         </Link>
       </div>
     </div>

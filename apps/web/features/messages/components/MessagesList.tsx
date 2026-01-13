@@ -11,18 +11,19 @@ interface MessagesListProps {
 
 export const MessagesList = ({
   messages,
-  emptyMessage = "No messages yet. Start a conversation!",
+  emptyMessage = "No messages yet :(",
   className = "",
 }: MessagesListProps) => {
   if (messages.length === 0) {
     return (
-      <p className="text-muted-foreground text-center py-8">{emptyMessage}</p>
+      <p className="text-muted-foreground text-xs text-center py-8">
+        {emptyMessage}
+      </p>
     );
   }
 
   return (
-    <div className={`flex flex-col gap-1 ${className} h-full`}>
-      <div className="flex-1" />
+    <div className={`flex flex-col gap-1 ${className}`}>
       {messages.map((message, index) => {
         const lastMessage = index > 0 ? messages[index - 1] : null;
 
