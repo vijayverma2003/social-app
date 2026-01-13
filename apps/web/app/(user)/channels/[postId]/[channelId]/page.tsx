@@ -233,11 +233,15 @@ const ChannelPage = () => {
   return (
     <section className="h-screen overflow-hidden flex flex-col">
       <MainHeader>
-        {channelType === "dm" ? <div>DM Channel</div> : <div>Post Channel</div>}
+        {channelType === "dm" ? (
+          <p className="text-sm font-medium">DM Channel</p>
+        ) : (
+          <p className="text-sm font-medium">Post Channel</p>
+        )}
       </MainHeader>
 
       <div className="flex w-full">
-        <div className="h-[calc(100vh-48px)] flex flex-col w-full border-r">
+        <div className="h-[calc(100vh-48px)] flex flex-col w-full">
           <div
             ref={messagesContainerRef}
             className="overflow-y-auto py-4 space-y-2 relative no-scrollbar flex-1 min-w-[400px]"
@@ -274,7 +278,7 @@ const ChannelPage = () => {
           </div>
         </div>
         {channelType === "dm" && (
-          <div className="min-w-[400px]">
+          <div className="p-6">
             <ProfileCard userId={otherUserId} variant="popover" />
           </div>
         )}

@@ -83,7 +83,7 @@ export const CreateMessagePayloadSchema = z
   .object({
     channelId: z.string().trim().min(1, "Channel ID is required"),
     channelType: ChannelTypeSchema,
-    content: z.string().trim(),
+    content: z.string().trim().max(1000, "Content must be less than 1000 characters"),
     storageObjectIds: z
       .array(z.string().trim().min(1))
       .max(10, "Maximum 10 attachments allowed")
@@ -109,7 +109,7 @@ export const EditMessagePayloadSchema = z
     messageId: z.string().trim().min(1, "Message ID is required"),
     channelId: z.string().trim().min(1, "Channel ID is required"),
     channelType: ChannelTypeSchema,
-    content: z.string().trim().min(1, "Content is required"),
+    content: z.string().trim().max(1000, "Content must be less than 1000 characters"),
   })
   .strict();
 

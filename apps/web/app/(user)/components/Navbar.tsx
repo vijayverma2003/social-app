@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
 import DMChannelNavigation from "./DMChannelNavigation";
 import { ProfileCardPopover } from "../settings/profile/components/ProfileCardPopover";
+import ProfileCard from "../settings/profile/components/ProfileCard";
 
 interface NavItem {
   href: string;

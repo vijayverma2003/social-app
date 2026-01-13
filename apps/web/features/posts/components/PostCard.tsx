@@ -72,7 +72,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       />
-      <div className="w-full max-w-2xl bg-background rounded-2xl py-8 shadow-md shadow-background/30 group space-y-6">
+      <div className="w-full max-w-2xl bg-background rounded-2xl py-8 shadow-md shadow-background/30 group space-y-6 px-8">
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -235,7 +235,9 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
           </div>
         </div>
       </div>
-      <Separator />
+      <div className="px-8">
+        <Separator />
+      </div>
     </>
   );
 };

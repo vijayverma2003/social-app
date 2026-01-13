@@ -3,8 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMessageForm } from "@/hooks/useMessageForm";
-import { ChannelType } from "@shared/schemas/messages";
-import { Send } from "lucide-react";
+import {
+  ChannelType,
+  CreateMessagePayloadSchema,
+} from "@shared/schemas/messages";
+import { Send, SendHorizonal } from "lucide-react";
 import { forwardRef, useImperativeHandle } from "react";
 import { MessageFilePreview } from "./MessageFilePreview";
 import { SelectedFile, UploadButton } from "./UploadButton";
@@ -44,7 +47,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
     }));
 
     return (
-      <div className="bg-secondary/50 border border-border rounded-xl">
+      <div className="bg-secondary/70 rounded-3xl">
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 p-2">
             {selectedFiles.map((file: SelectedFile) => (
@@ -70,11 +73,12 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none py-2"
+            className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none py-2 max-h-[300px]"
             autoComplete="off"
+            maxLength={1000}
           />
           <Button type="submit" size="icon" aria-label="Send message">
-            <Send className="size-4" />
+            <SendHorizonal />
           </Button>
         </form>
       </div>

@@ -28,14 +28,14 @@ export const MessageFilePreview = ({
 
   return (
     <div className="flex items-center gap-2 bg-muted rounded-lg text-sm relative group overflow-hidden">
-      <div className="truncate w-[200px] h-[200px] group-hover:scale-110 transition-transform group-hover:opacity-30">
+      <div className="truncate w-[150px] h-[150px] transition-opacity group-hover:opacity-30 duration-300 rounded-2xl overflow-hidden">
         {isImage ? (
           <Image
             src={objectUrl || ""}
             alt={file.file.name}
-            width={200}
-            height={200}
-            className="object-cover w-full h-full"
+            width={150}
+            height={150}
+            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
           />
         ) : (
           <FileIcon className="size-4" />

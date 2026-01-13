@@ -13,7 +13,7 @@ const MainHeader = ({ children }: PropsWithChildren) => {
       <div className="flex items-center gap-4">
         <Link href="/notifications">
           <Button variant="ghost" size="icon" className="relative">
-            <Bell className="size-5" />
+            <Bell />
           </Button>
         </Link>
       </div>

@@ -141,7 +141,7 @@ const HomePage = () => {
             <Input
               type="search"
               placeholder="Search..."
-              className="pl-10 py-5 border border-border bg-secondary/50 ring-0 focus-visible:ring-0"
+              className="pl-10 py-5 bg-secondary/50 ring-0 focus-visible:ring-0"
             />
           </div>
         </div>
