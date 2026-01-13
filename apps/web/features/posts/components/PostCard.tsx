@@ -27,6 +27,8 @@ import { useMemo, useState, useCallback } from "react";
 import { ImageCollage } from "./ImageCollage";
 import { PostDeleteDialog } from "./PostDeleteDialog";
 import { Separator } from "@/components/ui/separator";
+import { ProfileCardPopover } from "@/app/(user)/settings/profile/components/ProfileCardPopover";
+import { ProfileCardDialog } from "@/app/(user)/settings/profile/components/ProfileCardDialog";
 
 interface PostCardProps {
   post: PostResponse;
@@ -48,6 +50,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   const isAuthor = user?.id === post.userId;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const handleDeleteClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -59,6 +62,11 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
 
   return (
     <>
+      <ProfileCardDialog
+        open={profileDialogOpen}
+        setOpen={setProfileDialogOpen}
+        userId={userId}
+      />
       <PostDeleteDialog
         postId={post.id}
         open={deleteDialogOpen}
@@ -67,18 +75,25 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
       <div className="w-full max-w-2xl bg-background rounded-2xl p-8 shadow-md shadow-background/30 group space-y-6">
         {/* Header */}
         <header className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Avatar size="lg" className="border border-foreground/40">
-              <AvatarImage src={profile?.avatarURL || undefined} />
-              <AvatarFallback>
-                {displayName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex gap-1 items-center">
+          <div className="flex items-center gap-1">
+            <ProfileCardPopover
+              align="start"
+              side="top"
+              userId={userId}
+              className="flex items-center gap-2"
+            >
+              <Avatar size="lg" className="border border-foreground/40">
+                <AvatarImage src={profile?.avatarURL || undefined} />
+                <AvatarFallback>
+                  {displayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+
               <p className="text-sm font-medium">{displayName}</p>
-              <Dot color="var(--muted-foreground)" />
-              <p className="text-xs text-muted-foreground">{timeAgo}</p>
-            </div>
+            </ProfileCardPopover>
+
+            <Dot color="var(--muted-foreground)" />
+            <p className="text-xs text-muted-foreground">{timeAgo}</p>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -102,7 +117,9 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 <EllipsisVerticalIcon />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem>View Author</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setProfileDialogOpen(true)}>
+                  View Author
+                </DropdownMenuItem>
                 <DropdownMenuItem>Like Post</DropdownMenuItem>
                 <DropdownMenuItem>Save Post</DropdownMenuItem>
                 <DropdownMenuItem>Copy Link</DropdownMenuItem>
@@ -131,7 +148,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
         <div className="flex flex-col gap-4">
           {post.content && (
             <div>
-              <p className="text-md whitespace-pre-wrap wrap-break-word leading-relaxed">
+              <p className="whitespace-pre-wrap wrap-break-word leading-relaxed text-base">
                 {post.content}
               </p>
             </div>

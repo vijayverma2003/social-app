@@ -1,7 +1,7 @@
 "use client";
 
 import MainHeader from "@/app/(user)/components/MainHeader";
-import ProfilePreview from "@/app/(user)/settings/profile/components/ProfilePreview";
+import ProfileCard from "@/app/(user)/settings/profile/components/ProfileCard";
 import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
 import {
   MessageInput,
@@ -275,7 +275,7 @@ const ChannelPage = () => {
         </div>
         {channelType === "dm" && (
           <div className="min-w-[400px]">
-            <ProfilePreview userId={otherUserId} />
+            <ProfileCard userId={otherUserId} variant="popover" />
           </div>
         )}
       </div>

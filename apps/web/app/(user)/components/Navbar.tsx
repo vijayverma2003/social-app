@@ -17,7 +17,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
 import DMChannelNavigation from "./DMChannelNavigation";
-import { ProfilePopover } from "./ProfilePopover";
+import { ProfileCardPopover } from "../settings/profile/components/ProfileCardPopover";
 
 interface NavItem {
   href: string;
@@ -103,7 +103,11 @@ const Navbar = () => {
           <DMChannelNavigation />
         </div>
       </aside>
-      <ProfilePopover className="bg-secondary/50 backdrop-blur-2xl w-full px-2 py-2 flex items-center justify-between gap-4 sticky bottom-0 border-none">
+      <ProfileCardPopover
+        align="start"
+        side="top"
+        className="bg-secondary/50 backdrop-blur-2xl w-full px-2 py-2 flex items-center justify-between gap-4 sticky bottom-0 border-none"
+      >
         <div className="flex items-center gap-2">
           <Avatar className="size-12 border-2 border-muted">
             <AvatarImage src={user?.profile?.avatarURL || undefined} />
@@ -126,7 +130,7 @@ const Navbar = () => {
         >
           <Settings color="var(--muted-foreground)" className="size-5" />
         </Link>
-      </ProfilePopover>
+      </ProfileCardPopover>
     </div>
   );
 };
