@@ -87,6 +87,18 @@ export const useMessageForm = ({
     setSelectedFiles((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
+  // Wrapper for setSelectedFiles that prevents file selection for post channels
+  const setSelectedFilesSafe = useCallback(
+    (files: SelectedFile[] | ((prev: SelectedFile[]) => SelectedFile[])) => {
+      if (channelType === "post") {
+        // Silently ignore file selection for post channels
+        return;
+      }
+      setSelectedFiles(files);
+    },
+    [channelType]
+  );
+
   const validateSubmission = useCallback(
     (messageContent: string, hasAttachments: boolean): string | null => {
       if (!messageContent && !hasAttachments) return null;
@@ -96,13 +108,23 @@ export const useMessageForm = ({
 
       if (!user) return "You must be logged in to send messages";
 
+      // Prevent attachments for post channels
+      if (channelType === "post" && hasAttachments) {
+        return "File attachments are not allowed in post channels";
+      }
+
       return null;
     },
-    [user]
+    [user, channelType]
   );
 
   const handleFileUpload = useCallback(
     async (files: SelectedFile[], optimisticId: string): Promise<string[]> => {
+      // Prevent file uploads for post channels
+      if (channelType === "post" && files.length > 0) {
+        throw new Error("File attachments are not allowed in post channels");
+      }
+
       if (files.length === 0 || !uploadFilesFnRef.current) {
         return [];
       }
@@ -123,7 +145,7 @@ export const useMessageForm = ({
 
       return storageObjectIds;
     },
-    [channelId, markMessageAsError, updateMessage]
+    [channelId, channelType, markMessageAsError, updateMessage]
   );
 
   const sendMessage = useCallback(
@@ -228,7 +250,7 @@ export const useMessageForm = ({
     content,
     setContent,
     selectedFiles,
-    setSelectedFiles,
+    setSelectedFiles: setSelectedFilesSafe,
     // Refs
     textareaRef,
     uploadFilesFnRef,

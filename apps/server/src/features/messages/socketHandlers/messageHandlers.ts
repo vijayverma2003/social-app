@@ -99,6 +99,17 @@ export class MessageHandlers extends BaseSocketHandler {
         optimisticId,
       } = validation.data;
 
+      // Prevent attachments for post channels
+      if (
+        channelType === "post" &&
+        storageObjectIds &&
+        storageObjectIds.length > 0
+      ) {
+        return callback({
+          error: "File attachments are not allowed in post channels",
+        });
+      }
+
       // Verify user is a member of the channel
       if (channelType === "dm") {
         const channelUser = await prisma.channelUser.findUnique({

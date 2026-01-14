@@ -72,8 +72,17 @@ export const fetchMessages = (
   }
 ): Promise<MessageData[]> => {
   return new Promise<MessageData[]>((resolve, reject) => {
-    const { setMessages, prependMessages } = useMessagesStore.getState();
+    const { setMessages, prependMessages, messagesByChannel } =
+      useMessagesStore.getState();
 
+    const messages = messagesByChannel[payload.channelId] || [];
+    console.log("FetchMessages 1", messages.length);
+    if (messages.length > 0 && !options?.prepend) {
+      options?.onSuccess?.();
+      resolve(messages);
+      return;
+    }
+    console.log("FetchMessages 2", messages.length);
     socketService.emit(MESSAGE_EVENTS.GET, payload, ((response) => {
       if (response.success && response.data) {
         if (options?.prepend) {

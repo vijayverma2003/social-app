@@ -69,6 +69,7 @@ export const useChannelMessages = ({
         const isNearBottom =
           Math.abs(scrollHeight - scrollTop - clientHeight) < 100;
         // Only auto-scroll if user is near bottom (new message, not loading history)
+        console.log("Is Near Bottom", isNearBottom);
         if (isNearBottom) {
           setTimeout(scrollToBottom, 0);
         }
@@ -206,7 +207,7 @@ export const useChannelMessages = ({
 
   // Check if initial load already got all messages (if less than 100, there are no more)
   useEffect(() => {
-    if (messages.length > 0 && messages.length < 100)
+    if (messages.length > 0 && messages.length < 50)
       setHasMoreOlderMessages(false);
   }, [messages.length]);
 

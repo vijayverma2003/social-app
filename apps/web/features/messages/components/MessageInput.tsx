@@ -48,7 +48,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
 
     return (
       <div className="bg-secondary/70 rounded-3xl">
-        {selectedFiles.length > 0 && (
+        {channelType === "dm" && selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 p-2">
             {selectedFiles.map((file: SelectedFile) => (
               <MessageFilePreview
@@ -60,13 +60,15 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           </div>
         )}
         <form onSubmit={handleSubmit} className="flex items-start p-2">
-          <UploadButton
-            maxFiles={10}
-            onFilesChange={setSelectedFiles}
-            onUploadFilesReady={(fn) => {
-              uploadFilesFnRef.current = fn;
-            }}
-          />
+          {channelType === "dm" && (
+            <UploadButton
+              maxFiles={10}
+              onFilesChange={setSelectedFiles}
+              onUploadFilesReady={(fn) => {
+                uploadFilesFnRef.current = fn;
+              }}
+            />
+          )}
           <Textarea
             ref={textareaRef}
             placeholder="Type a message..."

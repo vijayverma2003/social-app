@@ -73,7 +73,7 @@ export const useMessagesBootstrap = (
 
   useEffect(() => {
     fetchMessages(
-      { channelId, channelType, limit: 100, before: undefined },
+      { channelId, channelType, limit: 50, before: undefined },
       {
         onSuccess: () => onLoadCompleteRef.current?.(),
         onError: (error) => toast.error(error),
