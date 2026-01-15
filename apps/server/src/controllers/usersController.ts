@@ -46,15 +46,20 @@ export class UsersController {
       if (!validation.success)
         throw new BadRequestError(validation.error.message);
 
+      const discriminator = generateDiscriminator();
+
       const userWithProfile = await prisma.user.create({
         data: {
           clerkId,
           email,
           username: validation.data.username,
-          discriminator: generateDiscriminator(),
+          discriminator,
           dob: validation.data.dob.toISOString(),
           profile: {
-            create: {},
+            create: {
+              username: validation.data.username,
+              discriminator,
+            },
           },
         },
         select: {
