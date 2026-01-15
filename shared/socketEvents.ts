@@ -61,6 +61,8 @@ export const POST_EVENTS = {
   DELETE: "post:delete",
   LIKE: "post:like",
   UNLIKE: "post:unlike",
+  BOOKMARK: "post:bookmark",
+  UNBOOKMARK: "post:unbookmark",
   GET_FEED: "post:get_feed",
   GET_RECENT_POSTS: "post:get_recent_posts",
   RECENT_POST_ADD: "post:recent_post_add",
@@ -71,6 +73,8 @@ export const POST_EVENTS = {
   DELETED: "post:deleted",
   LIKED: "post:liked",
   UNLIKED: "post:unliked",
+  BOOKMARKED: "post:bookmarked",
+  UNBOOKMARKED: "post:unbookmarked",
   RECENT_POST_ADDED: "post:recent_post_added",
 } as const;
 

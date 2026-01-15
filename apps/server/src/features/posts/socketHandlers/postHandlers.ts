@@ -8,6 +8,8 @@ import {
   DeletePostPayloadSchema,
   LikePostPayloadSchema,
   RemoveLikePayloadSchema,
+  BookmarkPostPayloadSchema,
+  RemoveBookmarkPayloadSchema,
 } from "@shared/schemas";
 import { POST_EVENTS } from "@shared/socketEvents";
 import { ClientToServerEvents } from "@shared/types/socket";
@@ -63,19 +65,43 @@ type RemoveLikeCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.UNLIKE]
 >[1];
 
-// Helper function to format post with likes count and isLiked status.
+type BookmarkPostData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.BOOKMARK]
+>[0];
+type BookmarkPostCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.BOOKMARK]
+>[1];
+
+type RemoveBookmarkData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.UNBOOKMARK]
+>[0];
+type RemoveBookmarkCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.UNBOOKMARK]
+>[1];
+
+// Helper function to format post with likes count, isLiked, and isBookmarked status.
 // Accepts a Prisma client or transaction client so likes and post reads share the same transaction.
 const formatPostWithLikes = async (
   db: any,
   post: any,
   userId: string | null
 ): Promise<any> => {
-  const [likesCount, userLike] = await Promise.all([
+  const [likesCount, userLike, userBookmark] = await Promise.all([
     db.postLike.count({
       where: { postId: post.id },
     }),
     userId
       ? db.postLike.findUnique({
+          where: {
+            postId_userId: {
+              postId: post.id,
+              userId,
+            },
+          },
+        })
+      : null,
+    userId
+      ? db.postBookmark.findUnique({
           where: {
             postId_userId: {
               postId: post.id,
@@ -90,10 +116,11 @@ const formatPostWithLikes = async (
     ...post,
     likes: likesCount,
     isLiked: !!userLike,
+    isBookmarked: !!userBookmark,
   };
 };
 
-// Helper function to format multiple posts with likes count and isLiked status.
+// Helper function to format multiple posts with likes count, isLiked, and isBookmarked status.
 // Accepts a Prisma client or transaction client so likes and post reads share the same transaction.
 const formatPostsWithLikes = async (
   db: any,
@@ -103,7 +130,7 @@ const formatPostsWithLikes = async (
   if (posts.length === 0) return posts;
 
   const postIds = posts.map((p) => p.id);
-  const [likesCounts, userLikes] = await Promise.all([
+  const [likesCounts, userLikes, userBookmarks] = await Promise.all([
     db.postLike.groupBy({
       by: ["postId"],
       where: { postId: { in: postIds } },
@@ -111,6 +138,17 @@ const formatPostsWithLikes = async (
     }),
     userId
       ? db.postLike.findMany({
+          where: {
+            postId: { in: postIds },
+            userId,
+          },
+          select: {
+            postId: true,
+          },
+        })
+      : [],
+    userId
+      ? db.postBookmark.findMany({
           where: {
             postId: { in: postIds },
             userId,
@@ -128,11 +166,15 @@ const formatPostsWithLikes = async (
   const userLikesSet = new Set(
     (userLikes as Array<{ postId: string }>).map((like) => like.postId)
   );
+  const userBookmarksSet = new Set(
+    (userBookmarks as Array<{ postId: string }>).map((b) => b.postId)
+  );
 
   return posts.map((post) => ({
     ...post,
     likes: likesMap.get(post.id) || 0,
     isLiked: userId ? userLikesSet.has(post.id) : false,
+    isBookmarked: userId ? userBookmarksSet.has(post.id) : false,
   }));
 };
 
@@ -164,6 +206,14 @@ export class PostHandlers extends BaseSocketHandler {
 
     socket.on(POST_EVENTS.UNLIKE, (data, callback) =>
       this.removeLike(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.BOOKMARK, (data, callback) =>
+      this.bookmarkPost(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.UNBOOKMARK, (data, callback) =>
+      this.removeBookmark(socket, data, callback)
     );
   }
 
@@ -268,8 +318,8 @@ export class PostHandlers extends BaseSocketHandler {
       });
 
       // Broadcast to all users (posts are public)
-      // Note: For broadcast, we don't include isLiked since it's user-specific
-      const broadcastPost = { ...post, isLiked: false };
+      // Note: For broadcast, we don't include isLiked/isBookmarked since they're user-specific
+      const broadcastPost = { ...post, isLiked: false, isBookmarked: false };
       this.io.emit(POST_EVENTS.CREATED, broadcastPost);
 
       callback({
@@ -418,8 +468,12 @@ export class PostHandlers extends BaseSocketHandler {
       );
 
       // Broadcast to all users (posts are public)
-      // Note: For broadcast, we don't include isLiked since it's user-specific
-      const broadcastPost = { ...formattedPost, isLiked: false };
+      // Note: For broadcast, we don't include isLiked/isBookmarked since they're user-specific
+      const broadcastPost = {
+        ...formattedPost,
+        isLiked: false,
+        isBookmarked: false,
+      };
       this.io.emit(POST_EVENTS.UPDATED, broadcastPost);
 
       callback({
@@ -757,8 +811,12 @@ export class PostHandlers extends BaseSocketHandler {
       });
 
       // Broadcast liked event to all users.
-      // For broadcast we don't include isLiked since it's user-specific.
-      const broadcastPost = { ...formattedPost, isLiked: false };
+      // For broadcast we don't include isLiked/isBookmarked since they're user-specific.
+      const broadcastPost = {
+        ...formattedPost,
+        isLiked: false,
+        isBookmarked: false,
+      };
       this.io.emit(POST_EVENTS.LIKED, broadcastPost);
 
       callback({
@@ -849,8 +907,12 @@ export class PostHandlers extends BaseSocketHandler {
       });
 
       // Broadcast unliked event to all users.
-      // For broadcast we don't include isLiked since it's user-specific.
-      const broadcastPost = { ...formattedPost, isLiked: false };
+      // For broadcast we don't include isLiked/isBookmarked since they're user-specific.
+      const broadcastPost = {
+        ...formattedPost,
+        isLiked: false,
+        isBookmarked: false,
+      };
       this.io.emit(POST_EVENTS.UNLIKED, broadcastPost);
 
       callback({
@@ -861,6 +923,178 @@ export class PostHandlers extends BaseSocketHandler {
       console.error("Error removing like:", error);
       const message =
         error instanceof Error ? error.message : "Failed to remove like";
+      callback({
+        error: message,
+      });
+    }
+  }
+
+  private async bookmarkPost(
+    socket: AuthenticatedSocket,
+    data: BookmarkPostData,
+    callback: BookmarkPostCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      const validation = BookmarkPostPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { postId } = validation.data;
+
+      const formattedPost = await prisma.$transaction(async (tx) => {
+        const existingPost = await tx.post.findUnique({
+          where: { id: postId },
+        });
+
+        if (!existingPost) {
+          throw new Error("Post not found");
+        }
+
+        const existingBookmark = await tx.postBookmark.findUnique({
+          where: {
+            postId_userId: {
+              postId,
+              userId: socket.userId!,
+            },
+          },
+        });
+
+        if (existingBookmark) {
+          throw new Error("You have already bookmarked this post");
+        }
+
+        await tx.postBookmark.create({
+          data: {
+            postId,
+            userId: socket.userId!,
+          },
+        });
+
+        const post = await tx.post.findUnique({
+          where: { id: postId },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+          },
+        });
+
+        if (!post) {
+          throw new Error("Post not found after bookmark");
+        }
+
+        return formatPostWithLikes(tx, post, socket.userId ?? null);
+      });
+
+      // Emit bookmarked event only to the user who bookmarked
+      socket.emit(POST_EVENTS.BOOKMARKED, formattedPost);
+
+      callback({
+        success: true,
+        data: formattedPost,
+      });
+    } catch (error) {
+      console.error("Error bookmarking post:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to bookmark post";
+      callback({
+        error: message,
+      });
+    }
+  }
+
+  private async removeBookmark(
+    socket: AuthenticatedSocket,
+    data: RemoveBookmarkData,
+    callback: RemoveBookmarkCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      const validation = RemoveBookmarkPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { postId } = validation.data;
+
+      const formattedPost = await prisma.$transaction(async (tx) => {
+        const existingPost = await tx.post.findUnique({
+          where: { id: postId },
+        });
+
+        if (!existingPost) {
+          throw new Error("Post not found");
+        }
+
+        const existingBookmark = await tx.postBookmark.findUnique({
+          where: {
+            postId_userId: {
+              postId,
+              userId: socket.userId!,
+            },
+          },
+        });
+
+        if (!existingBookmark) {
+          throw new Error("You have not bookmarked this post");
+        }
+
+        await tx.postBookmark.delete({
+          where: {
+            postId_userId: {
+              postId,
+              userId: socket.userId!,
+            },
+          },
+        });
+
+        const post = await tx.post.findUnique({
+          where: { id: postId },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+          },
+        });
+
+        if (!post) {
+          throw new Error("Post not found after unbookmark");
+        }
+
+        return formatPostWithLikes(tx, post, socket.userId ?? null);
+      });
+
+      // Emit unbookmarked event only to the user who unbookmarked
+      socket.emit(POST_EVENTS.UNBOOKMARKED, formattedPost);
+
+      callback({
+        success: true,
+        data: formattedPost,
+      });
+    } catch (error) {
+      console.error("Error removing bookmark:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to remove bookmark";
       callback({
         error: message,
       });

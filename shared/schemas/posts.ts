@@ -107,3 +107,17 @@ export const RemoveLikePayloadSchema = z
     postId: z.string().trim().min(1, "Post ID is required"),
   })
   .strict();
+
+// Bookmark Post Payload Schema (for socket events)
+export const BookmarkPostPayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();
+
+// Remove Bookmark Payload Schema (for socket events)
+export const RemoveBookmarkPayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();

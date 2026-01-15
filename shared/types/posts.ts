@@ -8,6 +8,8 @@ import {
   DeletePostPayloadSchema,
   LikePostPayloadSchema,
   RemoveLikePayloadSchema,
+  BookmarkPostPayloadSchema,
+  RemoveBookmarkPayloadSchema,
 } from "../schemas/posts";
 
 import { z } from "zod";
@@ -16,7 +18,7 @@ export type PostResponse = Prisma.PostGetPayload<{
   include: {
     attachments: { include: { storageObject: true } };
   };
-}> & { likes: number; isLiked: boolean };
+}> & { likes: number; isLiked: boolean; isBookmarked: boolean };
 
 export type CreatePostPayload = z.infer<typeof CreatePostPayloadSchema>;
 export type UpdatePostPayload = z.infer<typeof UpdatePostPayloadSchema>;
@@ -26,3 +28,5 @@ export type GetRecentPostsPayload = z.infer<typeof GetRecentPostsPayloadSchema>;
 export type GetFeedPayload = z.infer<typeof GetFeedPayloadSchema>;
 export type LikePostPayload = z.infer<typeof LikePostPayloadSchema>;
 export type RemoveLikePayload = z.infer<typeof RemoveLikePayloadSchema>;
+export type BookmarkPostPayload = z.infer<typeof BookmarkPostPayloadSchema>;
+export type RemoveBookmarkPayload = z.infer<typeof RemoveBookmarkPayloadSchema>;

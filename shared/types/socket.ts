@@ -49,6 +49,8 @@ import {
   DeletePostPayload,
   LikePostPayload,
   RemoveLikePayload,
+  BookmarkPostPayload,
+  RemoveBookmarkPayload,
 } from "./posts";
 import { GetUserProfilesPayload, UpdateUserProfilePayload } from "./users";
 
@@ -325,6 +327,28 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
+   * BOOKMARK: Bookmark a post
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<PostResponse> - Returns the updated post
+   * @broadcasts BOOKMARKED to the user only
+   */
+  [POST_EVENTS.BOOKMARK]: (
+    data: BookmarkPostPayload,
+    callback: (response: SocketResponse<PostResponse>) => void
+  ) => void;
+
+  /**
+   * UNBOOKMARK: Remove a bookmark from a post
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<PostResponse> - Returns the updated post
+   * @broadcasts UNBOOKMARKED to the user only
+   */
+  [POST_EVENTS.UNBOOKMARK]: (
+    data: RemoveBookmarkPayload,
+    callback: (response: SocketResponse<PostResponse>) => void
+  ) => void;
+
+  /**
    * GET_FEED: Get recent posts for the main feed with pagination
    * @param data - { take?: number; offset?: number } - take: number of posts (default 4, max 20), offset: skip count (default 0)
    * @param callback - SocketResponse<PostResponse[]> - Returns array of recent posts with user info
@@ -543,6 +567,20 @@ export interface ServerToClientEvents {
    * @param data - PostResponse - The updated post with new like count
    */
   [POST_EVENTS.UNLIKED]: (data: PostResponse) => void;
+
+  /**
+   * BOOKMARKED: A post was bookmarked
+   * @emitted_to The user who bookmarked only
+   * @param data - PostResponse - The updated post
+   */
+  [POST_EVENTS.BOOKMARKED]: (data: PostResponse) => void;
+
+  /**
+   * UNBOOKMARKED: A post was unbookmarked
+   * @emitted_to The user who unbookmarked only
+   * @param data - PostResponse - The updated post
+   */
+  [POST_EVENTS.UNBOOKMARKED]: (data: PostResponse) => void;
 
   /**
    * RECENT_POST_ADDED: A post was added to the user's RecentPosts
