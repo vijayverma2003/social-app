@@ -34,7 +34,17 @@ export const usePostsStore = create<PostsState>((set) => ({
 
   updatePost: (post) =>
     set((state) => ({
-      posts: state.posts.map((p) => (p.id === post.id ? post : p)),
+      posts: state.posts.map((p) => {
+        if (p.id === post.id) {
+          // Preserve existing isLiked status if the incoming post has isLiked: false
+          // This handles broadcasts where isLiked is set to false for all users
+          // but we want to preserve the current user's actual like status
+          const preserveIsLiked =
+            post.isLiked === false && p.isLiked === true ? true : post.isLiked;
+          return { ...post, isLiked: preserveIsLiked };
+        }
+        return p;
+      }),
     })),
 
   removePost: (postId) =>

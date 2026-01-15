@@ -6,6 +6,8 @@ import {
   GetRecentPostsPayloadSchema,
   UpdatePostPayloadSchema,
   DeletePostPayloadSchema,
+  LikePostPayloadSchema,
+  RemoveLikePayloadSchema,
 } from "@shared/schemas";
 import { POST_EVENTS } from "@shared/socketEvents";
 import { ClientToServerEvents } from "@shared/types/socket";
@@ -47,6 +49,93 @@ type DeletePostCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.DELETE]
 >[1];
 
+type LikePostData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.LIKE]
+>[0];
+type LikePostCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.LIKE]
+>[1];
+
+type RemoveLikeData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.UNLIKE]
+>[0];
+type RemoveLikeCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.UNLIKE]
+>[1];
+
+// Helper function to format post with likes count and isLiked status.
+// Accepts a Prisma client or transaction client so likes and post reads share the same transaction.
+const formatPostWithLikes = async (
+  db: any,
+  post: any,
+  userId: string | null
+): Promise<any> => {
+  const [likesCount, userLike] = await Promise.all([
+    db.postLike.count({
+      where: { postId: post.id },
+    }),
+    userId
+      ? db.postLike.findUnique({
+          where: {
+            postId_userId: {
+              postId: post.id,
+              userId,
+            },
+          },
+        })
+      : null,
+  ]);
+
+  return {
+    ...post,
+    likes: likesCount,
+    isLiked: !!userLike,
+  };
+};
+
+// Helper function to format multiple posts with likes count and isLiked status.
+// Accepts a Prisma client or transaction client so likes and post reads share the same transaction.
+const formatPostsWithLikes = async (
+  db: any,
+  posts: any[],
+  userId: string | null
+): Promise<any[]> => {
+  if (posts.length === 0) return posts;
+
+  const postIds = posts.map((p) => p.id);
+  const [likesCounts, userLikes] = await Promise.all([
+    db.postLike.groupBy({
+      by: ["postId"],
+      where: { postId: { in: postIds } },
+      _count: true,
+    }),
+    userId
+      ? db.postLike.findMany({
+          where: {
+            postId: { in: postIds },
+            userId,
+          },
+          select: {
+            postId: true,
+          },
+        })
+      : [],
+  ]);
+
+  const likesMap = new Map(
+    likesCounts.map((item: any) => [item.postId, item._count])
+  );
+  const userLikesSet = new Set(
+    (userLikes as Array<{ postId: string }>).map((like) => like.postId)
+  );
+
+  return posts.map((post) => ({
+    ...post,
+    likes: likesMap.get(post.id) || 0,
+    isLiked: userId ? userLikesSet.has(post.id) : false,
+  }));
+};
+
 export class PostHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(POST_EVENTS.CREATE, (data, callback) =>
@@ -67,6 +156,14 @@ export class PostHandlers extends BaseSocketHandler {
 
     socket.on(POST_EVENTS.DELETE, (data, callback) =>
       this.deletePost(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.LIKE, (data, callback) =>
+      this.likePost(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.UNLIKE, (data, callback) =>
+      this.removeLike(socket, data, callback)
     );
   }
 
@@ -161,11 +258,19 @@ export class PostHandlers extends BaseSocketHandler {
           },
         });
 
-        return { post: createdPost };
+        const formattedPost = await formatPostWithLikes(
+          tx,
+          createdPost,
+          socket.userId ?? null
+        );
+
+        return { post: formattedPost };
       });
 
       // Broadcast to all users (posts are public)
-      this.io.emit(POST_EVENTS.CREATED, post);
+      // Note: For broadcast, we don't include isLiked since it's user-specific
+      const broadcastPost = { ...post, isLiked: false };
+      this.io.emit(POST_EVENTS.CREATED, broadcastPost);
 
       callback({
         success: true,
@@ -290,7 +395,7 @@ export class PostHandlers extends BaseSocketHandler {
       });
 
       // Update post with new content and attachments (if provided)
-      const post = await prisma.post.update({
+      const updatedPost = await prisma.post.update({
         where: { id: postId },
         data: {
           content,
@@ -305,13 +410,21 @@ export class PostHandlers extends BaseSocketHandler {
         },
       });
 
-      // Format post data for response
+      // Format post with likes count and isLiked status
+      const formattedPost = await formatPostWithLikes(
+        prisma,
+        updatedPost,
+        socket.userId
+      );
+
       // Broadcast to all users (posts are public)
-      this.io.emit(POST_EVENTS.UPDATED, post);
+      // Note: For broadcast, we don't include isLiked since it's user-specific
+      const broadcastPost = { ...formattedPost, isLiked: false };
+      this.io.emit(POST_EVENTS.UPDATED, broadcastPost);
 
       callback({
         success: true,
-        data: post,
+        data: formattedPost,
       });
     } catch (error) {
       console.error("Error updating post:", error);
@@ -344,33 +457,38 @@ export class PostHandlers extends BaseSocketHandler {
       const { take, offset } = validation.data;
 
       // Get most recent posts ordered by createdAt descending with pagination
-      const posts = await prisma.post.findMany({
-        take,
-        skip: offset,
-        orderBy: {
-          createdAt: "desc",
-        },
-        include: {
-          attachments: {
-            include: {
-              storageObject: true,
+      // and compute likes & isLiked in a single transaction
+      const formattedPosts = await prisma.$transaction(async (tx) => {
+        const posts = await tx.post.findMany({
+          take,
+          skip: offset,
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                username: true,
+                discriminator: true,
+                profile: true,
+              },
             },
           },
-          user: {
-            select: {
-              id: true,
-              username: true,
-              discriminator: true,
-              profile: true,
-            },
-          },
-        },
+        });
+
+        return formatPostsWithLikes(tx, posts, socket.userId ?? null);
       });
 
       // Format posts for response with user info
       callback({
         success: true,
-        data: posts,
+        data: formattedPosts,
       });
     } catch (error) {
       console.error("Error getting feed:", error);
@@ -403,39 +521,45 @@ export class PostHandlers extends BaseSocketHandler {
       const { take, offset } = validation.data;
 
       // Get recent posts from RecentPosts table for the authenticated user
-      const recentPosts = await prisma.recentPosts.findMany({
-        where: {
-          userId: socket.userId,
-        },
-        take,
-        skip: offset,
-        orderBy: {
-          createdAt: "desc",
-        },
-        include: {
-          post: {
-            include: {
-              attachments: {
-                include: {
-                  storageObject: true,
+      // and compute likes & isLiked in a single transaction
+      const formattedPosts = await prisma.$transaction(async (tx) => {
+        const recentPosts = await tx.recentPosts.findMany({
+          where: {
+            userId: socket.userId,
+          },
+          take,
+          skip: offset,
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            post: {
+              include: {
+                attachments: {
+                  include: {
+                    storageObject: true,
+                  },
                 },
-              },
-              user: {
-                select: {
-                  id: true,
-                  username: true,
-                  discriminator: true,
-                  profile: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    discriminator: true,
+                    profile: true,
+                  },
                 },
               },
             },
           },
-        },
+        });
+
+        const posts = recentPosts.map((recentPost) => recentPost.post);
+        return formatPostsWithLikes(tx, posts, socket.userId ?? null);
       });
 
       callback({
         success: true,
-        data: recentPosts.map((recentPost) => recentPost.post),
+        data: formattedPosts,
       });
     } catch (error) {
       console.error("Error getting recent posts:", error);
@@ -553,6 +677,192 @@ export class PostHandlers extends BaseSocketHandler {
       console.error("Error deleting post:", error);
       callback({
         error: error instanceof Error ? error.message : "Failed to delete post",
+      });
+    }
+  }
+
+  private async likePost(
+    socket: AuthenticatedSocket,
+    data: LikePostData,
+    callback: LikePostCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = LikePostPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { postId } = validation.data;
+
+      // Perform all like operations and fetch the post in a single transaction
+      const formattedPost = await prisma.$transaction(async (tx) => {
+        // Ensure post exists
+        const existingPost = await tx.post.findUnique({
+          where: { id: postId },
+        });
+
+        if (!existingPost) {
+          throw new Error("Post not found");
+        }
+
+        // Check if user has already liked this post
+        const existingLike = await tx.postLike.findUnique({
+          where: {
+            postId_userId: {
+              postId,
+              userId: socket.userId!,
+            },
+          },
+        });
+
+        if (existingLike) {
+          throw new Error("You have already liked this post");
+        }
+
+        // Create the like
+        await tx.postLike.create({
+          data: {
+            postId,
+            userId: socket.userId!,
+          },
+        });
+
+        // Fetch the updated post with attachments
+        const post = await tx.post.findUnique({
+          where: { id: postId },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+          },
+        });
+
+        if (!post) {
+          throw new Error("Post not found after like");
+        }
+
+        // Format post with likes count and isLiked status using the same transaction
+        return formatPostWithLikes(tx, post, socket.userId ?? null);
+      });
+
+      // Broadcast liked event to all users.
+      // For broadcast we don't include isLiked since it's user-specific.
+      const broadcastPost = { ...formattedPost, isLiked: false };
+      this.io.emit(POST_EVENTS.LIKED, broadcastPost);
+
+      callback({
+        success: true,
+        data: formattedPost,
+      });
+    } catch (error) {
+      console.error("Error liking post:", error);
+
+      const message =
+        error instanceof Error ? error.message : "Failed to like post";
+
+      callback({
+        error: message,
+      });
+    }
+  }
+
+  private async removeLike(
+    socket: AuthenticatedSocket,
+    data: RemoveLikeData,
+    callback: RemoveLikeCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validation = RemoveLikePayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { postId } = validation.data;
+
+      const formattedPost = await prisma.$transaction(async (tx) => {
+        const existingPost = await tx.post.findUnique({
+          where: { id: postId },
+        });
+
+        if (!existingPost) {
+          throw new Error("Post not found");
+        }
+
+        const existingLike = await tx.postLike.findUnique({
+          where: {
+            postId_userId: {
+              postId,
+              userId: socket.userId!,
+            },
+          },
+        });
+
+        if (!existingLike) {
+          throw new Error("You have not liked this post");
+        }
+
+        await tx.postLike.delete({
+          where: {
+            postId_userId: {
+              postId,
+              userId: socket.userId!,
+            },
+          },
+        });
+
+        const post = await tx.post.findUnique({
+          where: { id: postId },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+          },
+        });
+
+        if (!post) {
+          throw new Error("Post not found after unlike");
+        }
+
+        return formatPostWithLikes(tx, post, socket.userId ?? null);
+      });
+
+      // Broadcast unliked event to all users.
+      // For broadcast we don't include isLiked since it's user-specific.
+      const broadcastPost = { ...formattedPost, isLiked: false };
+      this.io.emit(POST_EVENTS.UNLIKED, broadcastPost);
+
+      callback({
+        success: true,
+        data: formattedPost,
+      });
+    } catch (error) {
+      console.error("Error removing like:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to remove like";
+      callback({
+        error: message,
       });
     }
   }

@@ -27,6 +27,7 @@ model User {
   channelUsers     ChannelUser[]
   posts            Post[]
   joinedPosts      RecentPosts[]
+  postLikes        PostLike[]
 
   @@unique([username, discriminator])
 }
@@ -138,13 +139,13 @@ model Post {
   userId      String
   channelId   String?
   content     String           @db.VarChar(2000)
-  likes       Int              @default(0)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   user        User             @relation(fields: [userId], references: [id])
   channel     Channel?         @relation(fields: [channelId], references: [id])
   attachments PostAttachment[]
   joinedPosts RecentPosts[]
+  postLikes   PostLike[]
 
   @@index([userId])
   @@index([channelId])
@@ -174,4 +175,16 @@ model RecentPosts {
   @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
 }

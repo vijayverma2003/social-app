@@ -6,6 +6,8 @@ import {
   GetRecentPostsPayload,
   DeletePostPayload,
   PostResponse,
+  LikePostPayload,
+  RemoveLikePayload,
 } from "@shared/types";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { fetchUserProfiles } from "./profilesService";
@@ -24,6 +26,14 @@ type GetRecentPostsCallback = Parameters<
 
 type DeletePostCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.DELETE]
+>[1];
+
+type LikePostCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.LIKE]
+>[1];
+
+type RemoveLikeCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.UNLIKE]
 >[1];
 
 /**
@@ -169,5 +179,65 @@ export const deletePost = (
         reject(new Error("Failed to delete post"));
       }
     });
+  });
+};
+
+/**
+ * Like a post
+ * @param payload - { postId: string }
+ * @param options - Optional callbacks for success and error handling
+ * @returns Promise that resolves with the updated post or rejects with error
+ */
+export const likePost = (
+  payload: LikePostPayload,
+  options?: {
+    onComplete?: (post: PostResponse) => void;
+    onError?: (error: string) => void;
+  }
+): Promise<PostResponse> => {
+  return new Promise<PostResponse>((resolve, reject) => {
+    socketService.emit(POST_EVENTS.LIKE, payload, ((response) => {
+      if (response.error) {
+        options?.onError?.(response.error);
+        reject(new Error(response.error));
+      } else if (response.success && response.data) {
+        options?.onComplete?.(response.data);
+        resolve(response.data);
+      } else {
+        const message = "Failed to like post";
+        options?.onError?.(message);
+        reject(new Error(message));
+      }
+    }) as LikePostCallback);
+  });
+};
+
+/**
+ * Remove like from a post
+ * @param payload - { postId: string }
+ * @param options - Optional callbacks for success and error handling
+ * @returns Promise that resolves with the updated post or rejects with error
+ */
+export const removeLike = (
+  payload: RemoveLikePayload,
+  options?: {
+    onComplete?: (post: PostResponse) => void;
+    onError?: (error: string) => void;
+  }
+): Promise<PostResponse> => {
+  return new Promise<PostResponse>((resolve, reject) => {
+    socketService.emit(POST_EVENTS.UNLIKE, payload, ((response) => {
+      if (response.error) {
+        options?.onError?.(response.error);
+        reject(new Error(response.error));
+      } else if (response.success && response.data) {
+        options?.onComplete?.(response.data);
+        resolve(response.data);
+      } else {
+        const message = "Failed to remove like";
+        options?.onError?.(message);
+        reject(new Error(message));
+      }
+    }) as RemoveLikeCallback);
   });
 };

@@ -93,3 +93,17 @@ export const DeletePostPayloadSchema = z
     postId: z.string().trim().min(1, "Post ID is required"),
   })
   .strict();
+
+// Like Post Payload Schema (for socket events)
+export const LikePostPayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();
+
+// Remove Like Payload Schema (for socket events)
+export const RemoveLikePayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();

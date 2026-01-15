@@ -1,5 +1,7 @@
 "use client";
 
+import { ProfileCardDialog } from "@/app/(user)/settings/profile/components/ProfileCardDialog";
+import { ProfileCardPopover } from "@/app/(user)/settings/profile/components/ProfileCardPopover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -9,8 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
+import { likePost, removeLike } from "@/services/postsService";
 import { useProfilesStore } from "@/stores/profilesStore";
 import { PostResponse } from "@shared/types";
 import { formatDistanceToNow } from "date-fns";
@@ -23,12 +27,10 @@ import {
   StarIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ImageCollage } from "./ImageCollage";
 import { PostDeleteDialog } from "./PostDeleteDialog";
-import { Separator } from "@/components/ui/separator";
-import { ProfileCardPopover } from "@/app/(user)/settings/profile/components/ProfileCardPopover";
-import { ProfileCardDialog } from "@/app/(user)/settings/profile/components/ProfileCardDialog";
 
 interface PostCardProps {
   post: PostResponse;
@@ -38,19 +40,53 @@ interface PostCardProps {
 
 export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   const { user } = useUser();
+
   const profile = useProfilesStore((state) => state.getProfile(userId));
+  const [isLiked, setIsLiked] = useState(post.isLiked);
 
   const timeAgo = useMemo(() => {
     return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
   }, [post.createdAt]);
 
   const displayName = profile?.displayName || "Unknown";
-  const isLiked = false; // TODO: Implement like functionality
   const isBookmarked = false; // TODO: Implement bookmark functionality
   const isAuthor = user?.id === post.userId;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+
+  console.log("Post IsLiked", post.id, post.isLiked);
+
+  const handleLike = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      const action = isLiked ? removeLike : likePost;
+      const errorTitle = isLiked
+        ? "Failed to remove like"
+        : "Failed to like post";
+
+      action(
+        { postId: post.id },
+        {
+          onError: (errorMessage) => {
+            toast.error(errorTitle, {
+              description: errorMessage,
+            });
+          },
+          onComplete: (updatedPost) => {
+            setIsLiked(updatedPost.isLiked);
+          },
+        }
+      ).catch(() => {
+        // Error already handled via toast
+      });
+    },
+    [post.id, isLiked]
+  );
 
   const handleDeleteClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -120,7 +156,9 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 <DropdownMenuItem onClick={() => setProfileDialogOpen(true)}>
                   View Author
                 </DropdownMenuItem>
-                <DropdownMenuItem>Like Post</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLike}>
+                  {isLiked ? "Remove Like" : "Like Post"}
+                </DropdownMenuItem>
                 <DropdownMenuItem>Save Post</DropdownMenuItem>
                 <DropdownMenuItem>Copy Link</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onPreviewChat?.(post)}>
@@ -206,8 +244,10 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 "cursor-pointer",
                 isLiked ? "text-red-500 bg-red-500/10" : "hover:text-red-500"
               )}
+              onClick={handleLike}
             >
-              <HeartIcon className={isLiked ? "fill-red-500" : ""} /> {12}
+              <HeartIcon className={isLiked ? "fill-red-500" : ""} />{" "}
+              {post.likes ?? 0}
             </Button>
           </div>
           <div className="flex items-center gap-1">

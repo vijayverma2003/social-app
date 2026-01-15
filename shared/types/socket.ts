@@ -47,6 +47,8 @@ import {
   JoinPostPayload,
   UpdatePostPayload,
   DeletePostPayload,
+  LikePostPayload,
+  RemoveLikePayload,
 } from "./posts";
 import { GetUserProfilesPayload, UpdateUserProfilePayload } from "./users";
 
@@ -301,6 +303,28 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
+   * LIKE: Like a post
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<PostResponse> - Returns the updated post
+   * @broadcasts LIKED to all users
+   */
+  [POST_EVENTS.LIKE]: (
+    data: LikePostPayload,
+    callback: (response: SocketResponse<PostResponse>) => void
+  ) => void;
+
+  /**
+   * UNLIKE: Remove a like from a post
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<PostResponse> - Returns the updated post
+   * @broadcasts UNLIKED to all users
+   */
+  [POST_EVENTS.UNLIKE]: (
+    data: RemoveLikePayload,
+    callback: (response: SocketResponse<PostResponse>) => void
+  ) => void;
+
+  /**
    * GET_FEED: Get recent posts for the main feed with pagination
    * @param data - { take?: number; offset?: number } - take: number of posts (default 4, max 20), offset: skip count (default 0)
    * @param callback - SocketResponse<PostResponse[]> - Returns array of recent posts with user info
@@ -505,6 +529,20 @@ export interface ServerToClientEvents {
    * @param data - { postId: string } - The deleted post ID
    */
   [POST_EVENTS.DELETED]: (data: { postId: string }) => void;
+
+  /**
+   * LIKED: A post was liked
+   * @emitted_to All users (posts are public)
+   * @param data - PostResponse - The updated post with new like count
+   */
+  [POST_EVENTS.LIKED]: (data: PostResponse) => void;
+
+  /**
+   * UNLIKED: A post was unliked
+   * @emitted_to All users (posts are public)
+   * @param data - PostResponse - The updated post with new like count
+   */
+  [POST_EVENTS.UNLIKED]: (data: PostResponse) => void;
 
   /**
    * RECENT_POST_ADDED: A post was added to the user's RecentPosts

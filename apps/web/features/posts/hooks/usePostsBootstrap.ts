@@ -25,6 +25,18 @@ export const usePostsBootstrap = () => {
       updatePost(post);
     };
 
+    const handlePostLiked = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.LIKED]>[0]
+    ) => {
+      updatePost(post);
+    };
+
+    const handlePostUnliked = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.UNLIKED]>[0]
+    ) => {
+      updatePost(post);
+    };
+
     const handlePostDeleted = (
       data: Parameters<ServerToClientEvents[typeof POST_EVENTS.DELETED]>[0]
     ) => {
@@ -34,11 +46,15 @@ export const usePostsBootstrap = () => {
     socket.on(POST_EVENTS.CREATED, handlePostCreated);
     socket.on(POST_EVENTS.UPDATED, handlePostUpdated);
     socket.on(POST_EVENTS.DELETED, handlePostDeleted);
+    socket.on(POST_EVENTS.LIKED, handlePostLiked);
+    socket.on(POST_EVENTS.UNLIKED, handlePostUnliked);
 
     return () => {
       socket.off(POST_EVENTS.CREATED, handlePostCreated);
       socket.off(POST_EVENTS.UPDATED, handlePostUpdated);
       socket.off(POST_EVENTS.DELETED, handlePostDeleted);
+      socket.off(POST_EVENTS.LIKED, handlePostLiked);
+      socket.off(POST_EVENTS.UNLIKED, handlePostUnliked);
     };
   }, [socket, prependPost, updatePost, removePost]);
 };
