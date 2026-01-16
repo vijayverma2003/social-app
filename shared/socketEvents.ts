@@ -13,6 +13,7 @@ export const FRIEND_REQUEST_EVENTS = {
 } as const;
 
 export const FRIEND_EVENTS = {
+  GET_LIST: "friends:get_list",
   REMOVE: "friends:remove",
   REMOVED: "friends:removed",
 } as const;

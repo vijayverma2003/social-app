@@ -3,44 +3,51 @@
 import { getFriends } from "@/features/friends/services/friends";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { useSocket } from "@/contexts/socket";
-import { useAuth } from "@clerk/nextjs";
 import { FRIEND_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
+import { FriendsList } from "@shared/types/responses";
 
 export const useFriendsBootstrap = () => {
-  const { socket } = useSocket();
-  const { getToken, isSignedIn } = useAuth();
+  const { socket, isConnected } = useSocket();
   const { removeFriendById, setFriends, setLoading } = useFriendsStore();
 
-  const fetchFriends = async () => {
-    if (!isSignedIn) return;
-
-    try {
-      setLoading(true);
-      const token = await getToken();
-      const response = await getFriends(token || undefined);
-      setFriends(response.data);
-    } catch (error) {
-      toast.error("Failed to fetch friends");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    if (!isConnected) return;
+
+    const fetchFriends = async () => {
+      const onComplete = (friends: FriendsList[]) => {
+        setFriends(friends);
+      };
+
+      const onError = (error: string) => {
+        toast.error("Failed to fetch friends", {
+          description: error,
+        });
+      };
+
+      try {
+        setLoading(true);
+        await getFriends({ onComplete, onError });
+      } catch (error) {
+        toast.error("Failed to fetch friends");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchFriends();
-  }, [isSignedIn]);
+  }, [isConnected]);
 
   useEffect(() => {
     if (!socket) return;
 
-    const handleRemoved: ServerToClientEvents[typeof FRIEND_EVENTS.REMOVED] = (
-      data
-    ) => {
+    function handleRemoved(
+      data: Parameters<ServerToClientEvents[typeof FRIEND_EVENTS.REMOVED]>[0]
+    ) {
       removeFriendById(data.friendId);
-    };
+    }
 
     socket.on(FRIEND_EVENTS.REMOVED, handleRemoved);
 

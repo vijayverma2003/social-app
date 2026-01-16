@@ -1,11 +1,18 @@
 import prisma from "@database/postgres";
 import { RemoveFriendPayloadSchema } from "@shared/schemas/friends";
 import { FRIEND_EVENTS } from "@shared/socketEvents";
+import { FriendsList } from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
 
 // Extract types from ClientToServerEvents for type safety
+type GetFriendsData = Parameters<
+  ClientToServerEvents[typeof FRIEND_EVENTS.GET_LIST]
+>[0];
+type GetFriendsCallback = Parameters<
+  ClientToServerEvents[typeof FRIEND_EVENTS.GET_LIST]
+>[1];
 type RemoveFriendData = Parameters<
   ClientToServerEvents[typeof FRIEND_EVENTS.REMOVE]
 >[0];
@@ -15,9 +22,57 @@ type RemoveFriendCallback = Parameters<
 
 export class FriendsHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
+    socket.on(FRIEND_EVENTS.GET_LIST, (data, callback) =>
+      this.getFriends(socket, data, callback)
+    );
     socket.on(FRIEND_EVENTS.REMOVE, (data, callback) =>
       this.removeFriend(socket, data, callback)
     );
+  }
+
+  private async getFriends(
+    socket: AuthenticatedSocket,
+    data: GetFriendsData,
+    callback: GetFriendsCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        callback({ error: "Unauthorized" });
+        return;
+      }
+
+      const friendsData = await prisma.friend.findMany({
+        where: {
+          userId: socket.userId,
+        },
+        include: {
+          friend: {
+            select: {
+              id: true,
+              username: true,
+              discriminator: true,
+              profile: true,
+            },
+          },
+        },
+      });
+
+      const friends: FriendsList[] = friendsData.map((friend) => ({
+        id: friend.id,
+        username: friend.friend.username,
+        discriminator: friend.friend.discriminator,
+        channelId: friend.channelId,
+        profile: friend.friend.profile,
+      }));
+
+      callback({
+        success: true,
+        data: friends,
+      });
+    } catch (error) {
+      console.error("Error getting friends:", error);
+      callback({ error: "Failed to get friends" });
+    }
   }
 
   private async removeFriend(

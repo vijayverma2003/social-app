@@ -10,6 +10,7 @@ import {
 import {
   SocketResponse,
   FriendRequests,
+  FriendsList,
   Profile,
   Channel,
   ChannelWithUsers,
@@ -118,6 +119,16 @@ export interface ClientToServerEvents {
   // ============================================================================
   // FRIEND EVENTS
   // ============================================================================
+
+  /**
+   * GET_LIST: Get list of friends for the authenticated user
+   * @param data - {} - No payload required
+   * @param callback - SocketResponse<FriendsList[]> - Returns array of friends with profile and channelId
+   */
+  [FRIEND_EVENTS.GET_LIST]: (
+    data: {},
+    callback: (response: SocketResponse<FriendsList[]>) => void
+  ) => void;
 
   /**
    * REMOVE: Remove a friend relationship
