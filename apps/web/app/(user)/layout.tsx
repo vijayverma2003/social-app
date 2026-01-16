@@ -2,6 +2,7 @@
 
 import { PropsWithChildren } from "react";
 import Navbar from "./components/Navbar";
+import { ProfileCardViewerProvider } from "@/contexts/profileCardViewer";
 import { useFriendRequestsBootstrap } from "@/features/friends/hooks/useFriendRequestsBootstrap";
 import { useFriendsBootstrap } from "@/features/friends/hooks/useFriendsBootstrap";
 import { useChannelsBootstrap } from "@/features/dms/hooks/useChannelsBootstrap";
@@ -18,12 +19,14 @@ const Layout = ({ children }: PropsWithChildren) => {
   useProfilesBootstrap();
 
   return (
-    <div className="flex h-screen">
-      <Navbar />
-      <main className="flex flex-1 flex-col overflow-y-auto border-l border-border bg-background">
-        <div className="flex-1">{children}</div>
-      </main>
-    </div>
+    <ProfileCardViewerProvider>
+      <div className="flex h-screen">
+        <Navbar />
+        <main className="flex flex-1 flex-col overflow-y-auto border-l border-border bg-background">
+          <div className="flex-1">{children}</div>
+        </main>
+      </div>
+    </ProfileCardViewerProvider>
   );
 };
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { ProfileCardDialog } from "@/app/(user)/settings/profile/components/ProfileCardDialog";
 import { ProfileCardPopover } from "@/app/(user)/settings/profile/components/ProfileCardPopover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
+import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import {
   likePost,
   removeLike,
@@ -45,6 +45,7 @@ interface PostCardProps {
 
 export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   const { user } = useUser();
+  const { openProfileCard } = useProfileCardViewer();
 
   const profile = useProfilesStore((state) => state.getProfile(userId));
   const [isLiked, setIsLiked] = useState(post.isLiked);
@@ -58,7 +59,6 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   const isAuthor = user?.id === post.userId;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const handleLike = useCallback(
     (e?: React.MouseEvent) => {
@@ -132,11 +132,6 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
 
   return (
     <>
-      <ProfileCardDialog
-        open={profileDialogOpen}
-        setOpen={setProfileDialogOpen}
-        userId={userId}
-      />
       <PostDeleteDialog
         postId={post.id}
         open={deleteDialogOpen}
@@ -188,7 +183,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 <EllipsisVerticalIcon />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setProfileDialogOpen(true)}>
+                <DropdownMenuItem onClick={() => openProfileCard(userId)}>
                   View Author
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLike}>
