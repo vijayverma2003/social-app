@@ -1,11 +1,27 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { useProfilesStore } from "@/stores/profilesStore";
-import { Dot, EllipsisVerticalIcon, MessageCircleIcon } from "lucide-react";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
+import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
+import { useProfileCardViewer } from "@/contexts/profileCardViewer";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import {
+  Dot,
+  EllipsisVerticalIcon,
+  MessageCircleIcon,
+  UserMinus,
+} from "lucide-react";
 
 interface ProfileCardProps {
   userId?: string;
@@ -14,10 +30,30 @@ interface ProfileCardProps {
 
 const ProfileCard = ({ userId, variant = "card" }: ProfileCardProps) => {
   const { user } = useUser();
+  const router = useRouter();
+  const { openProfileCard } = useProfileCardViewer();
+  const { removeFriend } = useFriendActions();
+  const friends = useFriendsStore((state) => state.friends);
 
   const profile = useProfilesStore((state) =>
     state.getProfile(userId || user?.id || "")
   );
+
+  // Check if the viewed user is a friend (must be before any early returns)
+  const friendEntry = useMemo(() => {
+    if (!userId) return null;
+    return friends.find((friend) => friend.userId === userId);
+  }, [friends, userId]);
+
+  if (!profile) return null;
+
+  // Get username and discriminator - prefer profile, fallback to user
+  const username = profile?.username || user?.username || "";
+  const discriminator = profile?.discriminator || user?.discriminator || "";
+
+  const isFriend = !!friendEntry;
+  const viewedUserId = userId || user?.id || "";
+  const isCurrentUser = viewedUserId === user?.id;
 
   const isPremium = true;
   const bannerURL = isPremium ? profile?.bannerURL || "" : "";
@@ -32,10 +68,6 @@ const ProfileCard = ({ userId, variant = "card" }: ProfileCardProps) => {
     ? profile?.profileGradientEnd || "#000000"
     : "#1c1e21";
 
-  // Get username and discriminator - prefer profile, fallback to user
-  const username = profile?.username || user?.username || "";
-  const discriminator = profile?.discriminator || user?.discriminator || "";
-
   const mixColor: string = "#000000";
 
   const outerProfileGradient = `linear-gradient(to bottom,
@@ -48,6 +80,24 @@ const ProfileCard = ({ userId, variant = "card" }: ProfileCardProps) => {
             color-mix(in oklab, hsl(from ${profileGradientEnd} h s l) 50%, ${mixColor}))`;
 
   const fadeBackground = `color-mix(in oklab, transparent 60%, color-mix(in oklab, hsl(from ${profileGradientStart} h s l) 50%, hsl(from ${profileGradientEnd} h s l) 50%))`;
+
+  const handleSendMessage = () => {
+    if (friendEntry?.channelId) {
+      router.push(`/channels/@me/${friendEntry.channelId}`);
+    }
+  };
+
+  const handleRemoveFriend = () => {
+    if (friendEntry) {
+      removeFriend(friendEntry.id);
+    }
+  };
+
+  const handleViewProfile = () => {
+    if (variant === "popover" && userId) {
+      openProfileCard(userId);
+    }
+  };
 
   return (
     <>
@@ -132,54 +182,130 @@ const ProfileCard = ({ userId, variant = "card" }: ProfileCardProps) => {
             )}
           >
             <div className="flex items-center gap-2">
-              <Button
-                size={variant === "popover" ? "sm" : "default"}
-                onClick={() => {
-                  console.log("add friend");
-                }}
-                variant="secondary"
-                style={{ background: fadeBackground }}
-                className={cn(
-                  "cursor-pointer",
-                  mixColor === "#ffffff"
-                    ? "text-black border-black/10"
-                    : "text-white border-white/10"
-                )}
-              >
-                Add Friend
-              </Button>
-              <Button
-                size={variant === "popover" ? "icon-sm" : "icon"}
-                onClick={() => {
-                  console.log("send message");
-                }}
-                variant="secondary"
-                style={{ background: fadeBackground }}
-                className={cn(
-                  "cursor-pointer",
-                  mixColor === "#ffffff"
-                    ? "text-black border-black/10"
-                    : "text-white border-white/10"
-                )}
-              >
-                <MessageCircleIcon />
-              </Button>
-              <Button
-                size={variant === "popover" ? "icon-sm" : "icon"}
-                onClick={() => {
-                  console.log("other options");
-                }}
-                variant="secondary"
-                style={{ background: fadeBackground }}
-                className={cn(
-                  "cursor-pointer",
-                  mixColor === "#ffffff"
-                    ? "text-black border-black/10"
-                    : "text-white border-white/10"
-                )}
-              >
-                <EllipsisVerticalIcon />
-              </Button>
+              {isFriend && !isCurrentUser ? (
+                <>
+                  <Button
+                    size={variant === "popover" ? "sm" : "default"}
+                    onClick={handleSendMessage}
+                    variant="secondary"
+                    style={{ background: fadeBackground }}
+                    className={cn(
+                      "cursor-pointer",
+                      mixColor === "#ffffff"
+                        ? "text-black border-black/10"
+                        : "text-white border-white/10"
+                    )}
+                    disabled={!friendEntry?.channelId}
+                  >
+                    Send Message
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className={cn(
+                        buttonVariants({ size: "icon", variant: "secondary" }),
+                        "cursor-pointer",
+                        mixColor === "#ffffff"
+                          ? "text-black border-black/10"
+                          : "text-white border-white/10"
+                      )}
+                      style={{ background: fadeBackground }}
+                    >
+                      <EllipsisVerticalIcon />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {variant === "popover" && (
+                        <DropdownMenuItem
+                          onClick={handleViewProfile}
+                          className="cursor-pointer"
+                        >
+                          View Profile
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={handleSendMessage}
+                        className="cursor-pointer"
+                        disabled={!friendEntry?.channelId}
+                      >
+                        Send Message
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleRemoveFriend}
+                        className="cursor-pointer text-destructive focus:text-destructive"
+                      >
+                        Remove Friend
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : !isCurrentUser ? (
+                <>
+                  <Button
+                    size={variant === "popover" ? "sm" : "default"}
+                    onClick={() => {
+                      console.log("add friend");
+                    }}
+                    variant="secondary"
+                    style={{ background: fadeBackground }}
+                    className={cn(
+                      "cursor-pointer",
+                      mixColor === "#ffffff"
+                        ? "text-black border-black/10"
+                        : "text-white border-white/10"
+                    )}
+                  >
+                    Add Friend
+                  </Button>
+                  <Button
+                    size={variant === "popover" ? "icon-sm" : "icon"}
+                    onClick={() => {
+                      console.log("send message");
+                    }}
+                    variant="secondary"
+                    style={{ background: fadeBackground }}
+                    className={cn(
+                      "cursor-pointer",
+                      mixColor === "#ffffff"
+                        ? "text-black border-black/10"
+                        : "text-white border-white/10"
+                    )}
+                  >
+                    <MessageCircleIcon />
+                  </Button>
+                  <Button
+                    size={variant === "popover" ? "icon-sm" : "icon"}
+                    onClick={() => {
+                      console.log("other options");
+                    }}
+                    variant="secondary"
+                    style={{ background: fadeBackground }}
+                    className={cn(
+                      "cursor-pointer",
+                      mixColor === "#ffffff"
+                        ? "text-black border-black/10"
+                        : "text-white border-white/10"
+                    )}
+                  >
+                    <EllipsisVerticalIcon />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size={variant === "popover" ? "sm" : "default"}
+                    onClick={() => router.push(`/settings/profile`)}
+                    variant="secondary"
+                    style={{ background: fadeBackground }}
+                    className={cn(
+                      "cursor-pointer",
+                      mixColor === "#ffffff"
+                        ? "text-black border-black/10"
+                        : "text-white border-white/10"
+                    )}
+                  >
+                    Edit Profile
+                  </Button>
+                </>
+              )}
             </div>
             {variant === "card" && (
               <div className="mt-4 text-black/80">

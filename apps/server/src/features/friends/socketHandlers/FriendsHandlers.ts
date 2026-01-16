@@ -59,6 +59,7 @@ export class FriendsHandlers extends BaseSocketHandler {
 
       const friends: FriendsList[] = friendsData.map((friend) => ({
         id: friend.id,
+        userId: friend.friend.id,
         username: friend.friend.username,
         discriminator: friend.friend.discriminator,
         channelId: friend.channelId,

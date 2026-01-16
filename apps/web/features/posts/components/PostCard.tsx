@@ -11,14 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
-import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import {
-  likePost,
-  removeLike,
   bookmarkPost,
+  likePost,
   removeBookmark,
+  removeLike,
 } from "@/services/postsService";
 import { useProfilesStore } from "@/stores/profilesStore";
 import { PostResponse } from "@shared/types";

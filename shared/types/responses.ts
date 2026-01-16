@@ -43,6 +43,7 @@ export type UserWithProfile = PublicUser & {
 
 export type FriendsList = {
   id: string;
+  userId: string;
   username: string;
   discriminator: string;
   channelId: string | null;
