@@ -14,7 +14,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
-import { likePost, removeLike } from "@/services/postsService";
+import {
+  likePost,
+  removeLike,
+  bookmarkPost,
+  removeBookmark,
+} from "@/services/postsService";
 import { useProfilesStore } from "@/stores/profilesStore";
 import { PostResponse } from "@shared/types";
 import { formatDistanceToNow } from "date-fns";
@@ -43,19 +48,17 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
 
   const profile = useProfilesStore((state) => state.getProfile(userId));
   const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
 
   const timeAgo = useMemo(() => {
     return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
   }, [post.createdAt]);
 
   const displayName = profile?.displayName || "Unknown";
-  const isBookmarked = false; // TODO: Implement bookmark functionality
   const isAuthor = user?.id === post.userId;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
-
-  console.log("Post IsLiked", post.id, post.isLiked);
 
   const handleLike = useCallback(
     (e?: React.MouseEvent) => {
@@ -86,6 +89,37 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
       });
     },
     [post.id, isLiked]
+  );
+
+  const handleBookmark = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      const action = isBookmarked ? removeBookmark : bookmarkPost;
+      const errorTitle = isBookmarked
+        ? "Failed to remove bookmark"
+        : "Failed to bookmark post";
+
+      action(
+        { postId: post.id },
+        {
+          onError: (errorMessage) => {
+            toast.error(errorTitle, {
+              description: errorMessage,
+            });
+          },
+          onComplete: (updatedPost) => {
+            setIsBookmarked(updatedPost.isBookmarked);
+          },
+        }
+      ).catch(() => {
+        // Error already handled via toast
+      });
+    },
+    [post.id, isBookmarked]
   );
 
   const handleDeleteClick = useCallback(
@@ -140,8 +174,9 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 isBookmarked && "text-amber-500 bg-amber-500/10",
                 "group-hover:opacity-100 opacity-0 transition-opacity duration-300"
               )}
+              onClick={handleBookmark}
             >
-              <StarIcon />
+              <StarIcon className={isBookmarked ? "fill-amber-500" : ""} />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -159,7 +194,9 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 <DropdownMenuItem onClick={handleLike}>
                   {isLiked ? "Remove Like" : "Like Post"}
                 </DropdownMenuItem>
-                <DropdownMenuItem>Save Post</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleBookmark}>
+                  {isBookmarked ? "Remove Bookmark" : "Save Post"}
+                </DropdownMenuItem>
                 <DropdownMenuItem>Copy Link</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onPreviewChat?.(post)}>
                   Preview Chat
