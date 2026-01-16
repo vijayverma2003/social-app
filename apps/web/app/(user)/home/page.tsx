@@ -5,9 +5,9 @@ import { ConversationPreview } from "@/features/posts/components/ConversationPre
 import { PostCard } from "@/features/posts/components/PostCard";
 import { usePostsStore } from "@/features/posts/store/postsStore";
 import { useUser } from "@/providers/UserContextProvider";
-import { getFeed, getRecentPosts } from "@/services/postsService";
+import { usePosts } from "@/hooks/usePosts";
 import { PostResponse } from "@shared/types";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import MainHeader from "../components/MainHeader";
 import { Input } from "@/components/ui/input";
@@ -17,64 +17,20 @@ type TabValue = "feed" | "recent" | "own";
 
 const HomePage = () => {
   const { user } = useUser();
-  const { setPosts, appendPosts } = usePostsStore();
+  const {
+    recentPosts,
+    feedOffset,
+    isFeedLoading,
+    hasMoreFeed,
+    hasLoadedInitialFeed,
+    fetchFeedPage,
+  } = usePosts();
 
   // Use shallow comparison to prevent unnecessary re-renders
   const allPosts = usePostsStore(useShallow((state) => state.posts));
 
   const [previewedPost, setPreviewedPost] = useState<PostResponse | null>(null);
-  const [recentPosts, setRecentPosts] = useState<PostResponse[]>([]);
   const [activeTab, setActiveTab] = useState<TabValue>("feed");
-  const [feedOffset, setFeedOffset] = useState(0);
-  const [isFeedLoading, setIsFeedLoading] = useState(false);
-  const [hasMoreFeed, setHasMoreFeed] = useState(true);
-  const hasLoadedInitialFeedRef = useRef(false);
-
-  const fetchFeedPage = useCallback(
-    async (offset: number) => {
-      // Avoid duplicate requests
-      if (isFeedLoading || !hasMoreFeed) return;
-
-      try {
-        setIsFeedLoading(true);
-        const take = 4;
-        const posts = await getFeed({ take, offset });
-
-        if (offset === 0) setPosts(posts);
-        else appendPosts(posts);
-
-        if (!posts || posts.length < take) setHasMoreFeed(false);
-
-        setFeedOffset((prev) => {
-          console.log(prev, prev + posts.length);
-          return prev + posts.length;
-        });
-      } catch (error) {
-        console.error("Failed to fetch feed:", error);
-      } finally {
-        setIsFeedLoading(false);
-      }
-    },
-    [appendPosts, hasMoreFeed, isFeedLoading, setPosts]
-  );
-
-  const fetchRecentPosts = useCallback(async () => {
-    try {
-      const posts = await getRecentPosts({ take: 20, offset: 0 });
-      if (posts) setRecentPosts(posts);
-    } catch (error) {
-      console.error("Failed to fetch recent posts:", error);
-    }
-  }, []);
-
-  // Initial load for feed and recent posts (guarded against React StrictMode double-invoke)
-  useEffect(() => {
-    if (hasLoadedInitialFeedRef.current) return;
-    hasLoadedInitialFeedRef.current = true;
-    console.log("Fetching data from useEffect");
-    fetchFeedPage(0);
-    fetchRecentPosts();
-  }, [fetchFeedPage, fetchRecentPosts]);
 
   // Infinite scroll using IntersectionObserver
   useEffect(() => {
@@ -90,7 +46,7 @@ const HomePage = () => {
           entry.isIntersecting &&
           hasMoreFeed &&
           !isFeedLoading &&
-          hasLoadedInitialFeedRef.current
+          hasLoadedInitialFeed()
         ) {
           fetchFeedPage(feedOffset);
         }

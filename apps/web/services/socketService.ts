@@ -3,6 +3,12 @@ import {
   ClientToServerEvents,
   ServerToClientEvents,
 } from "@shared/types/socket";
+import { SocketResponse } from "@shared/types/responses";
+
+export type ServiceOptions<T> = {
+  onComplete?: (data: T) => void;
+  onError?: (error: string) => void;
+};
 
 class SocketService {
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
@@ -131,6 +137,41 @@ class SocketService {
     }
 
     (this.socket.emit as any)(event, data, callback);
+  }
+
+  /**
+   * Generic method to emit socket events and handle responses
+   * @param params - Object containing event, payload, defaultErrorMessage, and optional callbacks
+   * @returns Promise that resolves with the response data or rejects with error
+   */
+  emitWithResponse<K extends keyof ClientToServerEvents, T>(params: {
+    event: K;
+    payload: Parameters<ClientToServerEvents[K]>[0];
+    defaultErrorMessage: string;
+    options?: ServiceOptions<T>;
+  }): Promise<T> {
+    const { event, payload, defaultErrorMessage, options } = params;
+
+    return new Promise<T>((resolve, reject) => {
+      const callback = (response: SocketResponse<T>) => {
+        if (response.error) {
+          options?.onError?.(response.error);
+          reject(new Error(response.error));
+        } else if (response.success && response.data) {
+          options?.onComplete?.(response.data);
+          resolve(response.data);
+        } else {
+          options?.onError?.(defaultErrorMessage);
+          reject(new Error(defaultErrorMessage));
+        }
+      };
+
+      this.emit(
+        event,
+        payload,
+        callback as Parameters<ClientToServerEvents[K]>[1]
+      );
+    });
   }
 }
 

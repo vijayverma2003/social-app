@@ -1,47 +1,26 @@
+import { usePostsStore } from "@/features/posts/store/postsStore";
 import { POST_EVENTS } from "@shared/socketEvents";
-import { socketService } from "./socketService";
 import {
+  BookmarkPostPayload,
   CreatePostPayload,
+  DeletePostPayload,
   GetFeedPayload,
   GetRecentPostsPayload,
-  DeletePostPayload,
-  PostResponse,
   LikePostPayload,
+  PostResponse,
+  RemoveBookmarkPayload,
   RemoveLikePayload,
 } from "@shared/types";
-import { ClientToServerEvents } from "@shared/types/socket";
+import { ServerToClientEvents } from "@shared/types/socket";
 import { fetchUserProfiles } from "./profilesService";
-
-type CreatePostCallback = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.CREATE]
->[1];
-
-type GetFeedCallback = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.GET_FEED]
->[1];
-
-type GetRecentPostsCallback = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.GET_RECENT_POSTS]
->[1];
-
-type DeletePostCallback = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.DELETE]
->[1];
-
-type LikePostCallback = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.LIKE]
->[1];
-
-type RemoveLikeCallback = Parameters<
-  ClientToServerEvents[typeof POST_EVENTS.UNLIKE]
->[1];
+import { ServiceOptions, socketService } from "./socketService";
 
 /**
  * Fetch profiles for post authors
  * Extracts unique user IDs from posts and fetches their profiles
  * @param posts - Array of posts to extract user IDs from
  */
-const fetchPostAuthorProfiles = async (
+export const fetchPostAuthorProfiles = async (
   posts: PostResponse[]
 ): Promise<void> => {
   // Extract unique user IDs from posts
@@ -59,185 +38,245 @@ const fetchPostAuthorProfiles = async (
   }
 };
 
-/**
- * Create a new post
- * @param payload - { content: string, storageObjectIds?: string[] }
- * @returns Promise that resolves with the created post or rejects with error
- */
-export const createPost = (
-  payload: CreatePostPayload,
-  options?: {
-    onComplete?: (post: PostResponse) => void;
-    onError?: (error: string) => void;
+class PostsService {
+  /**
+   * Create a new post
+   * @param payload - { content: string, storageObjectIds?: string[] }
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with the created post or rejects with error
+   */
+  createPost(
+    payload: CreatePostPayload,
+    options?: ServiceOptions<PostResponse>
+  ): Promise<PostResponse> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.CREATE,
+      PostResponse
+    >({
+      event: POST_EVENTS.CREATE,
+      payload,
+      defaultErrorMessage: "Failed to create post",
+      options,
+    });
   }
-): Promise<PostResponse> => {
-  return new Promise<PostResponse>((resolve, reject) => {
-    socketService.emit(POST_EVENTS.CREATE, payload, ((response) => {
-      if (response.error) {
-        options?.onError?.(response.error);
-        reject(new Error(response.error));
-      } else if (response.success && response.data) {
-        options?.onComplete?.(response.data);
-        resolve(response.data);
-      } else {
-        options?.onError?.("Failed to create post");
-        reject(new Error("Failed to create post"));
-      }
-    }) as CreatePostCallback);
-  });
-};
 
-/**
- * Get recent posts for the main feed with pagination
- * Also fetches profiles of post authors and stores them
- * @param payload - { take?: number; offset?: number } - take: number of posts (default 4, max 20), offset: skip count (default 0)
- * @returns Promise that resolves with array of posts or rejects with error
- */
-export const getFeed = (
-  payload: GetFeedPayload = { take: 4, offset: 0 }
-): Promise<PostResponse[]> => {
-  console.log("Get Feed", payload);
-  return new Promise<PostResponse[]>((resolve, reject) => {
-    const callback: GetFeedCallback = (response) => {
-      console.log("getFeed callback invoked with response:", response);
-      if (response.error) reject(new Error(response.error));
-      else if (response.success && response.data) {
-        console.log(
-          "getFeed success, posts count:",
-          response.data.length,
-          payload.offset
-        );
-        const posts = response.data;
+  /**
+   * Get recent posts for the main feed with pagination
+   * @param payload - { take?: number; offset?: number } - take: number of posts (default 4, max 20), offset: skip count (default 0)
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with array of posts or rejects with error
+   */
+  getFeed(
+    payload: GetFeedPayload = { take: 4, offset: 0 },
+    options?: ServiceOptions<PostResponse[]>
+  ): Promise<PostResponse[]> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.GET_FEED,
+      PostResponse[]
+    >({
+      event: POST_EVENTS.GET_FEED,
+      payload,
+      defaultErrorMessage: "Failed to get feed",
+      options,
+    });
+  }
 
-        // Fetch profiles for post authors (async, but don't block resolution)
-        fetchPostAuthorProfiles(posts).catch((error) => {
-          console.error("Failed to fetch post author profiles:", error);
-        });
+  /**
+   * Get recent posts from the user's RecentPosts with pagination
+   * @param payload - { take?: number; offset?: number } - take: number of posts (default 5, max 20), offset: skip count (default 0)
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with array of recent posts or rejects with error
+   */
+  getRecentPosts(
+    payload: GetRecentPostsPayload = { take: 5, offset: 0 },
+    options?: ServiceOptions<PostResponse[]>
+  ): Promise<PostResponse[]> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.GET_RECENT_POSTS,
+      PostResponse[]
+    >({
+      event: POST_EVENTS.GET_RECENT_POSTS,
+      payload,
+      defaultErrorMessage: "Failed to get recent posts",
+      options,
+    });
+  }
 
-        resolve(posts);
-      } else {
-        reject(new Error("Failed to get feed"));
-      }
+  /**
+   * Delete a post
+   * @param payload - { postId: string }
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with the deleted post ID or rejects with error
+   */
+  deletePost(
+    payload: DeletePostPayload,
+    options?: ServiceOptions<{ postId: string }>
+  ): Promise<{ postId: string }> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.DELETE,
+      { postId: string }
+    >({
+      event: POST_EVENTS.DELETE,
+      payload,
+      defaultErrorMessage: "Failed to delete post",
+      options,
+    });
+  }
+
+  /**
+   * Like a post
+   * @param payload - { postId: string }
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with the updated post or rejects with error
+   */
+  likePost(
+    payload: LikePostPayload,
+    options?: ServiceOptions<PostResponse>
+  ): Promise<PostResponse> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.LIKE,
+      PostResponse
+    >({
+      event: POST_EVENTS.LIKE,
+      payload,
+      defaultErrorMessage: "Failed to like post",
+      options,
+    });
+  }
+
+  /**
+   * Remove like from a post
+   * @param payload - { postId: string }
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with the updated post or rejects with error
+   */
+  removeLike(
+    payload: RemoveLikePayload,
+    options?: ServiceOptions<PostResponse>
+  ): Promise<PostResponse> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.UNLIKE,
+      PostResponse
+    >({
+      event: POST_EVENTS.UNLIKE,
+      payload,
+      defaultErrorMessage: "Failed to remove like",
+      options,
+    });
+  }
+
+  /**
+   * Bookmark a post
+   * @param payload - { postId: string }
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with the updated post or rejects with error
+   */
+  bookmarkPost(
+    payload: BookmarkPostPayload,
+    options?: ServiceOptions<PostResponse>
+  ): Promise<PostResponse> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.BOOKMARK,
+      PostResponse
+    >({
+      event: POST_EVENTS.BOOKMARK,
+      payload,
+      defaultErrorMessage: "Failed to bookmark post",
+      options,
+    });
+  }
+
+  /**
+   * Remove bookmark from a post
+   * @param payload - { postId: string }
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with the updated post or rejects with error
+   */
+  removeBookmark(
+    payload: RemoveBookmarkPayload,
+    options?: ServiceOptions<PostResponse>
+  ): Promise<PostResponse> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.UNBOOKMARK,
+      PostResponse
+    >({
+      event: POST_EVENTS.UNBOOKMARK,
+      payload,
+      defaultErrorMessage: "Failed to remove bookmark",
+      options,
+    });
+  }
+
+  /**
+   * Get socket event handlers for post events
+   * @returns Object containing all post event handlers
+   */
+  getPostEventHandlers() {
+    const { prependPost, updatePost, removePost } = usePostsStore.getState();
+
+    const handlePostCreated = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.CREATED]>[0]
+    ) => {
+      prependPost(post);
     };
 
-    socketService.emit(POST_EVENTS.GET_FEED, payload, callback);
-  });
-};
-
-/**
- * Get recent posts from the user's RecentPosts with pagination
- * Also fetches profiles of post authors and stores them
- * @param payload - { take?: number; offset?: number } - take: number of posts (default 5, max 20), offset: skip count (default 0)
- * @returns Promise that resolves with array of recent posts or rejects with error
- */
-export const getRecentPosts = (
-  payload: GetRecentPostsPayload = { take: 5, offset: 0 }
-): Promise<PostResponse[]> => {
-  return new Promise<PostResponse[]>((resolve, reject) => {
-    socketService.emit(POST_EVENTS.GET_RECENT_POSTS, payload, (async (
-      response
+    const handlePostUpdated = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.UPDATED]>[0]
     ) => {
-      if (response.error) {
-        reject(new Error(response.error));
-      } else if (response.success && response.data) {
-        const posts = response.data;
+      updatePost(post);
+    };
 
-        // Fetch profiles for post authors
-        await fetchPostAuthorProfiles(posts);
+    const handlePostLiked = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.LIKED]>[0]
+    ) => {
+      updatePost(post);
+    };
 
-        resolve(posts);
-      } else {
-        reject(new Error("Failed to get recent posts"));
-      }
-    }) as GetRecentPostsCallback);
-  });
-};
+    const handlePostUnliked = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.UNLIKED]>[0]
+    ) => {
+      updatePost(post);
+    };
 
-/**
- * Delete a post
- * @param payload - { postId: string }
- * @param options - Optional callbacks for success and error handling
- * @returns Promise that resolves with the deleted post ID or rejects with error
- */
-export const deletePost = (
-  payload: DeletePostPayload,
-  options?: {
-    onComplete?: (data: { postId: string }) => void;
-    onError?: (error: string) => void;
+    const handlePostBookmarked = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.BOOKMARKED]>[0]
+    ) => {
+      updatePost(post);
+    };
+
+    const handlePostUnbookmarked = (
+      post: Parameters<ServerToClientEvents[typeof POST_EVENTS.UNBOOKMARKED]>[0]
+    ) => {
+      updatePost(post);
+    };
+
+    const handlePostDeleted = (
+      data: Parameters<ServerToClientEvents[typeof POST_EVENTS.DELETED]>[0]
+    ) => {
+      removePost(data.postId);
+    };
+
+    return {
+      handlePostCreated,
+      handlePostUpdated,
+      handlePostLiked,
+      handlePostUnliked,
+      handlePostBookmarked,
+      handlePostUnbookmarked,
+      handlePostDeleted,
+    };
   }
-): Promise<{ postId: string }> => {
-  return new Promise<{ postId: string }>((resolve, reject) => {
-    socketService.emit(POST_EVENTS.DELETE, payload, (response) => {
-      if (response.error) {
-        options?.onError?.(response.error);
-        reject(new Error(response.error));
-      } else if (response.success && response.data) {
-        options?.onComplete?.(response.data);
-        resolve(response.data);
-      } else {
-        options?.onError?.("Failed to delete post");
-        reject(new Error("Failed to delete post"));
-      }
-    });
-  });
-};
+}
 
-/**
- * Like a post
- * @param payload - { postId: string }
- * @param options - Optional callbacks for success and error handling
- * @returns Promise that resolves with the updated post or rejects with error
- */
-export const likePost = (
-  payload: LikePostPayload,
-  options?: {
-    onComplete?: (post: PostResponse) => void;
-    onError?: (error: string) => void;
-  }
-): Promise<PostResponse> => {
-  return new Promise<PostResponse>((resolve, reject) => {
-    socketService.emit(POST_EVENTS.LIKE, payload, ((response) => {
-      if (response.error) {
-        options?.onError?.(response.error);
-        reject(new Error(response.error));
-      } else if (response.success && response.data) {
-        options?.onComplete?.(response.data);
-        resolve(response.data);
-      } else {
-        const message = "Failed to like post";
-        options?.onError?.(message);
-        reject(new Error(message));
-      }
-    }) as LikePostCallback);
-  });
-};
+// Create singleton instance
+export const postsService = new PostsService();
 
-/**
- * Remove like from a post
- * @param payload - { postId: string }
- * @param options - Optional callbacks for success and error handling
- * @returns Promise that resolves with the updated post or rejects with error
- */
-export const removeLike = (
-  payload: RemoveLikePayload,
-  options?: {
-    onComplete?: (post: PostResponse) => void;
-    onError?: (error: string) => void;
-  }
-): Promise<PostResponse> => {
-  return new Promise<PostResponse>((resolve, reject) => {
-    socketService.emit(POST_EVENTS.UNLIKE, payload, ((response) => {
-      if (response.error) {
-        options?.onError?.(response.error);
-        reject(new Error(response.error));
-      } else if (response.success && response.data) {
-        options?.onComplete?.(response.data);
-        resolve(response.data);
-      } else {
-        const message = "Failed to remove like";
-        options?.onError?.(message);
-        reject(new Error(message));
-      }
-    }) as RemoveLikeCallback);
-  });
-};
+// Export functions for backward compatibility
+export const createPost = postsService.createPost.bind(postsService);
+export const getFeed = postsService.getFeed.bind(postsService);
+export const getRecentPosts = postsService.getRecentPosts.bind(postsService);
+export const deletePost = postsService.deletePost.bind(postsService);
+export const likePost = postsService.likePost.bind(postsService);
+export const removeLike = postsService.removeLike.bind(postsService);
+export const bookmarkPost = postsService.bookmarkPost.bind(postsService);
+export const removeBookmark = postsService.removeBookmark.bind(postsService);

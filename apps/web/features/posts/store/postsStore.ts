@@ -41,7 +41,18 @@ export const usePostsStore = create<PostsState>((set) => ({
           // but we want to preserve the current user's actual like status
           const preserveIsLiked =
             post.isLiked === false && p.isLiked === true ? true : post.isLiked;
-          return { ...post, isLiked: preserveIsLiked };
+          // Preserve existing isBookmarked status if the incoming post has isBookmarked: false
+          // This handles broadcasts where isBookmarked is set to false for all users
+          // but we want to preserve the current user's actual bookmark status
+          const preserveIsBookmarked =
+            post.isBookmarked === false && p.isBookmarked === true
+              ? true
+              : post.isBookmarked;
+          return {
+            ...post,
+            isLiked: preserveIsLiked,
+            isBookmarked: preserveIsBookmarked,
+          };
         }
         return p;
       }),
