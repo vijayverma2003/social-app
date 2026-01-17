@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
 import { CreatePostPayloadSchema } from "@shared/schemas";
 import { CreatePostPayload, PostResponse } from "@shared/types";
 
@@ -15,6 +14,7 @@ import {
   SelectedFile,
 } from "@/features/messages/components/UploadButton";
 import { createPost } from "@/services/postsService";
+import { PostAttachmentPreview } from "./PostAttachmentPreview";
 
 interface CreatePostFormProps {
   onSuccess?: () => void;
@@ -116,16 +116,16 @@ export const CreatePostForm = ({
   const hasContentOrFiles = content.trim() || selectedFiles.length > 0;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 overflow-hidden">
+      
       <div className="space-y-2">
-        <Label htmlFor="content">What's on your mind?</Label>
         <Textarea
           id="content"
           {...register("content")}
           placeholder="Share your thoughts..."
           disabled={isSubmitting || isUploading}
           rows={4}
-          className="resize-none"
+          className="resize-none max-h-[200px] min-h-[100px] ring-0 focus-visible:ring-0"
         />
         {errors.content && (
           <p className="text-sm text-destructive">{errors.content.message}</p>
@@ -137,31 +137,22 @@ export const CreatePostForm = ({
         )}
       </div>
 
-      {selectedFiles.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedFiles.map((selectedFile) => (
-            <div
-              key={selectedFile.id}
-              className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-sm"
-            >
-              <span className="truncate max-w-[200px]">
-                {selectedFile.file.name}
-              </span>
-              <Button
-                type="button"
-                onClick={() => removeFile(selectedFile.id)}
-                disabled={isSubmitting || isUploading}
-                size="icon-sm"
-                variant="ghost"
-                className="h-5 w-5"
-                aria-label="Remove file"
-              >
-                <X className="size-3" />
-              </Button>
+     
+        
+          {selectedFiles.length > 0 && (
+            <div className="flex overflow-x-auto no-scrollbar gap-2">
+              {selectedFiles.map((selectedFile) => (
+                <PostAttachmentPreview
+                  key={selectedFile.id}
+                  file={selectedFile}
+                  onRemove={removeFile}
+                  disabled={isSubmitting || isUploading}
+                />
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
+        
+      
 
       {isUploading && (
         <div className="text-sm text-muted-foreground">Uploading files...</div>
@@ -195,6 +186,7 @@ export const CreatePostForm = ({
           </Button>
         </div>
       </div>
+     
     </form>
   );
 };

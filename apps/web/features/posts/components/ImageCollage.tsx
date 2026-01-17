@@ -73,7 +73,7 @@ export const ImageCollage = ({ images, className = "" }: ImageCollageProps) => {
                 key={attachment.id}
                 className={cn(
                   "relative overflow-hidden cursor-pointer transition-opacity hover:opacity-90 min-h-0",
-                  spanClass ? "aspect-video" : "aspect-landscape",
+                  spanClass ? "aspect-video" : "aspect-square",
                   spanClass
                 )}
                 onClick={(e) => {

@@ -3,13 +3,8 @@
 import { NotificationBadge } from "@/components/custom/notification-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
-import { CreatePostForm } from "@/features/posts/components/CreatePostForm";
+import { CreatePostDialog } from "@/features/posts/components/CreatePostDialog";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { Home, LucideIcon, Plus, Settings, Users } from "lucide-react";
@@ -82,23 +77,20 @@ const Navbar = () => {
               </Link>
             );
           })}
-          <Popover open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-            <PopoverTrigger
-              className={cn(
-                buttonVariants({ variant: "default" }),
-                "w-full justify-start gap-3 mb-2"
-              )}
-            >
-              <Plus className="size-5" />
-              <span>Create Post</span>
-            </PopoverTrigger>
-            <PopoverContent className="w-96" align="start">
-              <CreatePostForm
-                onSuccess={() => setIsCreatePostOpen(false)}
-                onCancel={() => setIsCreatePostOpen(false)}
-              />
-            </PopoverContent>
-          </Popover>
+          <Button
+            onClick={() => setIsCreatePostOpen(true)}
+            className={cn(
+              buttonVariants({ variant: "default" }),
+              "w-full justify-start gap-3 mb-2"
+            )}
+          >
+            <Plus className="size-5" />
+            <span>Create Post</span>
+          </Button>
+          <CreatePostDialog
+            open={isCreatePostOpen}
+            onOpenChange={setIsCreatePostOpen}
+          />
         </nav>
         <div className="flex-1">
           <DMChannelNavigation />
