@@ -14,6 +14,7 @@ import { memo, useState } from "react";
 import DMChannelNavigation from "./DMChannelNavigation";
 import { ProfileCardPopover } from "../settings/profile/components/ProfileCardPopover";
 import ProfileCard from "../settings/profile/components/ProfileCard";
+import { ProfileSettingsDialog } from "../settings/profile/components/Settings";
 
 interface NavItem {
   href: string;
@@ -25,6 +26,7 @@ interface NavItem {
 const Navbar = () => {
   const pathname = usePathname();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const incomingCount = useFriendRequestsStore(
     (state) => state.received.length
   );
@@ -115,15 +117,22 @@ const Navbar = () => {
             </p>
           </div>
         </div>
-        <Link
-          onClick={(e) => e.stopPropagation()}
-          href="/settings/profile"
-          className={buttonVariants({ variant: "ghost", size: "icon" })}
-          aria-label="Open profile preview"
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsSettingsOpen(true);
+          }}
+          variant="ghost"
+          size="icon"
+          aria-label="Open settings"
         >
           <Settings color="var(--muted-foreground)" className="size-5" />
-        </Link>
+        </Button>
       </ProfileCardPopover>
+      <ProfileSettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+      />
     </div>
   );
 };

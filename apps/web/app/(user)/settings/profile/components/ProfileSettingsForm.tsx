@@ -13,9 +13,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { UpdateUserProfilePayloadSchema } from "@shared/schemas";
 import { UpdateUserProfilePayload, UserWithProfile } from "@shared/types";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { ProfileCardContent } from "./ProfileCard";
 
 interface ProfileSettingsFormProps {
   user: UserWithProfile;
@@ -37,6 +38,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<UpdateUserProfilePayload>({
     resolver: zodResolver(UpdateUserProfilePayloadSchema),
@@ -60,8 +62,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
   ): Promise<string> => {
     if (files.length === 0 || !uploadFn) {
       throw new Error(
-        `No ${
-          fieldName === "avatarURL" ? "avatar" : "banner"
+        `No ${fieldName === "avatarURL" ? "avatar" : "banner"
         } file selected or upload function not available`
       );
     }
@@ -74,15 +75,13 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         return imageURL;
       } else {
         throw new Error(
-          `Failed to upload ${
-            fieldName === "avatarURL" ? "avatar" : "banner"
+          `Failed to upload ${fieldName === "avatarURL" ? "avatar" : "banner"
           } image`
         );
       }
     } catch (error) {
       throw new Error(
-        `${fieldName === "avatarURL" ? "Avatar" : "Banner"} upload failed: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `${fieldName === "avatarURL" ? "Avatar" : "Banner"} upload failed: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -125,6 +124,48 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
   ) => {
     bannerUploadFnRef.current = uploadFn;
   };
+
+  // Watch form values for live preview
+  const watchedValues = watch();
+
+  // Create preview URLs for selected files
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (avatarFiles.length > 0 && avatarFiles[0].file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(avatarFiles[0].file);
+      setAvatarPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setAvatarPreviewUrl(null);
+    }
+  }, [avatarFiles]);
+
+  useEffect(() => {
+    if (bannerFiles.length > 0 && bannerFiles[0].file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(bannerFiles[0].file);
+      setBannerPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setBannerPreviewUrl(null);
+    }
+  }, [bannerFiles]);
+
+  // Get preview values (use selected file previews if available, otherwise use form values)
+  const previewValues = useMemo(() => {
+    return {
+      displayName: watchedValues.displayName || "",
+      username: user.username || "",
+      discriminator: user.discriminator || "",
+      pronouns: watchedValues.pronouns || "",
+      avatarURL: avatarPreviewUrl || watchedValues.avatarURL || "",
+      bannerURL: bannerPreviewUrl || watchedValues.bannerURL || "",
+      bio: watchedValues.bio || "",
+      profileGradientStart: watchedValues.profileGradientStart || null,
+      profileGradientEnd: watchedValues.profileGradientEnd || null,
+    };
+  }, [watchedValues, avatarPreviewUrl, bannerPreviewUrl, user.username, user.discriminator]);
 
   const onSubmitForm = async (data: UpdateUserProfilePayload) => {
     setError(null);
@@ -183,122 +224,146 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmitForm)} className="mt-4 space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="displayName">Display Name</Label>
-        <Input
-          id="displayName"
-          type="text"
-          placeholder="Your display name"
-          {...register("displayName")}
-          disabled={isSaving}
-        />
-        {errors.displayName && (
-          <p className="text-sm text-destructive">
-            {errors.displayName.message}
-          </p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="pronouns">Pronouns</Label>
-        <Input type="text" {...register("pronouns")} disabled={isSaving} />
-        {errors.pronouns && (
-          <p className="text-sm text-destructive">{errors.pronouns.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="bannerColor">Banner Color</Label>
-        <div className="flex gap-2 items-center">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+
+      {/* Form Section */}
+      <form onSubmit={handleSubmit(onSubmitForm)} className="mt-4 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="displayName">Display Name</Label>
           <Input
-            type="color"
-            {...register("bannerColor")}
-            disabled={isSaving}
-            className="w-20 h-10 cursor-pointer"
-          />
-          <Input
+            id="displayName"
             type="text"
-            placeholder="#4e83d9"
-            {...register("bannerColor")}
+            placeholder="Your display name"
+            {...register("displayName")}
             disabled={isSaving}
-            className="flex-1"
           />
+          {errors.displayName && (
+            <p className="text-sm text-destructive">
+              {errors.displayName.message}
+            </p>
+          )}
         </div>
-        {errors.bannerColor && (
-          <p className="text-sm text-destructive">
-            {errors.bannerColor.message}
-          </p>
+        <div className="space-y-2">
+          <Label htmlFor="pronouns">Pronouns</Label>
+          <Input type="text" {...register("pronouns")} disabled={isSaving} />
+          {errors.pronouns && (
+            <p className="text-sm text-destructive">{errors.pronouns.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="bannerColor">Banner Color</Label>
+          <div className="flex gap-2 items-center">
+            <Input
+              type="color"
+              {...register("bannerColor")}
+              disabled={isSaving}
+              className="w-20 h-10 cursor-pointer"
+            />
+            <Input
+              type="text"
+              placeholder="#4e83d9"
+              {...register("bannerColor")}
+              disabled={isSaving}
+              className="flex-1"
+            />
+          </div>
+          {errors.bannerColor && (
+            <p className="text-sm text-destructive">
+              {errors.bannerColor.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label>Avatar</Label>
+          <UploadButton
+            maxFiles={1}
+            onFilesChange={handleAvatarFilesChange}
+            onUploadFilesReady={handleAvatarUploadReady}
+            disabled={isSaving}
+            buttonText="Upload Avatar"
+          />
+          {errors.avatarURL && (
+            <p className="text-sm text-destructive">{errors.avatarURL.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label>Banner</Label>
+          <UploadButton
+            maxFiles={1}
+            onFilesChange={handleBannerFilesChange}
+            onUploadFilesReady={handleBannerUploadReady}
+            disabled={isSaving}
+             buttonText="Upload Banner"
+          />
+          {errors.bannerURL && (
+            <p className="text-sm text-destructive">{errors.bannerURL.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea {...register("bio")} disabled={isSaving} />
+          {errors.bio && (
+            <p className="text-sm text-destructive">{errors.bio.message}</p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="profileGradientStart">Profile Gradient</Label>
+          <div className="flex gap-2 items-center">
+            <Input
+              id="profileGradientStart"
+              type="color"
+              {...register("profileGradientStart")}
+              disabled={isSaving}
+              className="w-20 h-10 cursor-pointer"
+            />
+            <Input
+              id="profileGradientEnd"
+              type="color"
+              {...register("profileGradientEnd")}
+              disabled={isSaving}
+              className="w-20 h-10 cursor-pointer"
+            />
+          </div>
+          {errors.profileGradientStart && (
+            <p className="text-sm text-destructive">
+              {errors.profileGradientStart.message}
+            </p>
+          )}
+          {errors.profileGradientEnd && (
+            <p className="text-sm text-destructive">
+              {errors.profileGradientEnd.message}
+            </p>
+          )}
+        </div>
+        {error && (
+          <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
         )}
-      </div>
-      <div className="space-y-2">
-        <Label>Avatar</Label>
-        <UploadButton
-          maxFiles={1}
-          onFilesChange={handleAvatarFilesChange}
-          onUploadFilesReady={handleAvatarUploadReady}
-          disabled={isSaving}
-          buttonText="Upload Avatar"
+        <Button type="submit" className="w-full" disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save Changes"}
+        </Button>
+      </form>
+
+      {/* Preview Section */}
+      <div className="lg:sticky lg:top-6 h-fit">
+        <Label className="mb-4 block">Preview</Label>
+        <ProfileCardContent
+          variant="card"
+          displayName={previewValues.displayName}
+          username={previewValues.username}
+          discriminator={previewValues.discriminator}
+          pronouns={previewValues.pronouns}
+          avatarURL={previewValues.avatarURL}
+          bannerURL={previewValues.bannerURL}
+          bio={previewValues.bio}
+          profileGradientStart={previewValues.profileGradientStart}
+          profileGradientEnd={previewValues.profileGradientEnd}
+          buttons={<></>}
         />
-        {errors.avatarURL && (
-          <p className="text-sm text-destructive">{errors.avatarURL.message}</p>
-        )}
       </div>
-      <div className="space-y-2">
-        <Label>Banner</Label>
-        <UploadButton
-          maxFiles={1}
-          onFilesChange={handleBannerFilesChange}
-          onUploadFilesReady={handleBannerUploadReady}
-          disabled={isSaving}
-        />
-        {errors.bannerURL && (
-          <p className="text-sm text-destructive">{errors.bannerURL.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="bio">Bio</Label>
-        <Textarea {...register("bio")} disabled={isSaving} />
-        {errors.bio && (
-          <p className="text-sm text-destructive">{errors.bio.message}</p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="profileGradientStart">Profile Gradient</Label>
-        <div className="flex gap-2 items-center">
-          <Input
-            id="profileGradientStart"
-            type="color"
-            {...register("profileGradientStart")}
-            disabled={isSaving}
-            className="w-20 h-10 cursor-pointer"
-          />
-          <Input
-            id="profileGradientEnd"
-            type="color"
-            {...register("profileGradientEnd")}
-            disabled={isSaving}
-            className="w-20 h-10 cursor-pointer"
-          />
-        </div>
-        {errors.profileGradientStart && (
-          <p className="text-sm text-destructive">
-            {errors.profileGradientStart.message}
-          </p>
-        )}
-        {errors.profileGradientEnd && (
-          <p className="text-sm text-destructive">
-            {errors.profileGradientEnd.message}
-          </p>
-        )}
-      </div>
-      {error && (
-        <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-          <p className="text-sm text-destructive">{error}</p>
-        </div>
-      )}
-      <Button type="submit" className="w-full" disabled={isSaving}>
-        {isSaving ? "Saving..." : "Save Changes"}
-      </Button>
-    </form>
+    </div>
   );
 };
 
