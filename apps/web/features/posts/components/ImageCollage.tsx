@@ -73,7 +73,7 @@ export const ImageCollage = ({ images, className = "" }: ImageCollageProps) => {
                 key={attachment.id}
                 className={cn(
                   "relative overflow-hidden cursor-pointer transition-opacity hover:opacity-90 min-h-0",
-                  spanClass ? "aspect-video" : "aspect-square",
+                  spanClass ? "aspect-video" : "",
                   spanClass
                 )}
                 onClick={(e) => {
@@ -95,7 +95,7 @@ export const ImageCollage = ({ images, className = "" }: ImageCollageProps) => {
                 {shouldBlur && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
                     <span className="text-white font-semibold text-lg drop-shadow-lg">
-                      +{remainingCount} more
+                      +{remainingCount + 1} more
                     </span>
                   </div>
                 )}
