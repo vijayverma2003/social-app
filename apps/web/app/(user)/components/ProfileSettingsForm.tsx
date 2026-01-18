@@ -269,21 +269,13 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="bannerColor">Banner Color</Label>
-          <div className="flex gap-2 items-center">
-            <Input
-              type="color"
-              {...register("bannerColor")}
-              disabled={isSaving}
-              className="w-20 h-10 cursor-pointer"
-            />
-          </div>
-          {errors.bannerColor && (
-            <p className="text-sm text-destructive">
-              {errors.bannerColor.message}
-            </p>
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea {...register("bio")} disabled={isSaving} />
+          {errors.bio && (
+            <p className="text-sm text-destructive">{errors.bio.message}</p>
           )}
         </div>
+
         <div className="space-y-2">
           <Label>Avatar</Label>
           <div className="flex gap-2 items-center">
@@ -336,13 +328,24 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
             <p className="text-sm text-destructive">{errors.bannerURL.message}</p>
           )}
         </div>
+
         <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea {...register("bio")} disabled={isSaving} />
-          {errors.bio && (
-            <p className="text-sm text-destructive">{errors.bio.message}</p>
+          <Label htmlFor="bannerColor">Banner Color</Label>
+          <div className="flex gap-2 items-center">
+            <Input
+              type="color"
+              {...register("bannerColor")}
+              disabled={isSaving}
+              className="w-20 h-10 cursor-pointer"
+            />
+          </div>
+          {errors.bannerColor && (
+            <p className="text-sm text-destructive">
+              {errors.bannerColor.message}
+            </p>
           )}
         </div>
+
         <div className="space-y-2">
           <Label htmlFor="profileGradientStart">Profile Gradient</Label>
           <div className="flex gap-2 items-center">
@@ -383,7 +386,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
       </form>
 
       {/* Preview Section */}
-      <div className="lg:sticky lg:top-6 h-fit">
+      <div className="lg:sticky lg:top-0 h-fit">
         <Label className="mb-4 block">Preview</Label>
         <ProfileCardContent
           variant="card"

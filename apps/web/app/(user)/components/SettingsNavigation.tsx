@@ -20,8 +20,8 @@ export const SettingsNavigation = ({
   onSectionChange,
 }: SettingsNavigationProps) => {
   return (
-    <aside className="w-64 border-r border-border bg-accent/30 p-4 flex flex-col">
-      <div className="mb-6">
+    <aside className="w-64 border-r border-border p-4 flex flex-col backdrop-blur-xl">
+      <div className="mb-6 px-2">
         <h2 className="text-lg font-semibold">Settings</h2>
       </div>
       <nav className="flex flex-col gap-2">

@@ -36,7 +36,7 @@ export const ProfileSettingsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[75vw]! w-full h-[85vh] p-0 flex flex-col max-lg:max-w-[100vw]! max-lg:h-screen! ">
+      <DialogContent className="max-w-[75vw]! w-full h-[85vh] p-0 flex flex-col max-lg:max-w-[100vw]! max-lg:h-screen! bg-transparent border border-border rounded-4xl overflow-hidden">
         <div className="flex flex-1 overflow-hidden">
           {/* Left Sidebar Navigation */}
           <SettingsNavigation
@@ -45,7 +45,7 @@ export const ProfileSettingsDialog = ({
           />
 
           {/* Right Content Area */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 bg-background">
             {activeSection === "profile" && (<ProfileSettingsSection />)}
             {activeSection === "account" && <AccountSettingsSection />}
           </div>
