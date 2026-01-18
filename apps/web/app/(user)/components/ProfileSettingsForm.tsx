@@ -12,6 +12,7 @@ import { updateProfile } from "@/services/profilesService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UpdateUserProfilePayloadSchema } from "@shared/schemas";
 import { UpdateUserProfilePayload, UserWithProfile } from "@shared/types";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -27,6 +28,8 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [avatarFiles, setAvatarFiles] = useState<SelectedFile[]>([]);
   const [bannerFiles, setBannerFiles] = useState<SelectedFile[]>([]);
+  const [avatarUploadKey, setAvatarUploadKey] = useState(0);
+  const [bannerUploadKey, setBannerUploadKey] = useState(0);
   const avatarUploadFnRef = useRef<
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
   >(null);
@@ -123,6 +126,20 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
     uploadFn: (files: SelectedFile[]) => Promise<SelectedFile[]>
   ) => {
     bannerUploadFnRef.current = uploadFn;
+  };
+
+  const handleRemoveAvatar = () => {
+    setValue("avatarURL", undefined);
+    setAvatarFiles([]);
+    setAvatarPreviewUrl(null);
+    setAvatarUploadKey((prev) => prev + 1);
+  };
+
+  const handleRemoveBanner = () => {
+    setValue("bannerURL", undefined);
+    setBannerFiles([]);
+    setBannerPreviewUrl(null);
+    setBannerUploadKey((prev) => prev + 1);
   };
 
   // Watch form values for live preview
@@ -260,13 +277,6 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
               disabled={isSaving}
               className="w-20 h-10 cursor-pointer"
             />
-            <Input
-              type="text"
-              placeholder="#4e83d9"
-              {...register("bannerColor")}
-              disabled={isSaving}
-              className="flex-1"
-            />
           </div>
           {errors.bannerColor && (
             <p className="text-sm text-destructive">
@@ -276,26 +286,52 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
         </div>
         <div className="space-y-2">
           <Label>Avatar</Label>
-          <UploadButton
-            maxFiles={1}
-            onFilesChange={handleAvatarFilesChange}
-            onUploadFilesReady={handleAvatarUploadReady}
-            disabled={isSaving}
-            buttonText="Upload Avatar"
-          />
+          <div className="flex gap-2 items-center">
+            <UploadButton
+              key={avatarUploadKey}
+              maxFiles={1}
+              onFilesChange={handleAvatarFilesChange}
+              onUploadFilesReady={handleAvatarUploadReady}
+              disabled={isSaving}
+              buttonText="Upload Avatar"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleRemoveAvatar}
+              disabled={isSaving}
+              aria-label="Remove avatar"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
           {errors.avatarURL && (
             <p className="text-sm text-destructive">{errors.avatarURL.message}</p>
           )}
         </div>
         <div className="space-y-2">
           <Label>Banner</Label>
-          <UploadButton
-            maxFiles={1}
-            onFilesChange={handleBannerFilesChange}
-            onUploadFilesReady={handleBannerUploadReady}
-            disabled={isSaving}
-             buttonText="Upload Banner"
-          />
+          <div className="flex gap-2 items-center">
+            <UploadButton
+              key={bannerUploadKey}
+              maxFiles={1}
+              onFilesChange={handleBannerFilesChange}
+              onUploadFilesReady={handleBannerUploadReady}
+              disabled={isSaving}
+              buttonText="Upload Banner"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleRemoveBanner}
+              disabled={isSaving}
+              aria-label="Remove banner"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
           {errors.bannerURL && (
             <p className="text-sm text-destructive">{errors.bannerURL.message}</p>
           )}
@@ -360,7 +396,7 @@ const ProfileSettingsForm = ({ user }: ProfileSettingsFormProps) => {
           bio={previewValues.bio}
           profileGradientStart={previewValues.profileGradientStart}
           profileGradientEnd={previewValues.profileGradientEnd}
-          buttons={<></>}
+          isCurrentUser={true}
         />
       </div>
     </div>

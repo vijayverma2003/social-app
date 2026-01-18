@@ -1,6 +1,6 @@
 "use client";
 
-import ProfileCard from "@/app/(user)/settings/profile/components/ProfileCard";
+import ProfileCard from "@/app/(user)/components/ProfileCard";
 import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
 import { MessageInput } from "@/features/messages/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";

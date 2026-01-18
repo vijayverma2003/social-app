@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback } from "react";
-import { ProfileCardDialog } from "@/app/(user)/settings/profile/components/ProfileCardDialog";
+import { ProfileCardDialog } from "@/app/(user)/components/ProfileCardDialog";
 
 interface ProfileCardViewerContextType {
   openProfileCard: (userId?: string) => void;

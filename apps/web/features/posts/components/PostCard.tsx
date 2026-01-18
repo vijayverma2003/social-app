@@ -1,6 +1,6 @@
 "use client";
 
-import { ProfileCardPopover } from "@/app/(user)/settings/profile/components/ProfileCardPopover";
+import { ProfileCardPopover } from "@/app/(user)/components/ProfileCardPopover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {

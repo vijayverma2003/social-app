@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@/providers/UserContextProvider";
 import { SettingsNavigation, type SettingsSection } from "./SettingsNavigation";
 import { ProfileSettingsSection } from "./ProfileSettingsSection";
@@ -10,11 +10,13 @@ import { AccountSettingsSection } from "./AccountSettingsSection";
 interface ProfileSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialSection?: SettingsSection;
 }
 
 export const ProfileSettingsDialog = ({
   open,
   onOpenChange,
+  initialSection = "profile",
 }: ProfileSettingsDialogProps) => {
   const { user } = useUser();
 
@@ -22,7 +24,14 @@ export const ProfileSettingsDialog = ({
     return null;
   }
 
-  const [activeSection, setActiveSection] = useState<SettingsSection>("profile");
+  const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
+
+  // Update activeSection when initialSection changes and dialog opens
+  useEffect(() => {
+    if (open && initialSection) {
+      setActiveSection(initialSection);
+    }
+  }, [open, initialSection]);
 
 
   return (

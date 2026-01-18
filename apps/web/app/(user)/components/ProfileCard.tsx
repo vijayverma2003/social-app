@@ -14,6 +14,7 @@ import { useProfilesStore } from "@/stores/profilesStore";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { useProfileCardViewer } from "@/contexts/profileCardViewer";
+import { useSettings } from "@/contexts/settingsContext";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import {
@@ -30,9 +31,7 @@ interface FriendButtonsProps {
   fadeBackground: string;
   mixColor: string;
   friendEntry: { id: string; channelId: string | null } | null;
-  onSendMessage: () => void;
-  onRemoveFriend: () => void;
-  onViewProfile: () => void;
+  userId?: string;
 }
 
 const FriendButtons = ({
@@ -40,15 +39,35 @@ const FriendButtons = ({
   fadeBackground,
   mixColor,
   friendEntry,
-  onSendMessage,
-  onRemoveFriend,
-  onViewProfile,
+  userId,
 }: FriendButtonsProps) => {
+  const router = useRouter();
+  const { openProfileCard } = useProfileCardViewer();
+  const { removeFriend } = useFriendActions();
+
+  const handleSendMessage = () => {
+    if (friendEntry?.channelId) {
+      router.push(`/channels/@me/${friendEntry.channelId}`);
+    }
+  };
+
+  const handleRemoveFriend = () => {
+    if (friendEntry) {
+      removeFriend(friendEntry.id);
+    }
+  };
+
+  const handleViewProfile = () => {
+    if (variant === "popover" && userId) {
+      openProfileCard(userId);
+    }
+  };
+
   return (
     <>
       <Button
         size={variant === "popover" ? "sm" : "default"}
-        onClick={onSendMessage}
+        onClick={handleSendMessage}
         variant="secondary"
         style={{ background: fadeBackground }}
         className={cn(
@@ -77,21 +96,21 @@ const FriendButtons = ({
         <DropdownMenuContent align="end">
           {variant === "popover" && (
             <DropdownMenuItem
-              onClick={onViewProfile}
+              onClick={handleViewProfile}
               className="cursor-pointer"
             >
               View Profile
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
-            onClick={onSendMessage}
+            onClick={handleSendMessage}
             className="cursor-pointer"
             disabled={!friendEntry?.channelId}
           >
             Send Message
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={onRemoveFriend}
+            onClick={handleRemoveFriend}
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             Remove Friend
@@ -173,20 +192,24 @@ interface CurrentUserButtonsProps {
   variant: "popover" | "card";
   fadeBackground: string;
   mixColor: string;
-  onEditProfile: () => void;
 }
 
 const CurrentUserButtons = ({
   variant,
   fadeBackground,
   mixColor,
-  onEditProfile,
 }: CurrentUserButtonsProps) => {
+  const { openSettings } = useSettings();
+
+  const handleEditProfile = () => {
+    openSettings("profile");
+  };
+
   return (
     <>
       <Button
         size={variant === "popover" ? "sm" : "default"}
-        onClick={onEditProfile}
+        onClick={handleEditProfile}
         variant="secondary"
         style={{ background: fadeBackground }}
         className={cn(
@@ -214,8 +237,11 @@ interface ProfileCardContentProps {
   bio: string;
   profileGradientStart: string | null;
   profileGradientEnd: string | null;
-  // Buttons wrapper
-  buttons: React.ReactNode;
+  // Button props
+  isFriend?: boolean;
+  isCurrentUser?: boolean;
+  friendEntry?: { id: string; channelId: string | null } | null;
+  userId?: string;
 }
 
 export const ProfileCardContent = ({
@@ -229,7 +255,10 @@ export const ProfileCardContent = ({
   bio,
   profileGradientStart,
   profileGradientEnd,
-  buttons,
+  isFriend = false,
+  isCurrentUser = false,
+  friendEntry = null,
+  userId,
 }: ProfileCardContentProps) => {
   // Compute custom properties within ProfileCardContent
   const isPremium = true; // This could be determined from profile or user subscription
@@ -254,6 +283,33 @@ export const ProfileCardContent = ({
 
   const fadeBackground = `color-mix(in oklab, transparent 60%, color-mix(in oklab, hsl(from ${gradientStart} h s l) 50%, hsl(from ${gradientEnd} h s l) 50%))`;
 
+  // Create buttons based on relationship state
+  const buttons = (
+    <>
+      {isFriend && !isCurrentUser ? (
+        <FriendButtons
+          variant={variant}
+          fadeBackground={fadeBackground}
+          mixColor={mixColor}
+          friendEntry={friendEntry}
+          userId={userId}
+        />
+      ) : !isCurrentUser ? (
+        <NonFriendButtons
+          variant={variant}
+          fadeBackground={fadeBackground}
+          mixColor={mixColor}
+        />
+      ) : (
+        <CurrentUserButtons
+          variant={variant}
+          fadeBackground={fadeBackground}
+          mixColor={mixColor}
+        />
+      )}
+    </>
+  );
+
   return (
     <div
       style={isPremium ? { background: outerProfileGradient } : {}}
@@ -267,7 +323,7 @@ export const ProfileCardContent = ({
         style={isPremium ? { background: innerProfileGradient } : {}}
       >
         <div
-          className="absolute inset-0 bg-no-repeat bg-cover h-56 mask-b-from-20% mask-b-to-70% opacity-60 pointer-events-none"
+          className="absolute inset-0 bg-no-repeat bg-cover h-56 mask-b-from-20% mask-b-to-70% opacity-90 pointer-events-none"
           style={{ backgroundImage: `url(${bannerURL})` }}
         />
 
@@ -281,7 +337,7 @@ export const ProfileCardContent = ({
             className={cn(
               variant === "popover" ? "size-24" : "size-32",
               `border-3 border-transparent`,
-              mixColor === "#ffffff" ? "border-white/50" : "border-black/50"
+              mixColor === "#ffffff" ? "border-white/50" : "border-black/50",
             )}
           >
             <AvatarImage src={avatarURL} alt={displayName} />
@@ -361,9 +417,6 @@ interface ProfileCardProps {
 
 const ProfileCard = ({ userId, variant = "card" }: ProfileCardProps) => {
   const { user } = useUser();
-  const router = useRouter();
-  const { openProfileCard } = useProfileCardViewer();
-  const { removeFriend } = useFriendActions();
   const friends = useFriendsStore((state) => state.friends);
 
   const profile = useProfilesStore((state) =>
@@ -396,69 +449,6 @@ const ProfileCard = ({ userId, variant = "card" }: ProfileCardProps) => {
   const profileGradientStart = profile?.profileGradientStart || null;
   const profileGradientEnd = profile?.profileGradientEnd || null;
 
-  const handleSendMessage = () => {
-    if (friendEntry?.channelId) {
-      router.push(`/channels/@me/${friendEntry.channelId}`);
-    }
-  };
-
-  const handleRemoveFriend = () => {
-    if (friendEntry) {
-      removeFriend(friendEntry.id);
-    }
-  };
-
-  const handleViewProfile = () => {
-    if (variant === "popover" && userId) {
-      openProfileCard(userId);
-    }
-  };
-
-  const handleEditProfile = () => {
-    router.push(`/settings/profile`);
-  };
-
-  // Compute styling values for buttons
-  const isPremium = true;
-  const mixColor: string = "#000000";
-  const gradientStart = isPremium
-    ? profileGradientStart || "#000000"
-    : "#1c1e21";
-  const gradientEnd = isPremium
-    ? profileGradientEnd || "#000000"
-    : "#1c1e21";
-  const fadeBackground = `color-mix(in oklab, transparent 60%, color-mix(in oklab, hsl(from ${gradientStart} h s l) 50%, hsl(from ${gradientEnd} h s l) 50%))`;
-
-  // Create buttons based on relationship state
-  const buttons = (
-    <>
-      {isFriend && !isCurrentUser ? (
-        <FriendButtons
-          variant={variant}
-          fadeBackground={fadeBackground}
-          mixColor={mixColor}
-          friendEntry={friendEntry}
-          onSendMessage={handleSendMessage}
-          onRemoveFriend={handleRemoveFriend}
-          onViewProfile={handleViewProfile}
-        />
-      ) : !isCurrentUser ? (
-        <NonFriendButtons
-          variant={variant}
-          fadeBackground={fadeBackground}
-          mixColor={mixColor}
-        />
-      ) : (
-        <CurrentUserButtons
-          variant={variant}
-          fadeBackground={fadeBackground}
-          mixColor={mixColor}
-          onEditProfile={handleEditProfile}
-        />
-      )}
-    </>
-  );
-
   return (
     <ProfileCardContent
       variant={variant}
@@ -471,7 +461,10 @@ const ProfileCard = ({ userId, variant = "card" }: ProfileCardProps) => {
       bio={bio}
       profileGradientStart={profileGradientStart}
       profileGradientEnd={profileGradientEnd}
-      buttons={buttons}
+      isFriend={isFriend}
+      isCurrentUser={isCurrentUser}
+      friendEntry={friendEntry}
+      userId={userId}
     />
   );
 };

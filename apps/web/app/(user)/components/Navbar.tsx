@@ -3,6 +3,7 @@
 import { NotificationBadge } from "@/components/custom/notification-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useSettings } from "@/contexts/settingsContext";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
 import { CreatePostDialog } from "@/features/posts/components/CreatePostDialog";
 import { cn } from "@/lib/utils";
@@ -12,9 +13,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
 import DMChannelNavigation from "./DMChannelNavigation";
-import { ProfileCardPopover } from "../settings/profile/components/ProfileCardPopover";
-import ProfileCard from "../settings/profile/components/ProfileCard";
-import { ProfileSettingsDialog } from "../settings/profile/components/Settings";
+import { ProfileCardPopover } from "./ProfileCardPopover";
 
 interface NavItem {
   href: string;
@@ -26,7 +25,7 @@ interface NavItem {
 const Navbar = () => {
   const pathname = usePathname();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { openSettings } = useSettings();
   const incomingCount = useFriendRequestsStore(
     (state) => state.received.length
   );
@@ -120,7 +119,7 @@ const Navbar = () => {
         <Button
           onClick={(e) => {
             e.stopPropagation();
-            setIsSettingsOpen(true);
+            openSettings();
           }}
           variant="ghost"
           size="icon"
@@ -129,10 +128,6 @@ const Navbar = () => {
           <Settings color="var(--muted-foreground)" className="size-5" />
         </Button>
       </ProfileCardPopover>
-      <ProfileSettingsDialog
-        open={isSettingsOpen}
-        onOpenChange={setIsSettingsOpen}
-      />
     </div>
   );
 };

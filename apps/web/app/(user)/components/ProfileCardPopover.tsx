@@ -1,6 +1,6 @@
 "use client";
 
-import ProfileCard from "@/app/(user)/settings/profile/components/ProfileCard";
+import ProfileCard from "@/app/(user)/components/ProfileCard";
 import {
   Popover,
   PopoverContent,
