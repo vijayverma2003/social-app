@@ -91,11 +91,31 @@ export class ChannelHandlers extends BaseSocketHandler {
         return;
       }
 
-      // Get all DM channels where the user is a member
+      // Get all DM channels where the user is a member and:
+      // - isRequest is false or null (regular DM channels), OR
+      // - isRequest is true AND the current user is the message request sender
       const channels = await prisma.channel.findMany({
         where: {
           type: "dm",
           users: { some: { userId: socket.userId } },
+          AND: [
+            {
+              OR: [
+                { isRequest: false },
+                { isRequest: null },
+                {
+                  AND: [
+                    { isRequest: true },
+                    {
+                      messageRequests: {
+                        some: { senderId: socket.userId },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         include: { users: true },
         orderBy: { createdAt: "desc" },
