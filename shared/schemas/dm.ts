@@ -18,8 +18,15 @@ export const MarkChannelAsReadPayloadSchema = z
   })
   .strict();
 
+export const GetDMChannelPayloadSchema = z
+  .object({
+    otherUserId: z.string().trim().min(1, "Other user ID is required"),
+  })
+  .strict();
+
 export type JoinChannelPayload = z.infer<typeof JoinChannelPayloadSchema>;
 export type LeaveChannelPayload = z.infer<typeof LeaveChannelPayloadSchema>;
 export type MarkChannelAsReadPayload = z.infer<
   typeof MarkChannelAsReadPayloadSchema
 >;
+export type GetDMChannelPayload = z.infer<typeof GetDMChannelPayloadSchema>;

@@ -13,6 +13,7 @@ import { useSettings } from "@/contexts/settingsContext";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
+import { getDMChannel } from "@/services/channelService";
 import { cn, isLightColor } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { useProfilesStore } from "@/stores/profilesStore";
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { toast } from "sonner";
 
 // Friend Buttons Component
 interface FriendButtonsProps {
@@ -138,6 +140,7 @@ const NonFriendButtons = ({
   username,
   discriminator,
 }: NonFriendButtonsProps) => {
+  const router = useRouter();
   const { sendFriendRequest, sendFriendRequestByUserId } = useFriendActions();
   const sentRequests = useFriendRequestsStore((state) => state.sent);
 
@@ -163,6 +166,18 @@ const NonFriendButtons = ({
     });
   };
 
+  const handleSendMessage = async () => {
+    if (!userId) return;
+
+    try {
+      const channel = await getDMChannel(userId);
+      router.push(`/channels/@me/${channel.id}`);
+    } catch (error) {
+      toast.error("Failed to open DM channel");
+      console.error("Failed to open DM channel:", error);
+    }
+  };
+
   return (
     <>
       <Button
@@ -182,9 +197,7 @@ const NonFriendButtons = ({
       </Button>
       <Button
         size={variant === "popover" ? "icon-sm" : "icon"}
-        onClick={() => {
-          console.log("send message");
-        }}
+        onClick={handleSendMessage}
         variant="secondary"
         style={{ background: fadeBackground }}
         className={cn(

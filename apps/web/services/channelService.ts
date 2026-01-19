@@ -5,7 +5,9 @@ import {
   LeaveChannelPayload,
   MarkChannelAsReadPayload,
 } from "@shared/schemas/dm";
+import { ChannelWithUsers } from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";
+import { useDMChannelsStore } from "@/stores/dmChannelStore";
 
 type JoinChannelCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.JOIN]
@@ -18,6 +20,51 @@ type LeaveChannelCallback = Parameters<
 type MarkChannelAsReadCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.MARK_AS_READ]
 >[1];
+
+type GetDMChannelCallback = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DM_CHANNEL]
+>[1];
+
+/**
+ * Get a DM channel with another user.
+ * - First checks the local DM channel store for an existing channel with that user
+ * - If not found, emits GET_DM_CHANNEL, stores the returned channel in the store, and returns it
+ */
+export const getDMChannel = (
+  otherUserId: string
+): Promise<ChannelWithUsers> => {
+  return new Promise<ChannelWithUsers>((resolve, reject) => {
+    const { dmChannels, addDMChannel } = useDMChannelsStore.getState();
+
+    // Check if a DM channel with this user already exists in the store
+    const existingChannel = Object.values(dmChannels).find(
+      (channel) =>
+        channel.type === "dm" &&
+        channel.users?.some((user) => user.userId === otherUserId)
+    );
+
+    if (existingChannel) {
+      resolve(existingChannel);
+      return;
+    }
+
+    // Otherwise, ask the server to get or create the DM channel
+    socketService.emit(
+      CHANNEL_EVENTS.GET_DM_CHANNEL,
+      { otherUserId },
+      ((response) => {
+        if (response.success && response.data) {
+          const channel = response.data;
+          addDMChannel(channel);
+          resolve(channel);
+        } else {
+          const error = response.error || "Failed to get DM channel";
+          reject(new Error(error));
+        }
+      }) as GetDMChannelCallback
+    );
+  });
+};
 
 /**
  * Join a channel socket room for receiving broadcasts

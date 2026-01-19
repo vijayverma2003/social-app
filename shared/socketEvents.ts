@@ -22,6 +22,7 @@ export const CHANNEL_EVENTS = {
   // Client -> Server events (actions)
   GET_DMS_LIST: "channel:get_dms_list",
   GET_POSTS_LIST: "channel:get_posts_list",
+  GET_DM_CHANNEL: "channel:get_dm_channel",
   JOIN: "channel:join",
   LEAVE: "channel:leave",
   MARK_AS_READ: "channel:mark_as_read",

@@ -1,5 +1,6 @@
 import prisma from "@database/postgres";
 import {
+  GetDMChannelPayloadSchema,
   JoinChannelPayloadSchema,
   LeaveChannelPayloadSchema,
   MarkChannelAsReadPayloadSchema,
@@ -15,6 +16,13 @@ type GetDMsListData = Parameters<
 >[0];
 type GetDMsListCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DMS_LIST]
+>[1];
+
+type GetDMChannelData = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DM_CHANNEL]
+>[0];
+type GetDMChannelCallback = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DM_CHANNEL]
 >[1];
 
 type GetPostsListData = Parameters<
@@ -53,6 +61,10 @@ export class ChannelHandlers extends BaseSocketHandler {
 
     socket.on(CHANNEL_EVENTS.GET_POSTS_LIST, (data, callback) =>
       this.getPostChannels(socket, data, callback)
+    );
+
+    socket.on(CHANNEL_EVENTS.GET_DM_CHANNEL, (data, callback) =>
+      this.getOrCreateDMChannel(socket, data, callback)
     );
 
     socket.on(CHANNEL_EVENTS.JOIN, (data, callback) =>
@@ -97,6 +109,106 @@ export class ChannelHandlers extends BaseSocketHandler {
     } catch (error) {
       console.error("Error getting DM channels list:", error);
       cb({ error: "Failed to get DM channels list" });
+    }
+  }
+
+  private async getOrCreateDMChannel(
+    socket: AuthenticatedSocket,
+    data: GetDMChannelData,
+    cb: GetDMChannelCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        cb({ error: "Unauthorized" });
+        return;
+      }
+
+      const validationResult = GetDMChannelPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        cb({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
+        return;
+      }
+
+      const { otherUserId } = validationResult.data;
+
+      if (otherUserId === socket.userId) {
+        cb({ error: "Cannot create DM channel with yourself" });
+        return;
+      }
+
+      // Ensure the other user exists
+      const otherUser = await prisma.user.findUnique({
+        where: { id: otherUserId },
+        select: { id: true },
+      });
+
+      if (!otherUser) {
+        cb({ error: "User not found" });
+        return;
+      }
+
+      // Find existing DM channel between the two users (exactly 2 members)
+      const potentialChannels = await prisma.channel.findMany({
+        where: {
+          type: "dm",
+          users: {
+            some: {
+              userId: socket.userId,
+            },
+          },
+          AND: [
+            {
+              users: {
+                some: {
+                  userId: otherUserId,
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          users: true,
+        },
+      });
+
+      const existingChannel = potentialChannels.find(
+        (channel) => channel.users.length === 2
+      );
+
+      if (existingChannel) {
+        cb({
+          success: true,
+          data: existingChannel,
+        });
+        return;
+      }
+
+      // Create a new DM channel with isRequest=true
+      const newChannel = await prisma.channel.create({
+        data: {
+          type: "dm",
+          isRequest: true,
+          users: {
+            create: [
+              { userId: socket.userId },
+              { userId: otherUserId },
+            ],
+          },
+        },
+        include: {
+          users: true,
+        },
+      });
+
+      cb({
+        success: true,
+        data: newChannel,
+      });
+    } catch (error) {
+      console.error("Error getting or creating DM channel:", error);
+      cb({ error: "Failed to get or create DM channel" });
     }
   }
 

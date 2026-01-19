@@ -23,6 +23,7 @@ import {
   AcceptFriendRequestPayload,
 } from "../schemas/friends";
 import {
+  GetDMChannelPayload,
   JoinChannelPayload,
   LeaveChannelPayload,
   MarkChannelAsReadPayload,
@@ -163,6 +164,17 @@ export interface ClientToServerEvents {
   [CHANNEL_EVENTS.GET_POSTS_LIST]: (
     data: {},
     callback: (response: SocketResponse<Channel[]>) => void
+  ) => void;
+
+  /**
+   * GET_DM_CHANNEL: Get or create a DM channel with another user.
+   * If it doesn't exist, a new DM channel with isRequest=true is created.
+   * @param data - { otherUserId: string }
+   * @param callback - SocketResponse<ChannelWithUsers>
+   */
+  [CHANNEL_EVENTS.GET_DM_CHANNEL]: (
+    data: GetDMChannelPayload,
+    callback: (response: SocketResponse<ChannelWithUsers>) => void
   ) => void;
 
   /**
