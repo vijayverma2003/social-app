@@ -44,6 +44,7 @@ export const MESSAGE_EVENTS = {
   CREATED: "message:created",
   EDITED: "message:edited",
   DELETED: "message:deleted",
+  MESSAGE_REQUEST_CREATED: "message:request_created",
 } as const;
 
 export const UPLOAD_EVENTS = {

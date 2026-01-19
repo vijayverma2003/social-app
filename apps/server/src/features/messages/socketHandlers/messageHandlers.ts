@@ -186,6 +186,55 @@ export class MessageHandlers extends BaseSocketHandler {
         optimisticId, // Return the optimisticId so client can match and replace
       });
 
+      // If this is a DM request channel, create a MessageRequest and notify the receiver
+      if (channelType === "dm") {
+        const dmChannel = await prisma.channel.findUnique({
+          where: { id: channelId },
+          include: { users: true, messageRequests: true },
+        });
+
+        if (dmChannel?.isRequest) {
+          // Find the other user in the DM channel
+          const receiverUser = dmChannel.users.find(
+            (u) => u.userId !== socket.userId
+          );
+
+          if (receiverUser) {
+            const receiverId = receiverUser.userId;
+
+            // Only create a MessageRequest if one doesn't already exist from this sender to this receiver
+            const existingRequest = await prisma.messageRequest.findFirst({
+              where: {
+                senderId: socket.userId,
+                receiverId,
+                channelId,
+              },
+            });
+
+            if (!existingRequest) {
+              const messageRequest = await prisma.messageRequest.create({
+                data: {
+                  senderId: socket.userId,
+                  receiverId,
+                  channelId,
+                },
+              });
+
+              // Notify the receiver about the new message request
+              this.io
+                .to(`user:${receiverId}`)
+                .emit(MESSAGE_EVENTS.MESSAGE_REQUEST_CREATED, {
+                  id: messageRequest.id,
+                  senderId: messageRequest.senderId,
+                  receiverId: messageRequest.receiverId,
+                  channelId: messageRequest.channelId,
+                  createdAt: messageRequest.createdAt.toISOString(),
+                });
+            }
+          }
+        }
+      }
+
       // Update totalUnreadMessages for DM and post channels
       if (channelType === "dm" || channelType === "post") {
         // Get all users currently viewing the channel (in the socket room)

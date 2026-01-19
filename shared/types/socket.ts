@@ -534,6 +534,19 @@ export interface ServerToClientEvents {
     channelType: "dm" | "post";
   }) => void;
 
+  /**
+   * MESSAGE_REQUEST_CREATED: A new DM message request was created for a request-only DM channel
+   * @emitted_to Receiver (via user:receiverId room)
+   * @param data - { id: string; senderId: string; receiverId: string; channelId: string; createdAt: string }
+   */
+  [MESSAGE_EVENTS.MESSAGE_REQUEST_CREATED]: (data: {
+    id: string;
+    senderId: string;
+    receiverId: string;
+    channelId: string;
+    createdAt: string;
+  }) => void;
+
   // ============================================================================
   // UPLOAD EVENTS
   // ============================================================================
