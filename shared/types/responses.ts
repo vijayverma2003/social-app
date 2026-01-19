@@ -52,6 +52,10 @@ export type FriendsList = {
 
 export type FriendRequests = {
   id: string;
+  /**
+   * The other user's id involved in the request (sender for incoming, receiver for outgoing)
+   */
+  userId: string;
   username: string;
   discriminator: string;
   profile: Profile | null;

@@ -72,23 +72,36 @@ export class FriendRequestHandlers extends BaseSocketHandler {
           error: validationResult.error.issues[0]?.message || "Invalid input",
         });
 
-      const { receiverTag } = validationResult.data;
-      const [username, discriminator] = receiverTag.split("#");
+      const { receiverTag, receiverId } = validationResult.data;
 
-      if (!username || !discriminator)
-        return cb({ error: "Invalid receiver tag format" });
+      let receiver;
 
-      console.log(username, discriminator);
+      if (receiverId) {
+        receiver = await prisma.user.findUnique({
+          where: { id: receiverId },
+          select: {
+            id: true,
+            username: true,
+            discriminator: true,
+            profile: true,
+          },
+        });
+      } else if (receiverTag) {
+        const [username, discriminator] = receiverTag.split("#");
 
-      const receiver = await prisma.user.findUnique({
-        where: { username_discriminator: { username, discriminator } },
-        select: {
-          id: true,
-          username: true,
-          discriminator: true,
-          profile: true,
-        },
-      });
+        if (!username || !discriminator)
+          return cb({ error: "Invalid receiver tag format" });
+
+        receiver = await prisma.user.findUnique({
+          where: { username_discriminator: { username, discriminator } },
+          select: {
+            id: true,
+            username: true,
+            discriminator: true,
+            profile: true,
+          },
+        });
+      }
       if (!receiver) return cb({ error: "Receiver not found" });
 
       const sender = await prisma.user.findUnique({
@@ -153,6 +166,7 @@ export class FriendRequestHandlers extends BaseSocketHandler {
 
       this.io.to(`user:${receiver.id}`).emit(FRIEND_REQUEST_EVENTS.RECEIVED, {
         id: friendRequest.id,
+        userId: sender?.id || "",
         username: sender?.username || "",
         discriminator: sender?.discriminator || "",
         profile: sender?.profile || null,
@@ -163,6 +177,7 @@ export class FriendRequestHandlers extends BaseSocketHandler {
         success: true,
         data: {
           id: friendRequest.id,
+          userId: receiver?.id || "",
           username: receiver?.username || "",
           discriminator: receiver?.discriminator || "",
           profile: receiver?.profile || null,

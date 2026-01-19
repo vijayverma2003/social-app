@@ -46,6 +46,22 @@ export const useFriendActions = () => {
     [emit, addSentRequest]
   );
 
+  const sendFriendRequestByUserId = useCallback(
+    (receiverId: string, onSuccess: () => void) => {
+      emit(FRIEND_REQUEST_EVENTS.SEND, { receiverId }, ((response) => {
+        if (response.error) {
+          toast.error("Failed to send friend request", {
+            description: response.error,
+          });
+        } else if (response.success && response.data) {
+          addSentRequest(response.data);
+          onSuccess();
+        }
+      }) as SendFriendRequestCallback);
+    },
+    [emit, addSentRequest]
+  );
+
   const acceptFriendRequest = useCallback(
     (requestId: string) => {
       emit(FRIEND_REQUEST_EVENTS.ACCEPT, { requestId }, ((response) => {
@@ -99,6 +115,7 @@ export const useFriendActions = () => {
 
   return {
     sendFriendRequest,
+    sendFriendRequestByUserId,
     acceptFriendRequest,
     rejectFriendRequest,
     cancelFriendRequest,

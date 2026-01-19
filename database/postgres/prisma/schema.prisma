@@ -20,15 +20,17 @@ model User {
   profile Profile?
 
   // Relations
-  friends          Friend[]        @relation("UserFriends")
-  friendOf         Friend[]        @relation("UserFriendOf")
-  sentRequests     FriendRequest[] @relation("FriendRequestSender")
-  receivedRequests FriendRequest[] @relation("FriendRequestReceiver")
-  channelUsers     ChannelUser[]
-  posts            Post[]
-  joinedPosts      RecentPosts[]
-  postLikes        PostLike[]
-  postBookmarks    PostBookmark[]
+  friends                 Friend[]         @relation("UserFriends")
+  friendOf                Friend[]         @relation("UserFriendOf")
+  sentRequests            FriendRequest[]  @relation("FriendRequestSender")
+  receivedRequests        FriendRequest[]  @relation("FriendRequestReceiver")
+  channelUsers            ChannelUser[]
+  posts                   Post[]
+  joinedPosts             RecentPosts[]
+  postLikes               PostLike[]
+  postBookmarks           PostBookmark[]
+  sentMessageRequests     MessageRequest[] @relation("MessageRequestSender")
+  receivedMessageRequests MessageRequest[] @relation("MessageRequestReceiver")
 
   @@unique([username, discriminator])
 }
@@ -119,6 +121,10 @@ model Channel {
   users   ChannelUser[]
   friends Friend[]
   posts   Post[]
+
+  // DM Channel Properties
+  isRequest       Boolean?
+  messageRequests MessageRequest[]
 }
 
 model ChannelUser {
@@ -201,4 +207,25 @@ model PostBookmark {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
+}
+
+model MessageRequest {
+  id         String               @id @default(cuid())
+  senderId   String
+  receiverId String
+  channelId  String
+  createdAt  DateTime             @default(now())
+  status     MessageRequestStatus @default(pending)
+
+  sender   User    @relation("MessageRequestSender", fields: [senderId], references: [id])
+  receiver User    @relation("MessageRequestReceiver", fields: [receiverId], references: [id])
+  channel  Channel @relation(fields: [channelId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+enum MessageRequestStatus {
+  pending
+  accepted
+  rejected
 }

@@ -74,7 +74,7 @@ export interface ClientToServerEvents {
 
   /**
    * SEND: Client sends a friend request
-   * @param data - { receiverTag: string } - Format: "username#0000"
+   * @param data - { receiverTag?: string; receiverId?: string } - Provide either a tag ("username#0000") or a userId
    * @param callback - SocketResponse<FriendRequests> - Returns the created request with receiver info
    * @broadcasts RECEIVED to receiver
    */

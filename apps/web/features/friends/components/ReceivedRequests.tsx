@@ -21,7 +21,7 @@ const ReceivedRequests = ({ receivedRequests }: ReceivedRequestsProps) => {
           {receivedRequests.map((request) => (
             <div
               key={request.id}
-              className="group relative flex items-center justify-between gap-4 rounded-xl bg-accent/50 p-4"
+              className="group relative flex items-center justify-between gap-4 rounded-xl border border-border p-4"
             >
               <div className="flex items-center gap-3">
                 <Avatar>

@@ -192,7 +192,7 @@ export const FullScreenImageCarousel = ({
                     alt={attachment.fileName}
                     width={attachment.width || 672}
                     height={attachment.height || 672}
-                    className="object-contain max-w-2xl"
+                    className="object-contain max-w-2xl max-h-[80vh]"
                     priority
                   />
                 </div>

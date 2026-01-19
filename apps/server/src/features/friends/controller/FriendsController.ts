@@ -95,6 +95,7 @@ export class FriendsController {
         .filter((request) => request.receiverId === user.id)
         .map((request) => ({
           id: request.id,
+          userId: request.sender.id,
           username: request.sender.username,
           discriminator: request.sender.discriminator,
           profile: request.sender.profile,
@@ -105,6 +106,7 @@ export class FriendsController {
         .filter((request) => request.senderId === user.id)
         .map((request) => ({
           id: request.id,
+          userId: request.receiver.id,
           username: request.receiver.username,
           discriminator: request.receiver.discriminator,
           profile: request.receiver.profile,

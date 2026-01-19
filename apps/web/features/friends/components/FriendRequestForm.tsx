@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +28,7 @@ const FriendRequestForm = () => {
   const handleSendRequest = async (data: SendFriendRequestPayload) => {
     if (isSubmitting) return;
 
-    sendFriendRequest(data.receiverTag.trim(), () => {
+    sendFriendRequest(data.receiverTag?.trim() ?? "", () => {
       reset({ receiverTag: "" });
     });
   };
@@ -46,13 +47,12 @@ const FriendRequestForm = () => {
           aria-invalid={!!errors.receiverTag}
           {...register("receiverTag")}
         />
-        <button
+        <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? "Requesting..." : "Add Friend"}
-        </button>
+        </Button>
       </div>
       {errors.receiverTag && (
         <p className="text-xs text-destructive">{errors.receiverTag.message}</p>

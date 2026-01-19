@@ -14,7 +14,7 @@ const FriendsPage = () => {
   const { received, sent } = useFriendRequestsStore();
 
   return (
-    <div className="max-w-2xl space-y-4 py-2">
+    <div className="max-w-2xl space-y-4 p-6">
       <Tabs defaultValue="friends" className="w-full">
         <TabsList>
           <TabsTrigger value="friends">Friends</TabsTrigger>

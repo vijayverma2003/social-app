@@ -8,22 +8,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { useUser } from "@/providers/UserContextProvider";
-import { useProfilesStore } from "@/stores/profilesStore";
-import { useFriendsStore } from "@/features/friends/store/friendsStore";
-import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import { useSettings } from "@/contexts/settingsContext";
-import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
+import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
+import { cn, isLightColor } from "@/lib/utils";
+import { useUser } from "@/providers/UserContextProvider";
+import { useProfilesStore } from "@/stores/profilesStore";
 import {
   Dot,
   EllipsisVerticalIcon,
   MessageCircleIcon,
-  UserMinus,
 } from "lucide-react";
-import { isLightColor } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 
 // Friend Buttons Component
 interface FriendButtonsProps {
@@ -126,20 +125,49 @@ interface NonFriendButtonsProps {
   variant: "popover" | "card";
   fadeBackground: string;
   mixColor: string;
+  userId?: string;
+  username: string;
+  discriminator: string;
 }
 
 const NonFriendButtons = ({
   variant,
   fadeBackground,
   mixColor,
+  userId,
+  username,
+  discriminator,
 }: NonFriendButtonsProps) => {
+  const { sendFriendRequest, sendFriendRequestByUserId } = useFriendActions();
+  const sentRequests = useFriendRequestsStore((state) => state.sent);
+
+  // Check if there's a pending friend request for this user
+  const pendingRequest = useMemo(() => {
+    if (!userId) return undefined;
+    return sentRequests.find((request) => request.userId === userId);
+  }, [sentRequests, userId]);
+
+  const isPending = !!pendingRequest;
+
+  const handleAddFriend = () => {
+    if (userId) {
+      sendFriendRequestByUserId(userId, () => {
+        // Success callback - the store will be updated automatically
+      });
+      return;
+    }
+
+    const receiverTag = `${username}#${discriminator}`;
+    sendFriendRequest(receiverTag, () => {
+      // Success callback - the store will be updated automatically
+    });
+  };
+
   return (
     <>
       <Button
         size={variant === "popover" ? "sm" : "default"}
-        onClick={() => {
-          console.log("add friend");
-        }}
+        onClick={handleAddFriend}
         variant="secondary"
         style={{ background: fadeBackground }}
         className={cn(
@@ -148,8 +176,9 @@ const NonFriendButtons = ({
             ? "text-black border-black/10"
             : "text-white border-white/10"
         )}
+        disabled={isPending}
       >
-        Add Friend
+        {isPending ? "Pending Request" : "Add Friend"}
       </Button>
       <Button
         size={variant === "popover" ? "icon-sm" : "icon"}
@@ -299,6 +328,9 @@ export const ProfileCardContent = ({
           variant={variant}
           fadeBackground={fadeBackground}
           mixColor={mixColor}
+          userId={userId}
+          username={username}
+          discriminator={discriminator}
         />
       ) : (
         <CurrentUserButtons

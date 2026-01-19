@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { type FriendsList } from "@shared/types/responses";
 import { MoreVertical } from "lucide-react";
@@ -20,28 +21,26 @@ interface FriendsListProps {
 const FriendsList = ({ friends }: FriendsListProps) => {
   const router = useRouter();
   const { removeFriend } = useFriendActions();
+  const { openProfileCard } = useProfileCardViewer();
 
   const handleViewProfile = (friend: FriendsList) => {
-    // TODO: Update this route based on your profile routing structure
-    // Using username+discriminator as identifier for now
-    const userTag = `${friend.username}#${friend.discriminator}`;
-    router.push(`/profile/${encodeURIComponent(userTag)}`);
+    openProfileCard(friend.id);
   };
 
   const handleSendMessage = (friend: FriendsList) => {
-    // TODO: Update this route based on your DM routing structure
-    if (friend.channelId) router.push(`/channels/${friend.channelId}`);
-    // If no DM channel exists, you might want to create one first
-    else console.warn("No DM channel ID available for this friend");
+    if (friend.channelId) router.push(`/channels/@me/${friend.channelId}`);
   };
 
   return (
-    <div>
+    <div className="space-y-3">
+      <h2 className="text-xs text-muted-foreground font-bold flex items-center gap-2">
+        Your Friends
+      </h2>
       {friends.map((friend) => {
         return (
           <div
             key={friend.id}
-            className="flex items-center justify-between gap-3 rounded-xl bg-accent/50 p-4"
+            className="flex items-center justify-between gap-3 rounded-xl border border-border p-4"
           >
             <div className="flex items-center gap-3">
               <Avatar>

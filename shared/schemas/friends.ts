@@ -9,9 +9,29 @@ export const SendFriendRequestPayloadSchema = z
       .regex(
         /^[a-zA-Z0-9_]{3,50}#[0-9]{4}$/,
         "Friend tag must look like username#0000"
-      ),
+      )
+      .optional(),
+    receiverId: z
+      .string()
+      .trim()
+      .min(1, "Receiver ID is required")
+      .optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => data.receiverTag || data.receiverId,
+    {
+      message: "Either receiverTag or receiverId is required",
+      path: ["receiverTag"],
+    }
+  )
+  .refine(
+    (data) => !(data.receiverTag && data.receiverId),
+    {
+      message: "Provide only one of receiverTag or receiverId",
+      path: ["receiverTag"],
+    }
+  );
 
 export const AcceptFriendRequestPayloadSchema = z
   .object({

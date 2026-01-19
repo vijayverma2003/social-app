@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/custom/date-picker";
-import { createUserSchema, type CreateUserSchema } from "@shared/schemas/user";
+import { CreateUserPayloadSchema } from "@shared/schemas/users";
 import { createUser } from "@/services/usersService";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
+import { CreateUserPayload } from "@shared/types";
 
 const OnboardingForm = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -23,8 +24,8 @@ const OnboardingForm = () => {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<CreateUserSchema>({
-    resolver: zodResolver(createUserSchema),
+  } = useForm<CreateUserPayload>({
+    resolver: zodResolver(CreateUserPayloadSchema),
     defaultValues: {
       username: "",
       dob: new Date(),
@@ -37,7 +38,7 @@ const OnboardingForm = () => {
     setValue("dob", date, { shouldValidate: true });
   };
 
-  const onSubmitForm = async (data: CreateUserSchema) => {
+  const onSubmitForm = async (data: CreateUserPayload) => {
     setSubmitError(null);
     try {
       const token = await getToken();
@@ -53,7 +54,7 @@ const OnboardingForm = () => {
       } else if (error instanceof AxiosError)
         setSubmitError(
           error.response?.data.error ||
-            "Failed to create user. Please try again."
+          "Failed to create user. Please try again."
         );
       else setSubmitError("Failed to create user. Please try again.");
     }
