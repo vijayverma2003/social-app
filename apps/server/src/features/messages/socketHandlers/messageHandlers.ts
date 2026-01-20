@@ -6,6 +6,8 @@ import {
   EditMessagePayloadSchema,
   DeleteMessagePayloadSchema,
   GetMessagesPayloadSchema,
+  AcceptMessageRequestPayloadSchema,
+  RejectMessageRequestPayloadSchema,
 } from "@shared/schemas/messages";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ClientToServerEvents } from "@shared/types/socket";
@@ -48,6 +50,20 @@ type GetMessageRequestsCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.GET_MESSAGE_REQUESTS]
 >[1];
 
+type AcceptMessageRequestData = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST]
+>[0];
+type AcceptMessageRequestCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST]
+>[1];
+
+type RejectMessageRequestData = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST]
+>[0];
+type RejectMessageRequestCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST]
+>[1];
+
 /**
  * Maps MongoDB _id field to id for client-side consumption
  */
@@ -79,6 +95,14 @@ export class MessageHandlers extends BaseSocketHandler {
 
     socket.on(MESSAGE_EVENTS.GET_MESSAGE_REQUESTS, (data, callback) =>
       this.getMessageRequests(socket, data, callback)
+    );
+
+    socket.on(MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST, (data, callback) =>
+      this.acceptMessageRequest(socket, data, callback)
+    );
+
+    socket.on(MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST, (data, callback) =>
+      this.rejectMessageRequest(socket, data, callback)
     );
   }
 
@@ -608,6 +632,163 @@ export class MessageHandlers extends BaseSocketHandler {
           error instanceof Error
             ? error.message
             : "Failed to get message requests",
+      });
+    }
+  }
+
+  private async acceptMessageRequest(
+    socket: AuthenticatedSocket,
+    data: AcceptMessageRequestData,
+    callback: AcceptMessageRequestCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validationResult = AcceptMessageRequestPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        return callback({
+          error: validationResult.error.errors[0]?.message || "Invalid payload",
+        });
+      }
+
+      const { messageRequestId } = validationResult.data;
+
+      // Find the message request
+      const messageRequest = await prisma.messageRequest.findUnique({
+        where: { id: messageRequestId },
+        include: {
+          channel: {
+            include: {
+              users: true,
+            },
+          },
+        },
+      });
+
+      if (!messageRequest) {
+        return callback({
+          error: "Message request not found",
+        });
+      }
+
+      // Verify the current user is the receiver
+      if (messageRequest.receiverId !== socket.userId) {
+        return callback({
+          error: "Unauthorized: You are not the receiver of this message request",
+        });
+      }
+
+      // Verify the request is still pending
+      if (messageRequest.status !== "pending") {
+        return callback({
+          error: `Message request has already been ${messageRequest.status}`,
+        });
+      }
+
+      const updatedChannel = await prisma.$transaction(async (tx) => {
+
+        // Update the message request status to accepted
+        await prisma.messageRequest.update({
+          where: { id: messageRequestId },
+          data: { status: "accepted" },
+        });
+
+        // Update the channel's isRequest to false
+        const updatedChannel = await prisma.channel.update({
+          where: { id: messageRequest.channelId },
+          data: { isRequest: false },
+          include: {
+            users: true,
+          },
+        });
+
+        return updatedChannel;
+      })
+
+      callback({
+        success: true,
+        data: updatedChannel,
+      });
+    } catch (error) {
+      console.error("Error accepting message request:", error);
+      callback({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to accept message request",
+      });
+    }
+  }
+
+  private async rejectMessageRequest(
+    socket: AuthenticatedSocket,
+    data: RejectMessageRequestData,
+    callback: RejectMessageRequestCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Validate payload
+      const validationResult = RejectMessageRequestPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        return callback({
+          error: validationResult.error.errors[0]?.message || "Invalid payload",
+        });
+      }
+
+      const { messageRequestId } = validationResult.data;
+
+      // Find the message request
+      const messageRequest = await prisma.messageRequest.findUnique({
+        where: { id: messageRequestId },
+      });
+
+      if (!messageRequest) {
+        return callback({
+          error: "Message request not found",
+        });
+      }
+
+      // Verify the current user is the receiver
+      if (messageRequest.receiverId !== socket.userId) {
+        return callback({
+          error: "Unauthorized: You are not the receiver of this message request",
+        });
+      }
+
+      // Verify the request is still pending
+      if (messageRequest.status !== "pending") {
+        return callback({
+          error: `Message request has already been ${messageRequest.status}`,
+        });
+      }
+
+      // Update the message request status to rejected
+      await prisma.messageRequest.update({
+        where: { id: messageRequestId },
+        data: { status: "rejected" },
+      });
+
+      callback({
+        success: true,
+        data: { messageRequestId },
+      });
+    } catch (error) {
+      console.error("Error rejecting message request:", error);
+      callback({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to reject message request",
       });
     }
   }

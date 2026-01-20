@@ -7,6 +7,11 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { MessageCircle, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  acceptMessageRequest,
+  rejectMessageRequest,
+} from "@/services/messagesService";
+import { toast } from "sonner";
 
 const MessageRequestsPage = () => {
   const { requests, removeRequestById } = useMessageRequestsStore();
@@ -28,18 +33,46 @@ const MessageRequestsPage = () => {
     setSelectedRequestId(null);
   };
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (!selectedRequest) return;
-    // For now, just remove the request locally.
-    // Server-side accept behaviour can be implemented later.
-    removeRequestById(selectedRequest.id);
-    setSelectedRequestId(null);
+
+    try {
+      await acceptMessageRequest({
+        messageRequestId: selectedRequest.id,
+      });
+      // Remove the request from the store (channel is now added to dmChannelsStore)
+      removeRequestById(selectedRequest.id);
+      setSelectedRequestId(null);
+      toast.success("Message request accepted");
+    } catch (error) {
+      console.error("Failed to accept message request:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to accept message request"
+      );
+    }
   };
 
-  const handleIgnore = () => {
+  const handleIgnore = async () => {
     if (!selectedRequest) return;
-    removeRequestById(selectedRequest.id);
-    setSelectedRequestId(null);
+
+    try {
+      await rejectMessageRequest({
+        messageRequestId: selectedRequest.id,
+      });
+      // Remove the request from the store
+      removeRequestById(selectedRequest.id);
+      setSelectedRequestId(null);
+      toast.success("Message request rejected");
+    } catch (error) {
+      console.error("Failed to reject message request:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to reject message request"
+      );
+    }
   };
 
   return (

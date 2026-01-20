@@ -33,6 +33,8 @@ import {
   GetMessagesPayload,
   EditMessagePayload,
   DeleteMessagePayload,
+  AcceptMessageRequestPayload,
+  RejectMessageRequestPayload,
   MessageData,
 } from "../schemas/messages";
 import {
@@ -278,6 +280,30 @@ export interface ClientToServerEvents {
       channelId: string;
       createdAt: string;
     }>>) => void
+  ) => void;
+
+  /**
+   * ACCEPT_MESSAGE_REQUEST: Accept a message request
+   * @param data - { messageRequestId: string }
+   * @param callback - SocketResponse<ChannelWithUsers> - Returns the updated DM channel
+   * @requires User must be the receiver of the message request
+   * @updates MessageRequest status to "accepted" and Channel.isRequest to false
+   */
+  [MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST]: (
+    data: AcceptMessageRequestPayload,
+    callback: (response: SocketResponse<ChannelWithUsers>) => void
+  ) => void;
+
+  /**
+   * REJECT_MESSAGE_REQUEST: Reject a message request
+   * @param data - { messageRequestId: string }
+   * @param callback - SocketResponse<{ messageRequestId: string }> - Returns the rejected message request ID
+   * @requires User must be the receiver of the message request
+   * @updates MessageRequest status to "rejected"
+   */
+  [MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST]: (
+    data: RejectMessageRequestPayload,
+    callback: (response: SocketResponse<{ messageRequestId: string }>) => void
   ) => void;
 
   // ============================================================================

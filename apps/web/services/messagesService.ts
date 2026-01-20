@@ -4,12 +4,16 @@ import {
   CreateMessagePayload,
   GetMessagesPayload,
   DeleteMessagePayload,
+  AcceptMessageRequestPayload,
+  RejectMessageRequestPayload,
   MessageData,
 } from "@shared/schemas/messages";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
 import { MessageRequest } from "@/features/messages/store/messageRequestsStore";
 import { fetchUserProfiles } from "./profilesService";
+import { ChannelWithUsers } from "@shared/types/responses";
+import { useDMChannelsStore } from "@/stores/dmChannelStore";
 
 type CreateMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.CREATE]
@@ -25,6 +29,14 @@ type DeleteMessageCallback = Parameters<
 
 type GetMessageRequestsCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.GET_MESSAGE_REQUESTS]
+>[1];
+
+type AcceptMessageRequestCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST]
+>[1];
+
+type RejectMessageRequestCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST]
 >[1];
 
 /**
@@ -171,6 +183,69 @@ export const fetchMessageRequests = (): Promise<MessageRequest[]> => {
           reject(new Error("Failed to get message requests"));
         }
       }) as GetMessageRequestsCallback
+    );
+  });
+};
+
+/**
+ * Accept a message request
+ * Updates the message request status to accepted and sets channel.isRequest to false
+ * Adds the DM channel to the dmChannelsStore on success
+ * @param payload - { messageRequestId: string }
+ * @returns Promise that resolves with the updated channel or rejects with error
+ */
+export const acceptMessageRequest = (
+  payload: AcceptMessageRequestPayload
+): Promise<ChannelWithUsers> => {
+  return new Promise<ChannelWithUsers>((resolve, reject) => {
+    socketService.emit(
+      MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST,
+      payload,
+      ((response) => {
+        if (response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+
+        if (response.success && response.data) {
+          const channel = response.data;
+          // Add the channel to the DM channels store
+          const { addDMChannel } = useDMChannelsStore.getState();
+          addDMChannel(channel);
+          resolve(channel);
+        } else {
+          reject(new Error("Failed to accept message request"));
+        }
+      }) as AcceptMessageRequestCallback
+    );
+  });
+};
+
+/**
+ * Reject a message request
+ * Updates the message request status to rejected
+ * @param payload - { messageRequestId: string }
+ * @returns Promise that resolves with the message request ID or rejects with error
+ */
+export const rejectMessageRequest = (
+  payload: RejectMessageRequestPayload
+): Promise<{ messageRequestId: string }> => {
+  return new Promise<{ messageRequestId: string }>((resolve, reject) => {
+    socketService.emit(
+      MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST,
+      payload,
+      ((response) => {
+        if (response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+
+        if (response.success && response.data) {
+          resolve(response.data);
+        } else {
+          reject(new Error("Failed to reject message request"));
+        }
+      }) as RejectMessageRequestCallback
     );
   });
 };

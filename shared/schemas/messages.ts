@@ -122,6 +122,20 @@ export const DeleteMessagePayloadSchema = z
   })
   .strict();
 
+// Accept Message Request Payload Schema
+export const AcceptMessageRequestPayloadSchema = z
+  .object({
+    messageRequestId: z.string().trim().min(1, "Message Request ID is required"),
+  })
+  .strict();
+
+// Reject Message Request Payload Schema
+export const RejectMessageRequestPayloadSchema = z
+  .object({
+    messageRequestId: z.string().trim().min(1, "Message Request ID is required"),
+  })
+  .strict();
+
 export type ChannelType = z.infer<typeof ChannelTypeSchema>;
 export type Attachment = z.infer<typeof AttachmentSchema>;
 export type MessageData = z.infer<typeof MessageSchema>;
@@ -131,3 +145,5 @@ export type GetMessagesPayload = z.infer<typeof GetMessagesPayloadSchema>;
 export type CreateMessagePayload = z.infer<typeof CreateMessagePayloadSchema>;
 export type EditMessagePayload = z.infer<typeof EditMessagePayloadSchema>;
 export type DeleteMessagePayload = z.infer<typeof DeleteMessagePayloadSchema>;
+export type AcceptMessageRequestPayload = z.infer<typeof AcceptMessageRequestPayloadSchema>;
+export type RejectMessageRequestPayload = z.infer<typeof RejectMessageRequestPayloadSchema>;

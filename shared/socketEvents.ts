@@ -40,6 +40,8 @@ export const MESSAGE_EVENTS = {
   EDIT: "message:edit",
   DELETE: "message:delete",
   GET_MESSAGE_REQUESTS: "message:get_message_requests",
+  ACCEPT_MESSAGE_REQUEST: "message:accept_message_request",
+  REJECT_MESSAGE_REQUEST: "message:reject_message_request",
 
   // Server -> Client events (notifications)
   CREATED: "message:created",
