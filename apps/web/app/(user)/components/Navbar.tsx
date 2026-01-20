@@ -5,10 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useSettings } from "@/contexts/settingsContext";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
+import { useMessageRequestsStore } from "@/features/messages/store/messageRequestsStore";
 import { CreatePostDialog } from "@/features/posts/components/CreatePostDialog";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
-import { Home, LucideIcon, Plus, Settings, Users } from "lucide-react";
+import { Home, LucideIcon, MessageCircle, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
@@ -30,6 +31,10 @@ const Navbar = () => {
     (state) => state.received.length
   );
   const hasIncoming = incomingCount > 0;
+  const messageRequestsCount = useMessageRequestsStore(
+    (state) => state.requests.length
+  );
+  const hasMessageRequests = messageRequestsCount > 0;
   const { user } = useUser();
 
   const navItems: NavItem[] = [
@@ -42,6 +47,12 @@ const Navbar = () => {
       href: "/friends",
       label: "Friends",
       icon: Users,
+      showBadge: true,
+    },
+    {
+      href: "/message-requests",
+      label: "Message Requests",
+      icon: MessageCircle,
       showBadge: true,
     },
   ];
@@ -58,7 +69,19 @@ const Navbar = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
-            const showNotificationBadge = item.showBadge && hasIncoming;
+            const showNotificationBadge =
+              item.showBadge &&
+              (item.href === "/friends"
+                ? hasIncoming
+                : item.href === "/message-requests"
+                ? hasMessageRequests
+                : false);
+            const badgeCount =
+              item.href === "/friends"
+                ? incomingCount
+                : item.href === "/message-requests"
+                ? messageRequestsCount
+                : 0;
             return (
               <Link key={item.href} href={item.href}>
                 <Button
@@ -72,7 +95,7 @@ const Navbar = () => {
                   <Icon className="size-5" />
                   <span>{item.label}</span>
                   {showNotificationBadge && (
-                    <NotificationBadge count={incomingCount} />
+                    <NotificationBadge count={badgeCount} />
                   )}
                 </Button>
               </Link>

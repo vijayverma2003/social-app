@@ -13,7 +13,7 @@ import { useShallow } from "zustand/react/shallow";
 
 interface ConversationPreviewProps {
   channelId: string;
-  postId: string;
+  postId?: string;
   onClose?: () => void;
   title?: string;
 }
@@ -26,7 +26,7 @@ export const ConversationPreview = ({
 }: ConversationPreviewProps) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const channelType: ChannelType = "post";
+  const channelType: ChannelType = postId ? "post" : "dm";
 
   const messagesSelector = useMemo(
     () => (state: ReturnType<typeof useMessagesStore.getState>) =>
@@ -51,6 +51,13 @@ export const ConversationPreview = ({
   useEffect(() => {
     scrollToBottom("instant");
   }, [scrollToBottom]);
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom("smooth");
+    }
+  }, [messages.length, scrollToBottom]);
 
   useMessagesBootstrap(channelId, channelType, scrollToBottom);
 

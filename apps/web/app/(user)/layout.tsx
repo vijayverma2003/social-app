@@ -10,6 +10,7 @@ import { useChannelsBootstrap } from "@/features/dms/hooks/useChannelsBootstrap"
 import { usePostChannelsBootstrap } from "@/features/posts/hooks/usePostChannelsBootstrap";
 import { usePostsBootstrap } from "@/features/posts/hooks/usePostsBootstrap";
 import { useProfilesBootstrap } from "@/hooks/useProfilesBootstrap";
+import { useMessageRequestsBootstrap } from "@/features/messages/hooks/useMessageRequestsBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
@@ -18,6 +19,7 @@ const Layout = ({ children }: PropsWithChildren) => {
   usePostChannelsBootstrap();
   usePostsBootstrap();
   useProfilesBootstrap();
+  useMessageRequestsBootstrap();
 
   return (
     <ProfileCardViewerProvider>
