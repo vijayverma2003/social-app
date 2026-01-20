@@ -41,6 +41,13 @@ type DeleteMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
 >[1];
 
+type GetMessageRequestsData = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.GET_MESSAGE_REQUESTS]
+>[0];
+type GetMessageRequestsCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.GET_MESSAGE_REQUESTS]
+>[1];
+
 /**
  * Maps MongoDB _id field to id for client-side consumption
  */
@@ -68,6 +75,10 @@ export class MessageHandlers extends BaseSocketHandler {
 
     socket.on(MESSAGE_EVENTS.DELETE, (data, callback) =>
       this.deleteMessage(socket, data, callback)
+    );
+
+    socket.on(MESSAGE_EVENTS.GET_MESSAGE_REQUESTS, (data, callback) =>
+      this.getMessageRequests(socket, data, callback)
     );
   }
 
@@ -550,6 +561,53 @@ export class MessageHandlers extends BaseSocketHandler {
       callback({
         error:
           error instanceof Error ? error.message : "Failed to delete message",
+      });
+    }
+  }
+
+  private async getMessageRequests(
+    socket: AuthenticatedSocket,
+    data: GetMessageRequestsData,
+    callback: GetMessageRequestsCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      // Get all message requests where the current user is the receiver
+      const messageRequests = await prisma.messageRequest.findMany({
+        where: {
+          receiverId: socket.userId,
+          status: "pending",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      // Map to the response format
+      const requests = messageRequests.map((request) => ({
+        id: request.id,
+        senderId: request.senderId,
+        receiverId: request.receiverId,
+        channelId: request.channelId,
+        createdAt: request.createdAt.toISOString(),
+      }));
+
+      callback({
+        success: true,
+        data: requests,
+      });
+    } catch (error) {
+      console.error("Error getting message requests:", error);
+      callback({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to get message requests",
       });
     }
   }

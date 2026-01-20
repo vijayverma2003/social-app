@@ -1,15 +1,37 @@
 "use client";
 
 import { useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { useSocket } from "@/contexts/socket";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useMessageRequestsStore } from "../store/messageRequestsStore";
+import { fetchMessageRequests } from "@/services/messagesService";
+import { toast } from "sonner";
 
 export const useMessageRequestsBootstrap = () => {
   const { socket } = useSocket();
-  const { addRequest } = useMessageRequestsStore();
+  const { isSignedIn } = useAuth();
+  const { addRequest, setInitialRequests } = useMessageRequestsStore();
 
+  // Load initial message requests
+  useEffect(() => {
+    if (!isSignedIn) return;
+
+    const loadMessageRequests = async () => {
+      try {
+        const requests = await fetchMessageRequests();
+        setInitialRequests(requests);
+      } catch (error) {
+        console.error("Failed to load message requests:", error);
+        toast.error("Failed to load message requests");
+      }
+    };
+
+    loadMessageRequests();
+  }, [isSignedIn, setInitialRequests]);
+
+  // Listen for new message requests
   useEffect(() => {
     if (!socket) return;
 

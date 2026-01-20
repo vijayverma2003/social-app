@@ -10,6 +10,7 @@ export type MessageRequest = {
 
 interface MessageRequestsState {
   requests: MessageRequest[];
+  setInitialRequests: (requests: MessageRequest[]) => void;
   addRequest: (request: MessageRequest) => void;
   removeRequestById: (id: string) => void;
   clearRequests: () => void;
@@ -17,6 +18,8 @@ interface MessageRequestsState {
 
 export const useMessageRequestsStore = create<MessageRequestsState>((set) => ({
   requests: [],
+
+  setInitialRequests: (requests) => set({ requests }),
 
   addRequest: (request) =>
     set((state) => {

@@ -264,6 +264,22 @@ export interface ClientToServerEvents {
     callback: (response: SocketResponse<{ messageId: string }>) => void
   ) => void;
 
+  /**
+   * GET_MESSAGE_REQUESTS: Get incoming message requests for the authenticated user
+   * @param data - {} - No payload required
+   * @param callback - SocketResponse<MessageRequest[]> - Returns array of message requests
+   */
+  [MESSAGE_EVENTS.GET_MESSAGE_REQUESTS]: (
+    data: {},
+    callback: (response: SocketResponse<Array<{
+      id: string;
+      senderId: string;
+      receiverId: string;
+      channelId: string;
+      createdAt: string;
+    }>>) => void
+  ) => void;
+
   // ============================================================================
   // UPLOAD EVENTS
   // ============================================================================

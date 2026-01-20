@@ -39,6 +39,7 @@ export const MESSAGE_EVENTS = {
   GET: "message:get",
   EDIT: "message:edit",
   DELETE: "message:delete",
+  GET_MESSAGE_REQUESTS: "message:get_message_requests",
 
   // Server -> Client events (notifications)
   CREATED: "message:created",

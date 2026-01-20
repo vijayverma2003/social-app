@@ -8,6 +8,8 @@ import {
 } from "@shared/schemas/messages";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
+import { MessageRequest } from "@/features/messages/store/messageRequestsStore";
+import { fetchUserProfiles } from "./profilesService";
 
 type CreateMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.CREATE]
@@ -19,6 +21,10 @@ type GetMessagesCallback = Parameters<
 
 type DeleteMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
+>[1];
+
+type GetMessageRequestsCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.GET_MESSAGE_REQUESTS]
 >[1];
 
 /**
@@ -125,5 +131,46 @@ export const deleteMessage = (
         reject(new Error(response.error || "Failed to delete message"));
       }
     }) as DeleteMessageCallback);
+  });
+};
+
+/**
+ * Fetch message requests for the authenticated user
+ * Also fetches profiles of users who sent the requests and stores them
+ * @returns Promise that resolves with array of message requests or rejects with error
+ */
+export const fetchMessageRequests = (): Promise<MessageRequest[]> => {
+  return new Promise<MessageRequest[]>((resolve, reject) => {
+    socketService.emit(
+      MESSAGE_EVENTS.GET_MESSAGE_REQUESTS,
+      {},
+      (async (response) => {
+        if (response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+
+        if (response.success && response.data) {
+          const requests = response.data;
+          const senderIds = requests.map((r) => r.senderId);
+
+          // Fetch profiles for users who sent the requests (async, but don't block resolution)
+          if (senderIds.length > 0) {
+            try {
+              await fetchUserProfiles({ userIds: senderIds });
+            } catch (error) {
+              console.error(
+                "Failed to fetch user profiles for message requests:",
+                error
+              );
+            }
+          }
+
+          resolve(requests);
+        } else {
+          reject(new Error("Failed to get message requests"));
+        }
+      }) as GetMessageRequestsCallback
+    );
   });
 };
