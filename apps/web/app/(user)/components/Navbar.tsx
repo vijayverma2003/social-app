@@ -49,12 +49,17 @@ const Navbar = () => {
       icon: Users,
       showBadge: true,
     },
-    {
-      href: "/message-requests",
-      label: "Message Requests",
-      icon: MessageCircle,
-      showBadge: true,
-    },
+    // Only show Message Requests tab if there are any message requests
+    ...(hasMessageRequests
+      ? [
+        {
+          href: "/message-requests",
+          label: "Message Requests",
+          icon: MessageCircle,
+          showBadge: true,
+        },
+      ]
+      : []),
   ];
 
   return (
@@ -74,14 +79,14 @@ const Navbar = () => {
               (item.href === "/friends"
                 ? hasIncoming
                 : item.href === "/message-requests"
-                ? hasMessageRequests
-                : false);
+                  ? hasMessageRequests
+                  : false);
             const badgeCount =
               item.href === "/friends"
                 ? incomingCount
                 : item.href === "/message-requests"
-                ? messageRequestsCount
-                : 0;
+                  ? messageRequestsCount
+                  : 0;
             return (
               <Link key={item.href} href={item.href}>
                 <Button
