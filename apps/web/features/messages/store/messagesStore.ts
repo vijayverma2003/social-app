@@ -12,6 +12,7 @@ interface MessagesState {
   messagesByChannel: Record<string, MessageData[]>;
   isLoading: boolean;
   error: string | null;
+  pendingEditRequests: number;
   setMessages: (channelId: string, messages: MessageData[]) => void;
   addMessage: (channelId: string, message: MessageData) => void;
   addOptimisticMessage: (
@@ -38,12 +39,15 @@ interface MessagesState {
   clearChannel: (channelId: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+  incrementPendingEditRequests: () => void;
+  decrementPendingEditRequests: () => void;
 }
 
 export const useMessagesStore = create<MessagesState>((set) => ({
   messagesByChannel: {},
   isLoading: false,
   error: null,
+  pendingEditRequests: 0,
 
   setMessages: (channelId, messages) =>
     set((state) => ({
@@ -191,4 +195,14 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   setError: (error) => set({ error }),
+
+  incrementPendingEditRequests: () =>
+    set((state) => ({
+      pendingEditRequests: state.pendingEditRequests + 1,
+    })),
+
+  decrementPendingEditRequests: () =>
+    set((state) => ({
+      pendingEditRequests: Math.max(0, state.pendingEditRequests - 1),
+    })),
 }));

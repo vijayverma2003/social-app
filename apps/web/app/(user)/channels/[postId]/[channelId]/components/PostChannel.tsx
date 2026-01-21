@@ -4,6 +4,8 @@ import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
 import { MessageInput } from "@/features/messages/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useChannelMessages } from "../hooks/useChannelMessages";
+import { MessageData } from "@shared/schemas/messages";
+import { useCallback } from "react";
 
 interface PostChannelProps {
   channelId: string;
@@ -22,6 +24,23 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
     channelId,
     channelType: "post",
   });
+
+  const handleEditMessage = useCallback(
+    (
+      messageId: string,
+      messageContent: string,
+      attachments?: MessageData["attachments"]
+    ) => {
+      if (messageInputRef.current) {
+        messageInputRef.current.startEditing(
+          messageId,
+          messageContent,
+          attachments
+        );
+      }
+    },
+    []
+  );
 
   return (
     <div className="h-[calc(100vh-48px)] flex flex-col w-full">
@@ -49,6 +68,7 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
         <MessagesList
           messages={messages}
           emptyMessage="No messages yet. Start a conversation!"
+          onEditMessage={handleEditMessage}
         />
       </div>
       <div className="p-4">

@@ -4,6 +4,7 @@ import {
   CreateMessagePayload,
   GetMessagesPayload,
   DeleteMessagePayload,
+  EditMessagePayload,
   AcceptMessageRequestPayload,
   RejectMessageRequestPayload,
   MessageData,
@@ -25,6 +26,10 @@ type GetMessagesCallback = Parameters<
 
 type DeleteMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.DELETE]
+>[1];
+
+type EditMessageCallback = Parameters<
+  ClientToServerEvents[typeof MESSAGE_EVENTS.EDIT]
 >[1];
 
 type GetMessageRequestsCallback = Parameters<
@@ -143,6 +148,35 @@ export const deleteMessage = (
         reject(new Error(response.error || "Failed to delete message"));
       }
     }) as DeleteMessageCallback);
+  });
+};
+
+/**
+ * Edit a message in a channel
+ * @param payload - { messageId: string, channelId: string, channelType: "dm" | "post", content: string, storageObjectIds?: string[] }
+ * @param options - { onComplete?: (success: boolean) => void }
+ * @returns Promise that resolves with the updated message or rejects with error
+ */
+export const editMessage = (
+  payload: EditMessagePayload,
+  options?: { onComplete?: (success: boolean) => void }
+): Promise<MessageData> => {
+  return new Promise<MessageData>((resolve, reject) => {
+    const { updateMessage, decrementPendingEditRequests } =
+      useMessagesStore.getState();
+
+    socketService.emit(MESSAGE_EVENTS.EDIT, payload, ((response) => {
+      if (response.success && response.data) {
+        updateMessage(payload.channelId, payload.messageId, response.data);
+        decrementPendingEditRequests();
+        options?.onComplete?.(true);
+        resolve(response.data);
+      } else {
+        decrementPendingEditRequests();
+        options?.onComplete?.(false);
+        reject(new Error(response.error || "Failed to edit message"));
+      }
+    }) as EditMessageCallback);
   });
 };
 

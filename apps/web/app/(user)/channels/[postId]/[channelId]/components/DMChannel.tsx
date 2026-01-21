@@ -8,6 +8,7 @@ import { useUser } from "@/providers/UserContextProvider";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";
 import { useMemo, useCallback } from "react";
 import { useChannelMessages } from "../hooks/useChannelMessages";
+import { MessageData } from "@shared/schemas/messages";
 
 interface DMChannelProps {
   channelId: string;
@@ -57,6 +58,23 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
     onMarkAsReadSuccess: handleMarkAsReadSuccess,
   });
 
+  const handleEditMessage = useCallback(
+    (
+      messageId: string,
+      messageContent: string,
+      attachments?: MessageData["attachments"]
+    ) => {
+      if (messageInputRef.current) {
+        messageInputRef.current.startEditing(
+          messageId,
+          messageContent,
+          attachments
+        );
+      }
+    },
+    []
+  );
+
   return (
     <div className="flex w-full">
       <div className="h-[calc(100vh-48px)] flex flex-col w-full">
@@ -84,6 +102,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
           <MessagesList
             messages={messages}
             emptyMessage="No messages yet. Start a conversation!"
+            onEditMessage={handleEditMessage}
           />
         </div>
         <div className="p-4">

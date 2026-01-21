@@ -7,12 +7,18 @@ interface MessagesListProps {
   messages: MessageData[];
   emptyMessage?: string;
   className?: string;
+  onEditMessage?: (
+    messageId: string,
+    messageContent: string,
+    attachments?: MessageData["attachments"]
+  ) => void;
 }
 
 export const MessagesList = ({
   messages,
   emptyMessage = "No messages yet :(",
   className = "",
+  onEditMessage,
 }: MessagesListProps) => {
   if (messages.length === 0) {
     return (
@@ -32,6 +38,7 @@ export const MessagesList = ({
             key={message.id}
             message={message}
             lastMessage={lastMessage}
+            onEdit={onEditMessage}
           />
         );
       })}

@@ -12,15 +12,25 @@ import { useUser } from "@/providers/UserContextProvider";
 import { createMessage, deleteMessage } from "@/services/messagesService";
 import { useProfilesStore } from "@/stores/profilesStore";
 import { OptimistcMessageData } from "@/features/messages/store/messagesStore";
-import { Loader2, RotateCcw } from "lucide-react";
+import { Loader2, RotateCcw, Pencil } from "lucide-react";
 import { memo, useMemo } from "react";
+
+interface MessagePreviewProps {
+  message: OptimistcMessageData;
+  lastMessage?: OptimistcMessageData | null;
+  onEdit?: (
+    messageId: string,
+    messageContent: string,
+    attachments?: OptimistcMessageData["attachments"]
+  ) => void;
+}
 
 interface MessagePreviewProps {
   message: OptimistcMessageData;
   lastMessage?: OptimistcMessageData | null;
 }
 
-const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
+const MessagePreview = memo(({ message, lastMessage, onEdit }: MessagePreviewProps) => {
   const { user } = useUser();
   const profile = useProfilesStore((state) =>
     state.getProfile(message.authorId)
@@ -93,18 +103,18 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
                 <p className="text-[10px] text-muted-foreground">
                   {isSameDay
                     ? new Date(message.createdAt).toLocaleString("en-US", {
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                      })
+                      hour: "numeric",
+                      minute: "numeric",
+                      hour12: true,
+                    })
                     : new Date(message.createdAt).toLocaleString("en-US", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                      })}
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                      hour12: true,
+                    })}
                 </p>
               </div>
             )}
@@ -203,18 +213,33 @@ const MessagePreview = memo(({ message, lastMessage }: MessagePreviewProps) => {
           Copy Text
         </ContextMenuItem>
         {user && message.authorId === user.id && !isOptimistic && (
-          <ContextMenuItem
-            onClick={() =>
-              deleteMessage({
-                messageId: message.id,
-                channelId: message.channelId,
-                channelType: message.channelType,
-              })
-            }
-            variant="destructive"
-          >
-            Delete Message
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem
+              onClick={() => {
+                if (onEdit) {
+                  onEdit(
+                    message.id,
+                    message.content,
+                    message.attachments || []
+                  );
+                }
+              }}
+            >
+              Edit Message
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                deleteMessage({
+                  messageId: message.id,
+                  channelId: message.channelId,
+                  channelType: message.channelType,
+                })
+              }
+              variant="destructive"
+            >
+              Delete Message
+            </ContextMenuItem>
+          </>
         )}
       </ContextMenuContent>
     </ContextMenu>
