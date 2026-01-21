@@ -95,12 +95,14 @@ export class Message {
       throw new Error(validation.error.message);
     }
 
+    const validatedData = validation.data;
     const collection = await getCollection(COLLECTION_NAME);
     const result = await collection.updateOne(
       { _id: new ObjectId(data.messageId) },
       {
         $set: {
-          content: validation.data.content,
+          content: validatedData.content,
+          attachments: validatedData.attachments || [],
           updatedAt: new Date(),
         },
       }

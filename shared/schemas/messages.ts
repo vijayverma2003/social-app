@@ -64,9 +64,20 @@ export const CreateMessageSchema = z
 export const UpdateMessageSchema = z
   .object({
     messageId: z.string().trim().min(1),
-    content: z.string().trim().min(1),
+    content: z.string().trim(),
+    attachments: z.array(AttachmentSchema).optional().default([]),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => {
+      const hasContent = data.content.trim().length > 0;
+      const hasAttachments = (data.attachments?.length || 0) > 0;
+      return hasContent || hasAttachments;
+    },
+    {
+      message: "Message must have either content or attachments",
+    }
+  );
 
 // Get Messages Payload Schema
 export const GetMessagesPayloadSchema = z
@@ -110,8 +121,23 @@ export const EditMessagePayloadSchema = z
     channelId: z.string().trim().min(1, "Channel ID is required"),
     channelType: ChannelTypeSchema,
     content: z.string().trim().max(1000, "Content must be less than 1000 characters"),
+    storageObjectIds: z
+      .array(z.string().trim().min(1))
+      .max(10, "Maximum 10 attachments allowed")
+      .optional()
+      .default([]),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => {
+      const hasContent = data.content.trim().length > 0;
+      const hasAttachments = (data.storageObjectIds?.length || 0) > 0;
+      return hasContent || hasAttachments;
+    },
+    {
+      message: "Message must have either content or attachments",
+    }
+  );
 
 // Delete Message Payload Schema (for socket events)
 export const DeleteMessagePayloadSchema = z

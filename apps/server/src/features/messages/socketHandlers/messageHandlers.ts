@@ -417,7 +417,24 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      const { messageId, channelId, channelType, content } = validation.data;
+      const {
+        messageId,
+        channelId,
+        channelType,
+        content,
+        storageObjectIds,
+      } = validation.data;
+
+      // Prevent attachments for post channels
+      if (
+        channelType === "post" &&
+        storageObjectIds &&
+        storageObjectIds.length > 0
+      ) {
+        return callback({
+          error: "File attachments are not allowed in post channels",
+        });
+      }
 
       // Find the message
       const message = await Message.findById(messageId);
@@ -444,20 +461,73 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      // Verify user is a member of the channel
-      if (channelType === "dm") {
-        const channelUser = await prisma.channelUser.findUnique({
+      // Get old attachment storage object IDs
+      const oldStorageObjectIds =
+        message.attachments?.map((att) => att.storageObjectId) || [];
+      const newStorageObjectIds = storageObjectIds || [];
+
+      // Find attachments being removed (in old but not in new)
+      const removedStorageObjectIds = oldStorageObjectIds.filter(
+        (id) => !newStorageObjectIds.includes(id)
+      );
+
+      // Find attachments being added (in new but not in old)
+      const addedStorageObjectIds = newStorageObjectIds.filter(
+        (id) => !oldStorageObjectIds.includes(id)
+      );
+
+      // Decrement refCount for removed attachments
+      if (removedStorageObjectIds.length > 0) {
+        await prisma.storageObject.updateMany({
           where: {
-            channelId_userId: {
-              channelId,
-              userId: socket.userId,
+            id: { in: removedStorageObjectIds },
+          },
+          data: {
+            refCount: {
+              decrement: 1,
             },
           },
         });
+      }
 
-        if (!channelUser) {
+      // Fetch StorageObject data from PostgreSQL for new attachments
+      let attachments: Attachment[] = [];
+      if (newStorageObjectIds.length > 0) {
+        const storageObjects = await prisma.storageObject.findMany({
+          where: {
+            id: { in: newStorageObjectIds },
+            status: "done", // Only allow completed uploads
+          },
+        });
+
+        // Verify all StorageObjects exist and are ready
+        if (storageObjects.length !== newStorageObjectIds.length) {
           return callback({
-            error: "You are not a member of this channel",
+            error: "One or more storage objects not found or not ready",
+          });
+        }
+
+        attachments = storageObjects.map((storageObject) => ({
+          storageObjectId: storageObject.id,
+          url: storageObject.url || "",
+          fileName: storageObject.filename,
+          contentType: storageObject.mimeType,
+          size: storageObject.size,
+          hash: storageObject.hash,
+          storageKey: storageObject.storageKey,
+        }));
+
+        // Increment refCount for newly added attachments
+        if (addedStorageObjectIds.length > 0) {
+          await prisma.storageObject.updateMany({
+            where: {
+              id: { in: addedStorageObjectIds },
+            },
+            data: {
+              refCount: {
+                increment: 1,
+              },
+            },
           });
         }
       }
@@ -466,6 +536,7 @@ export class MessageHandlers extends BaseSocketHandler {
       const updated = await Message.update(messageId, {
         messageId,
         content,
+        attachments,
       });
 
       if (!updated) {

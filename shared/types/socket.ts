@@ -244,7 +244,7 @@ export interface ClientToServerEvents {
 
   /**
    * EDIT: Edit a message in a channel
-   * @param data - { messageId: string, channelId: string, channelType: "dm" | "post", content: string }
+   * @param data - { messageId: string, channelId: string, channelType: "dm" | "post", content: string, storageObjectIds?: string[] }
    * @param callback - SocketResponse<MessageData> - Returns the updated message
    * @requires User must be the author of the message and a member of the channel
    * @broadcasts EDITED to channel room
