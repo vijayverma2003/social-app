@@ -9,7 +9,7 @@ import { useMessageRequestsStore } from "@/features/messages/store/messageReques
 import { CreatePostDialog } from "@/features/posts/components/CreatePostDialog";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
-import { Home, LucideIcon, MessageCircle, Plus, Settings, Users } from "lucide-react";
+import { Clock, Home, LucideIcon, MessageCircle, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { memo, useState } from "react";
@@ -42,6 +42,11 @@ const Navbar = () => {
       href: "/home",
       label: "Home",
       icon: Home,
+    },
+    {
+      href: "/recents",
+      label: "Recents",
+      icon: Clock,
     },
     {
       href: "/friends",
