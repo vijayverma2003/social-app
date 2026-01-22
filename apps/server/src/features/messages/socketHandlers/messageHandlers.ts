@@ -310,12 +310,30 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      // Broadcast to channel room based on channel type
-      const roomName =
-        channelType === "dm"
-          ? `dm_channel:${channelId}`
-          : `channel:${channelId}`;
-      this.io.to(roomName).emit(MESSAGE_EVENTS.CREATED, messageData);
+      // Broadcast message based on channel type
+      if (channelType === "dm") {
+        // For DM channels, emit to user rooms instead of channel room
+        // This allows sorting DMs by most recent message and updating unread counters
+        // even when not viewing the channel
+
+        // Get the DM channel to find both users
+        const dmChannel = await prisma.channel.findUnique({
+          where: { id: channelId },
+          include: { users: true },
+        });
+
+        if (dmChannel) {
+          // Emit to both users in the DM channel
+          dmChannel.users.forEach((channelUser) => {
+            this.io
+              .to(`user:${channelUser.userId}`)
+              .emit(MESSAGE_EVENTS.CREATED, messageData);
+          });
+        }
+      } else {
+        // For post channels, still emit to channel room
+        this.io.to(`channel:${channelId}`).emit(MESSAGE_EVENTS.CREATED, messageData);
+      }
 
       callback({
         success: true,
@@ -561,12 +579,26 @@ export class MessageHandlers extends BaseSocketHandler {
         updatedAt: updatedMessage.updatedAt,
       });
 
-      // Broadcast to channel room based on channel type
-      const roomName =
-        channelType === "dm"
-          ? `dm_channel:${channelId}`
-          : `channel:${channelId}`;
-      this.io.to(roomName).emit(MESSAGE_EVENTS.EDITED, messageData);
+      // Broadcast message edit based on channel type
+      if (channelType === "dm") {
+        // For DM channels, emit to user rooms
+        const dmChannel = await prisma.channel.findUnique({
+          where: { id: channelId },
+          include: { users: true },
+        });
+
+        if (dmChannel) {
+          // Emit to both users in the DM channel
+          dmChannel.users.forEach((channelUser) => {
+            this.io
+              .to(`user:${channelUser.userId}`)
+              .emit(MESSAGE_EVENTS.EDITED, messageData);
+          });
+        }
+      } else {
+        // For post channels, emit to channel room
+        this.io.to(`channel:${channelId}`).emit(MESSAGE_EVENTS.EDITED, messageData);
+      }
 
       callback({
         success: true,
@@ -636,16 +668,32 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      // Broadcast to channel room based on channel type
-      const roomName =
-        channelType === "dm"
-          ? `dm_channel:${channelId}`
-          : `channel:${channelId}`;
-      this.io.to(roomName).emit(MESSAGE_EVENTS.DELETED, {
+      // Broadcast message deletion based on channel type
+      const deletedData = {
         messageId,
         channelId,
         channelType,
-      });
+      };
+
+      if (channelType === "dm") {
+        // For DM channels, emit to user rooms
+        const dmChannel = await prisma.channel.findUnique({
+          where: { id: channelId },
+          include: { users: true },
+        });
+
+        if (dmChannel) {
+          // Emit to both users in the DM channel
+          dmChannel.users.forEach((channelUser) => {
+            this.io
+              .to(`user:${channelUser.userId}`)
+              .emit(MESSAGE_EVENTS.DELETED, deletedData);
+          });
+        }
+      } else {
+        // For post channels, emit to channel room
+        this.io.to(`channel:${channelId}`).emit(MESSAGE_EVENTS.DELETED, deletedData);
+      }
 
       callback({
         success: true,

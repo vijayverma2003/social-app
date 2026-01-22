@@ -84,6 +84,9 @@ export const useMessagesBootstrap = (
   useEffect(() => {
     if (!socket || !channelId || !channelType) return;
 
+    // Skip socket listeners for DM channels - they're handled globally by useDMMessagesBootstrap
+    if (channelType === "dm") return;
+
     socket.on(MESSAGE_EVENTS.CREATED, handleMessageCreated);
     socket.on(MESSAGE_EVENTS.DELETED, handleMessageDeleted);
 
