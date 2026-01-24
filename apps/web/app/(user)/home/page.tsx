@@ -3,15 +3,17 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConversationPreview } from "@/features/posts/components/ConversationPreview";
 import { PostCard } from "@/features/posts/components/PostCard";
+import { VirtualList } from "@/features/posts/components/VirtualList";
 import { usePostsStore } from "@/features/posts/store/postsStore";
 import { useUser } from "@/providers/UserContextProvider";
 import { usePosts } from "@/hooks/usePosts";
 import { PostResponse } from "@shared/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import MainHeader from "../components/MainHeader";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 
 type TabValue = "feed" | "recent" | "own";
 
@@ -31,13 +33,27 @@ const HomePage = () => {
 
   const [previewedPost, setPreviewedPost] = useState<PostResponse | null>(null);
   const [activeTab, setActiveTab] = useState<TabValue>("feed");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Virtual scrolling for feed
+  const feedVirtualizer = useVirtualizer({
+    count: allPosts.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => 400, // Estimated height per post
+    overscan: 2, // Number of items to render outside visible area
+    enabled: activeTab === "feed" && allPosts.length > 0,
+    measureElement:
+      typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
+        ? (element: Element | null) => element?.getBoundingClientRect().height ?? 400
+        : undefined,
+  });
 
   // Infinite scroll using IntersectionObserver
   useEffect(() => {
     if (activeTab !== "feed") return;
 
     const sentinel = document.getElementById("feed-infinite-scroll-sentinel");
-    if (!sentinel) return;
+    if (!sentinel || !scrollContainerRef.current) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -52,7 +68,7 @@ const HomePage = () => {
         }
       },
       {
-        root: null,
+        root: scrollContainerRef.current,
         rootMargin: "200px",
         threshold: 0.1,
       }
@@ -63,7 +79,7 @@ const HomePage = () => {
     return () => {
       observer.disconnect();
     };
-  }, [activeTab, fetchFeedPage, feedOffset, hasMoreFeed, isFeedLoading]);
+  }, [activeTab, fetchFeedPage, feedOffset, hasMoreFeed, isFeedLoading, hasLoadedInitialFeed]);
 
   // Filter posts based on active tab
   const displayedPosts = useMemo(() => {
@@ -102,7 +118,10 @@ const HomePage = () => {
           </div>
         </div>
       </MainHeader>
-      <div className="flex gap-4 w-full p-4 overflow-y-auto">
+      <div
+        ref={scrollContainerRef}
+        className="flex gap-4 w-full p-4 overflow-y-auto"
+      >
         <div className="max-w-2xl w-full">
           <Tabs
             value={activeTab}
@@ -121,16 +140,18 @@ const HomePage = () => {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-4">
-                    {allPosts.map((post) => (
+                  <VirtualList
+                    virtualizer={feedVirtualizer as unknown as Virtualizer<HTMLElement, Element>}
+                    items={allPosts}
+                    renderItem={(post) => (
                       <PostCard
-                        key={post.id}
                         post={post}
                         userId={post.userId}
                         onPreviewChat={handlePreviewChat}
                       />
-                    ))}
-                  </div>
+                    )}
+                    itemSpacing={16}
+                  />
 
                   <div
                     id="feed-infinite-scroll-sentinel"
@@ -139,8 +160,8 @@ const HomePage = () => {
                     {isFeedLoading
                       ? "Loading more..."
                       : hasMoreFeed
-                      ? "Scroll to load more"
-                      : "No more posts"}
+                        ? "Scroll to load more"
+                        : "No more posts"}
                   </div>
                 </>
               )}
