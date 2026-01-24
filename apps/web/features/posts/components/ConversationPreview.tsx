@@ -88,7 +88,7 @@ export const ConversationPreview = ({
             </p>
           </div>
         )}
-        <MessagesList messages={messages} />
+        <MessagesList messages={messages} containerRef={messagesContainerRef} />
       </div>
 
       <div className="px-4 pb-4 absolute bottom-0 left-0 w-full">

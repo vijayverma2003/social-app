@@ -103,6 +103,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             messages={messages}
             emptyMessage="No messages yet. Start a conversation!"
             onEditMessage={handleEditMessage}
+            containerRef={messagesContainerRef}
           />
         </div>
         <div className="p-4">

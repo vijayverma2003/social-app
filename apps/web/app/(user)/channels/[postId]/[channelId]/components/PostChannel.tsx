@@ -69,6 +69,7 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
           messages={messages}
           emptyMessage="No messages yet. Start a conversation!"
           onEditMessage={handleEditMessage}
+          containerRef={messagesContainerRef}
         />
       </div>
       <div className="p-4">
