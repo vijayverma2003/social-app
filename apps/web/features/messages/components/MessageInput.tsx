@@ -1,18 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useMessageForm } from "@/hooks/useMessageForm";
-import {
-  ChannelType,
-  CreateMessagePayloadSchema,
-} from "@shared/schemas/messages";
-import { Send, SendHorizonal, X } from "lucide-react";
-import { forwardRef, useImperativeHandle } from "react";
-import { MessageFilePreview } from "./MessageFilePreview";
-import { ExistingAttachmentPreview } from "./ExistingAttachmentPreview";
-import { SelectedFile, UploadButton } from "./UploadButton";
 import { Textarea } from "@/components/ui/textarea";
+import { OptimistcMessageData } from "@/features/messages/store/messagesStore";
+import { useMessageForm } from "@/hooks/useMessageForm";
+import { useProfilesStore } from "@/stores/profilesStore";
+import {
+  Attachment,
+  ChannelType
+} from "@shared/schemas/messages";
+import { SendHorizonal, X } from "lucide-react";
+import { forwardRef, useImperativeHandle } from "react";
+import { ExistingAttachmentPreview } from "./ExistingAttachmentPreview";
+import { MessageFilePreview } from "./MessageFilePreview";
+import { SelectedFile, UploadButton } from "./UploadButton";
 
 interface MessageInputProps {
   channelId: string;
@@ -20,12 +21,12 @@ interface MessageInputProps {
   onSend?: () => void;
 }
 
-import { Attachment } from "@shared/schemas/messages";
 
 export interface MessageInputRef {
   focus: () => void;
   appendText: (text: string) => void;
   startEditing: (messageId: string, messageContent: string, attachments?: Attachment[]) => void;
+  startReply: (message: OptimistcMessageData) => void;
 }
 
 export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
@@ -37,6 +38,7 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       setSelectedFiles,
       editingMessageId,
       existingAttachments,
+      replyingToMessage,
       textareaRef,
       uploadFilesFnRef,
       removeFile,
@@ -45,7 +47,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       handleKeyDown,
       startEditing,
       cancelEditing,
+      startReply,
+      cancelReply,
     } = useMessageForm({ channelId, channelType, onSend });
+
+    const repliedToProfile = useProfilesStore((state) =>
+      replyingToMessage ? state.getProfile(replyingToMessage.authorId) : null
+    );
 
     useImperativeHandle(ref, () => ({
       focus: () => textareaRef.current?.focus(),
@@ -54,10 +62,11 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
         textareaRef.current?.focus();
       },
       startEditing,
+      startReply,
     }));
 
     return (
-      <div className="bg-secondary/70 rounded-3xl">
+      <div className="bg-secondary rounded-3xl">
         {editingMessageId && (
           <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/20">
             <p className="text-xs text-muted-foreground">
@@ -68,6 +77,28 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
               variant="ghost"
               size="sm"
               onClick={cancelEditing}
+              className="h-6 px-2"
+            >
+              <X className="size-3" />
+            </Button>
+          </div>
+        )}
+        {replyingToMessage && (
+          <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/20">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground shrink-0">Replying to</p>
+              <p className="text-xs font-medium text-primary shrink-0">
+                {repliedToProfile?.displayName || "Unknown User"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {replyingToMessage.content.slice(0, 100)}...
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={cancelReply}
               className="h-6 px-2"
             >
               <X className="size-3" />
@@ -110,7 +141,13 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           )}
           <Textarea
             ref={textareaRef}
-            placeholder={editingMessageId ? "Edit message..." : "Type a message..."}
+            placeholder={
+              editingMessageId
+                ? "Edit message..."
+                : replyingToMessage
+                  ? "Type a reply..."
+                  : "Type a message..."
+            }
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}

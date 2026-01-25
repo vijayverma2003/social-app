@@ -23,14 +23,19 @@ interface MessagePreviewProps {
     messageContent: string,
     attachments?: OptimistcMessageData["attachments"]
   ) => void;
+  onReply?: (message: OptimistcMessageData) => void;
+  repliedToMessage?: OptimistcMessageData | null;
+  highlightedMessageId?: string;
 }
 
-interface MessagePreviewProps {
-  message: OptimistcMessageData;
-  lastMessage?: OptimistcMessageData | null;
-}
-
-const MessagePreview = memo(({ message, lastMessage, onEdit }: MessagePreviewProps) => {
+const MessagePreview = memo(({
+  message,
+  lastMessage,
+  onEdit,
+  onReply,
+  repliedToMessage,
+  highlightedMessageId
+}: MessagePreviewProps) => {
   const { user } = useUser();
   const profile = useProfilesStore((state) =>
     state.getProfile(message.authorId)
@@ -39,6 +44,12 @@ const MessagePreview = memo(({ message, lastMessage, onEdit }: MessagePreviewPro
   const isOptimistic = message.id.startsWith("optimistic-");
   const hasError = !!message.error;
   const uploadingFiles = message.uploadingFiles || [];
+
+  const repliedToProfile = useProfilesStore((state) =>
+    repliedToMessage ? state.getProfile(repliedToMessage.authorId) : null
+  );
+
+  const isHighlighted = highlightedMessageId === message.id;
 
   const handleRetry = () => {
     if (hasError && user) {
@@ -80,7 +91,8 @@ const MessagePreview = memo(({ message, lastMessage, onEdit }: MessagePreviewPro
         <div
           className={cn(
             "p-0 flex items-start gap-3 hover:bg-accent/15 rounded-sm px-4",
-            showAvatar && "mt-4"
+            showAvatar && "mt-4",
+            isHighlighted && "bg-primary/10 border-l-2 border-primary"
           )}
         >
           {showAvatar ? (
@@ -116,6 +128,25 @@ const MessagePreview = memo(({ message, lastMessage, onEdit }: MessagePreviewPro
                       hour12: true,
                     })}
                 </p>
+              </div>
+            )}
+            {/* Show reply preview */}
+            {message.replyToMessageId && (
+              <div className="flex items-center gap-2 mb-2 h-6 px-2 bg-muted/50 rounded border-l-2 border-primary/50">
+                {repliedToMessage ? (
+                  <>
+                    <p className="text-xs font-medium text-primary">
+                      {repliedToProfile?.displayName || "Unknown User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                      {repliedToMessage.content}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Message could not be loaded
+                  </p>
+                )}
               </div>
             )}
             {/* Show uploading files */}
@@ -212,6 +243,17 @@ const MessagePreview = memo(({ message, lastMessage, onEdit }: MessagePreviewPro
         >
           Copy Text
         </ContextMenuItem>
+        {!isOptimistic && (
+          <ContextMenuItem
+            onClick={() => {
+              if (onReply) {
+                onReply(message);
+              }
+            }}
+          >
+            Reply
+          </ContextMenuItem>
+        )}
         {user && message.authorId === user.id && !isOptimistic && (
           <>
             <ContextMenuItem

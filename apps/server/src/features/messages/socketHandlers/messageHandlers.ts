@@ -132,6 +132,7 @@ export class MessageHandlers extends BaseSocketHandler {
         content,
         storageObjectIds,
         optimisticId,
+        replyToMessageId,
       } = validation.data;
 
       // Prevent attachments for post channels
@@ -143,6 +144,25 @@ export class MessageHandlers extends BaseSocketHandler {
         return callback({
           error: "File attachments are not allowed in post channels",
         });
+      }
+
+      // Validate replyToMessageId if provided
+      if (replyToMessageId) {
+        const repliedToMessage = await Message.findById(replyToMessageId);
+        if (!repliedToMessage) {
+          return callback({
+            error: "Message being replied to does not exist",
+          });
+        }
+        // Ensure the replied-to message is in the same channel
+        if (
+          repliedToMessage.channelId !== channelId ||
+          repliedToMessage.channelType !== channelType
+        ) {
+          return callback({
+            error: "Cannot reply to a message from a different channel",
+          });
+        }
       }
 
       // Verify user is a member of the channel
@@ -210,6 +230,7 @@ export class MessageHandlers extends BaseSocketHandler {
         content,
         authorId: socket.userId,
         attachments,
+        replyToMessageId: replyToMessageId || undefined,
       });
 
       // Convert MongoDB ObjectId to string and map _id to id

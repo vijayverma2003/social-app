@@ -20,10 +20,6 @@ export const ProfileSettingsDialog = ({
 }: ProfileSettingsDialogProps) => {
   const { user } = useUser();
 
-  if (!user) {
-    return null;
-  }
-
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
   // Update activeSection when initialSection changes and dialog opens
@@ -33,6 +29,7 @@ export const ProfileSettingsDialog = ({
     }
   }, [open, initialSection]);
 
+  if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

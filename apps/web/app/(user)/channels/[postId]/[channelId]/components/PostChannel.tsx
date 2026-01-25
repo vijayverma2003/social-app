@@ -42,6 +42,15 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
     []
   );
 
+  const handleReplyMessage = useCallback(
+    (message: MessageData) => {
+      if (messageInputRef.current) {
+        messageInputRef.current.startReply(message);
+      }
+    },
+    []
+  );
+
   return (
     <div className="h-[calc(100vh-48px)] flex flex-col w-full">
       <div
@@ -69,6 +78,7 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
           messages={messages}
           emptyMessage="No messages yet. Start a conversation!"
           onEditMessage={handleEditMessage}
+          onReplyMessage={handleReplyMessage}
           containerRef={messagesContainerRef}
         />
       </div>

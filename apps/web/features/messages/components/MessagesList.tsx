@@ -3,8 +3,9 @@
 import { MessageData } from "@shared/schemas/messages";
 import MessagePreview from "./MessagePreview";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { VirtualList } from "@/features/posts/components/VirtualList";
+import { useUser } from "@/providers/UserContextProvider";
 
 interface MessagesListProps {
   messages: MessageData[];
@@ -15,6 +16,7 @@ interface MessagesListProps {
     messageContent: string,
     attachments?: MessageData["attachments"]
   ) => void;
+  onReplyMessage?: (message: MessageData) => void;
   containerRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -23,8 +25,10 @@ export const MessagesList = ({
   emptyMessage = "No messages yet :(",
   className = "",
   onEditMessage,
+  onReplyMessage,
   containerRef,
 }: MessagesListProps) => {
+  const { user } = useUser();
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollElement = containerRef || parentRef;
 
@@ -39,6 +43,24 @@ export const MessagesList = ({
         ? (element: Element | null) => element?.getBoundingClientRect().height ?? 80
         : undefined,
   });
+
+  // Create a map of message IDs to messages for quick lookup
+  const messagesMap = useMemo(() => {
+    const map = new Map<string, MessageData>();
+    messages.forEach((m) => {
+      map.set(m.id, m);
+    });
+    return map;
+  }, [messages]);
+
+  // Compute set of message IDs that are replies (for highlighting)
+  const replyMessageIds = useMemo(() => {
+    const ids = new Set<string>();
+    messages.forEach((m) => {
+      if (m.replyToMessageId) ids.add(m.id);
+    });
+    return ids;
+  }, [messages]);
 
   if (messages.length === 0) {
     return (
@@ -55,12 +77,18 @@ export const MessagesList = ({
         items={messages}
         renderItem={(message, index) => {
           const lastMessage = index > 0 ? messages[index - 1] : null;
+          const repliedToMessage = message.replyToMessageId
+            ? messagesMap.get(message.replyToMessageId) || null
+            : null;
           return (
-            <MessagePreview
-              message={message}
-              lastMessage={lastMessage}
-              onEdit={onEditMessage}
-            />
+              <MessagePreview
+                message={message}
+                lastMessage={lastMessage}
+                onEdit={onEditMessage}
+                onReply={onReplyMessage}
+                repliedToMessage={repliedToMessage}
+                highlightedMessageId={replyMessageIds.has(message.id) ? message.id : undefined}
+              />
           );
         }}
         itemSpacing={4}

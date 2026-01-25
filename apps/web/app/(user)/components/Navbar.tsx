@@ -149,18 +149,18 @@ const Navbar = () => {
             </p>
           </div>
         </div>
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            openSettings();
-          }}
-          variant="ghost"
-          size="icon"
-          aria-label="Open settings"
-        >
-          <Settings color="var(--muted-foreground)" className="size-5" />
-        </Button>
       </ProfileCardPopover>
+      <Button
+        onClick={(e) => {
+          e.stopPropagation();
+          openSettings();
+        }}
+        variant="ghost"
+        size="icon"
+        aria-label="Open settings"
+      >
+        <Settings color="var(--muted-foreground)" className="size-5" />
+      </Button>
     </div>
   );
 };

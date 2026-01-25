@@ -75,9 +75,18 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
     []
   );
 
+  const handleReplyMessage = useCallback(
+    (message: MessageData) => {
+      if (messageInputRef.current) {
+        messageInputRef.current.startReply(message);
+      }
+    },
+    []
+  );
+
   return (
-    <div className="flex w-full">
-      <div className="h-[calc(100vh-48px)] flex flex-col w-full">
+    <div className="w-full grid grid-cols-[1fr_360px]">
+      <div className="h-[calc(100vh-48px)] flex flex-col">
         <div
           ref={messagesContainerRef}
           className="overflow-y-auto py-4 space-y-2 relative no-scrollbar flex-1 min-w-[400px]"
@@ -103,6 +112,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             messages={messages}
             emptyMessage="No messages yet. Start a conversation!"
             onEditMessage={handleEditMessage}
+            onReplyMessage={handleReplyMessage}
             containerRef={messagesContainerRef}
           />
         </div>

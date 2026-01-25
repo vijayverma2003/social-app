@@ -7,6 +7,7 @@ import { createMessage, editMessage } from "@/services/messagesService";
 import { ChannelType, MessageData, Attachment } from "@shared/schemas/messages";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { OptimistcMessageData } from "@/features/messages/store/messagesStore";
 
 const MAX_PENDING_MESSAGES = 5;
 const ERROR_SEND_MESSAGE = "Failed to send message. Click to retry.";
@@ -75,6 +76,7 @@ export const useMessageForm = ({
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+  const [replyingToMessage, setReplyingToMessage] = useState<OptimistcMessageData | null>(null);
   const uploadFilesFnRef = useRef<
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
   >(null);
@@ -163,7 +165,10 @@ export const useMessageForm = ({
     ): void => {
       const onComplete = (messageId: string | null) => {
         pendingMessagesRef.current.delete(optimisticId);
-        if (messageId) onSend?.();
+        if (messageId) {
+          setReplyingToMessage(null); // Clear reply state after successful send
+          onSend?.();
+        }
       };
 
       const payload = {
@@ -172,11 +177,12 @@ export const useMessageForm = ({
         content,
         storageObjectIds,
         optimisticId,
+        replyToMessageId: replyingToMessage?.id,
       };
 
       createMessage(payload, { onComplete, optimisticId });
     },
-    [channelId, channelType, onSend]
+    [channelId, channelType, onSend, replyingToMessage]
   );
 
   const startEditing = useCallback(
@@ -199,6 +205,17 @@ export const useMessageForm = ({
     setContent("");
     setSelectedFiles([]);
     setExistingAttachments([]);
+  }, []);
+
+  const startReply = useCallback((message: OptimistcMessageData) => {
+    setReplyingToMessage(message);
+    setEditingMessageId(null); // Cancel any editing
+    setSelectedFiles([]);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  }, []);
+
+  const cancelReply = useCallback(() => {
+    setReplyingToMessage(null);
   }, []);
 
   const removeExistingAttachment = useCallback((storageObjectId: string) => {
@@ -314,6 +331,7 @@ export const useMessageForm = ({
       // Clear input immediately for better UX
       setContent("");
       setSelectedFiles([]);
+      setReplyingToMessage(null); // Clear reply state
 
       try {
         // Upload files and get storage object IDs
@@ -366,6 +384,7 @@ export const useMessageForm = ({
     setSelectedFiles: setSelectedFilesSafe,
     editingMessageId,
     existingAttachments,
+    replyingToMessage,
     // Refs
     textareaRef,
     uploadFilesFnRef,
@@ -376,5 +395,7 @@ export const useMessageForm = ({
     handleKeyDown,
     startEditing,
     cancelEditing,
+    startReply,
+    cancelReply,
   };
 };

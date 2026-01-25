@@ -26,6 +26,7 @@ export const MessageSchema = z
     createdAt: z.date(),
     updatedAt: z.date(),
     authorId: z.string().trim().min(1),
+    replyToMessageId: z.string().trim().optional(),
   })
   .strict()
   .refine(
@@ -47,6 +48,7 @@ export const CreateMessageSchema = z
     content: z.string().trim(),
     authorId: z.string().trim().min(1),
     attachments: z.array(AttachmentSchema).optional().default([]),
+    replyToMessageId: z.string().trim().optional(),
   })
   .strict()
   .refine(
@@ -101,6 +103,7 @@ export const CreateMessagePayloadSchema = z
       .optional()
       .default([]),
     optimisticId: z.string().trim().optional(), // Client-generated optimistic message ID
+    replyToMessageId: z.string().trim().optional(), // ID of the message being replied to
   })
   .strict()
   .refine(
