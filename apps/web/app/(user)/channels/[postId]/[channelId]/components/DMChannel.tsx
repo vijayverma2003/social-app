@@ -123,7 +123,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             channelType="dm"
             onSend={scrollToBottom}
           />
-        </div>
+        </div>  
       </div>
       <div className="p-6">
         <ProfileCard userId={otherUserId} variant="popover" />

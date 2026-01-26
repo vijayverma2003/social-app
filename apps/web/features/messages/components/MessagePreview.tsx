@@ -25,7 +25,7 @@ interface MessagePreviewProps {
   ) => void;
   onReply?: (message: OptimistcMessageData) => void;
   repliedToMessage?: OptimistcMessageData | null;
-  highlightedMessageId?: string;
+  highlight?: boolean;
 }
 
 const MessagePreview = memo(({
@@ -34,7 +34,7 @@ const MessagePreview = memo(({
   onEdit,
   onReply,
   repliedToMessage,
-  highlightedMessageId
+  highlight
 }: MessagePreviewProps) => {
   const { user } = useUser();
   const profile = useProfilesStore((state) =>
@@ -48,8 +48,6 @@ const MessagePreview = memo(({
   const repliedToProfile = useProfilesStore((state) =>
     repliedToMessage ? state.getProfile(repliedToMessage.authorId) : null
   );
-
-  const isHighlighted = highlightedMessageId === message.id;
 
   const handleRetry = () => {
     if (hasError && user) {
@@ -92,7 +90,7 @@ const MessagePreview = memo(({
           className={cn(
             "p-0 flex items-start gap-3 hover:bg-accent/15 rounded-sm px-4",
             showAvatar && "mt-4",
-            isHighlighted && "bg-primary/10 border-l-2 border-primary"
+            highlight && "bg-primary/10 border-l-2 border-primary"
           )}
         >
           {showAvatar ? (

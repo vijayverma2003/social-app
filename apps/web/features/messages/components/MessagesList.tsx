@@ -80,6 +80,8 @@ export const MessagesList = ({
           const repliedToMessage = message.replyToMessageId
             ? messagesMap.get(message.replyToMessageId) || null
             : null;
+
+          const highlight = repliedToMessage ? repliedToMessage.authorId === user?.id : false;
           return (
               <MessagePreview
                 message={message}
@@ -87,7 +89,7 @@ export const MessagesList = ({
                 onEdit={onEditMessage}
                 onReply={onReplyMessage}
                 repliedToMessage={repliedToMessage}
-                highlightedMessageId={replyMessageIds.has(message.id) ? message.id : undefined}
+                highlight={highlight}
               />
           );
         }}
