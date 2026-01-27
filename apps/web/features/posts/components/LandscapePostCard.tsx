@@ -355,14 +355,16 @@ export const LandscapePostCard = ({
             </Button>
           </div>
           <div className="flex items-center gap-1">
-            <Button
-              size="icon"
-              variant="secondary"
-              className={cn("cursor-pointer")}
+            <button
+              type="button"
+              className={cn(
+                buttonVariants({ size: "icon", variant: "secondary" }),
+                "cursor-pointer"
+              )}
               onClick={() => onPreviewChat?.(post)}
             >
               <Eye />
-            </Button>
+            </button>
 
             {post.channelId && (
               <Link

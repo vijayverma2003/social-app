@@ -6,7 +6,7 @@ import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBoots
 import { useMessagesStore } from "@/features/messages/store/messagesStore";
 import { cn } from "@/lib/utils";
 import { ChannelType } from "@shared/schemas/messages";
-import { MessageCircle, X } from "lucide-react";
+import { ArrowLeft, MessageCircle, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -64,13 +64,30 @@ export const ConversationPreview = ({
   if (!channelId) return null;
 
   return (
-    <div className="flex flex-col bg-secondary/50 rounded-2xl w-full max-h-[500px] h-full overflow-hidden justify-between relative">
-      <div className="flex items-center justify-between gap-4 px-4 py-2">
-        <p className="text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden">
-          {title}
-        </p>
+    <div className="flex h-full flex-col w-full overflow-hidden justify-between relative">
+      <div className="flex items-center justify-between gap-2 px-4 py-2">
+        <div className="flex flex-1 items-center gap-2 min-w-0">
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="cursor-pointer sm:hidden"
+              onClick={onClose}
+            >
+              <ArrowLeft />
+            </Button>
+          )}
+          <p className="text-sm font-medium whitespace-nowrap text-ellipsis overflow-hidden">
+            {title}
+          </p>
+        </div>
         {onClose && (
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="cursor-pointer hidden sm:inline-flex"
+            onClick={onClose}
+          >
             <X />
           </Button>
         )}

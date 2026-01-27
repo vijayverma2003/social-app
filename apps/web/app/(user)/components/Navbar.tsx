@@ -69,7 +69,7 @@ const Navbar = () => {
 
   return (
     <div className="overflow-hidden">
-      <aside className="h-screen w-64 p-4 flex flex-col gap-4 overflow-y-auto no-scrollbar relative">
+      <aside className="h-screen w-56 p-2 flex flex-col gap-4 overflow-y-auto no-scrollbar relative">
         <div className="mb-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
             <span>Social App</span>

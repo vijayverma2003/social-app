@@ -137,7 +137,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       />
-      <div className="w-full max-w-2xl bg-background rounded-2xl py-8 shadow-md shadow-background/30 group space-y-6 px-8">
+      <div className="w-full max-w-2xl bg-background rounded-2xl py-8 shadow-md shadow-background/30 group space-y-6">
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -283,14 +283,16 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
             </Button>
           </div>
           <div className="flex items-center gap-1">
-            <Button
-              size="icon"
-              variant="secondary"
-              className={cn("cursor-pointer")}
+            <button
+              type="button"
+              className={cn(
+                buttonVariants({ size: "icon", variant: "secondary" }),
+                "cursor-pointer"
+              )}
               onClick={() => onPreviewChat?.(post)}
             >
               <Eye />
-            </Button>
+            </button>
 
             {post.channelId && (
               <Link

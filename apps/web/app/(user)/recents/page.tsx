@@ -4,14 +4,14 @@ import { LandscapePostCard } from "@/features/posts/components/LandscapePostCard
 import { getRecentPosts, fetchPostAuthorProfiles } from "@/services/postsService";
 import { PostResponse } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
-import { ConversationPreview } from "@/features/posts/components/ConversationPreview";
 import { useUser } from "@/providers/UserContextProvider";
+import { useConversationPreview } from "@/contexts/conversationPreviewContext";
 
 const RecentsPage = () => {
   const { user } = useUser();
   const [recentPosts, setRecentPosts] = useState<PostResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [previewedPost, setPreviewedPost] = useState<PostResponse | null>(null);
+  const { openConversation } = useConversationPreview();
 
   const fetchRecentPosts = useCallback(async () => {
     try {
@@ -41,13 +41,19 @@ const RecentsPage = () => {
     fetchRecentPosts();
   }, [fetchRecentPosts]);
 
-  const handlePreviewChat = useCallback((post: PostResponse) => {
-    setPreviewedPost(post);
-  }, []);
-
-  const handleClosePreview = useCallback(() => {
-    setPreviewedPost(null);
-  }, []);
+  const handlePreviewChat = useCallback(
+    (post: PostResponse) => {
+      if (!post.channelId) return;
+      openConversation({
+        channelId: post.channelId,
+        postId: post.id,
+        title:
+          post.content.slice(0, 30) +
+          (post.content.length > 30 ? "..." : ""),
+      });
+    },
+    [openConversation],
+  );
 
   return (
     <div className="flex h-full">
@@ -85,21 +91,6 @@ const RecentsPage = () => {
           )}
         </div>
       </div>
-
-      {/* Preview Panel */}
-      {previewedPost && previewedPost.channelId && (
-        <div className="w-96 border-l border-border bg-background">
-          <ConversationPreview
-            channelId={previewedPost.channelId}
-            postId={previewedPost.id}
-            onClose={handleClosePreview}
-            title={
-              previewedPost.content.slice(0, 30) +
-              (previewedPost.content.length > 30 ? "..." : "")
-            }
-          />
-        </div>
-      )}
     </div>
   );
 };

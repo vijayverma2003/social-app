@@ -12,6 +12,8 @@ import { usePostsBootstrap } from "@/features/posts/hooks/usePostsBootstrap";
 import { useProfilesBootstrap } from "@/hooks/useProfilesBootstrap";
 import { useMessageRequestsBootstrap } from "@/features/messages/hooks/useMessageRequestsBootstrap";
 import { useDMMessagesBootstrap } from "@/features/dms/hooks/useDMMessagesBootstrap";
+import { ConversationPreviewProvider } from "@/contexts/conversationPreviewContext";
+import { ConversationPreviewPanel } from "./components/ConversationPreviewPanel";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
@@ -26,14 +28,19 @@ const Layout = ({ children }: PropsWithChildren) => {
   return (
     <ProfileCardViewerProvider>
       <SettingsProvider>
-        <div className="flex h-screen">
-          <Navbar />
-          <main className="flex flex-1 flex-col overflow-y-auto border-l border-border bg-background">
-            <div className="flex-1">{children}</div>
-          </main>
-        </div>
-      </SettingsProvider>
-    </ProfileCardViewerProvider>
+        <ConversationPreviewProvider>
+          <div className="flex h-screen">
+            <Navbar />
+            <div className="flex flex-1 mt-2">
+              <main className="flex flex-1 overflow-hidden border border-border border-b-0 bg-background rounded-t-3xl">
+                <div className="flex-1">{children}</div>
+              </main>
+              <ConversationPreviewPanel />
+            </div>
+          </div>
+        </ConversationPreviewProvider >
+      </SettingsProvider >
+    </ProfileCardViewerProvider >
   );
 };
 
