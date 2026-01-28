@@ -110,7 +110,10 @@ export const useMessageForm = ({
 
   const validateSubmission = useCallback(
     (messageContent: string, hasAttachments: boolean): string | null => {
-      if (!messageContent && !hasAttachments) return null;
+      // Validate that message has content or attachments
+      if (!messageContent && !hasAttachments) {
+        return "Message must have either content or attachments";
+      }
 
       if (pendingMessagesRef.current.size >= MAX_PENDING_MESSAGES)
         return "Please wait for previous messages to send";

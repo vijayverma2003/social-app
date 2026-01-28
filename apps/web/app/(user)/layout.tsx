@@ -26,8 +26,8 @@ const Layout = ({ children }: PropsWithChildren) => {
   useDMMessagesBootstrap();
 
   return (
-    <ProfileCardViewerProvider>
-      <SettingsProvider>
+    <SettingsProvider>
+      <ProfileCardViewerProvider>
         <ConversationPreviewProvider>
           <div className="flex h-screen">
             <Navbar />
@@ -39,8 +39,8 @@ const Layout = ({ children }: PropsWithChildren) => {
             </div>
           </div>
         </ConversationPreviewProvider >
-      </SettingsProvider >
-    </ProfileCardViewerProvider >
+      </ProfileCardViewerProvider >
+    </SettingsProvider >
   );
 };
 
