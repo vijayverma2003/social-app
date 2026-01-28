@@ -42,6 +42,7 @@ export const MessagesList = ({
       typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
         ? (element: Element | null) => element?.getBoundingClientRect().height ?? 80
         : undefined,
+
   });
 
   // Create a map of message IDs to messages for quick lookup
@@ -51,15 +52,6 @@ export const MessagesList = ({
       map.set(m.id, m);
     });
     return map;
-  }, [messages]);
-
-  // Compute set of message IDs that are replies (for highlighting)
-  const replyMessageIds = useMemo(() => {
-    const ids = new Set<string>();
-    messages.forEach((m) => {
-      if (m.replyToMessageId) ids.add(m.id);
-    });
-    return ids;
   }, [messages]);
 
   if (messages.length === 0) {
@@ -83,14 +75,14 @@ export const MessagesList = ({
 
           const highlight = repliedToMessage ? repliedToMessage.authorId === user?.id : false;
           return (
-              <MessagePreview
-                message={message}
-                lastMessage={lastMessage}
-                onEdit={onEditMessage}
-                onReply={onReplyMessage}
-                repliedToMessage={repliedToMessage}
-                highlight={highlight}
-              />
+            <MessagePreview
+              message={message}
+              lastMessage={lastMessage}
+              onEdit={onEditMessage}
+              onReply={onReplyMessage}
+              repliedToMessage={repliedToMessage}
+              highlight={highlight}
+            />
           );
         }}
         itemSpacing={4}

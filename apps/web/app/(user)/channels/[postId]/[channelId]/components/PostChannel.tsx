@@ -6,6 +6,7 @@ import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useChannelMessages } from "../hooks/useChannelMessages";
 import { MessageData } from "@shared/schemas/messages";
 import { useCallback } from "react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface PostChannelProps {
   channelId: string;
@@ -53,10 +54,12 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
 
   return (
     <div className="h-[calc(100vh-48px)] flex flex-col w-full">
+      <div className="flex-1" />
       <div
         ref={messagesContainerRef}
-        className="overflow-y-auto py-4 space-y-2 relative no-scrollbar flex-1 min-w-[400px]"
+        className="overflow-y-auto py-4 space-y-2 relative no-scrollbar min-w-[400px]"
       >
+
         <InfiniteScroll
           onLoadMore={loadOlderMessages}
           hasMore={hasMoreOlderMessages}
@@ -65,14 +68,10 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
           enabled={messages.length > 0}
           loadingComponent={
             <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-              Loading older messages...
+              <Spinner />
             </div>
           }
-          endComponent={
-            <div className="flex items-center justify-center py-2 text-xs text-muted-foreground">
-              No more messages
-            </div>
-          }
+          endComponent={<>?</>}
         />
         <MessagesList
           messages={messages}
@@ -82,7 +81,7 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
           containerRef={messagesContainerRef}
         />
       </div>
-      <div className="p-4">
+      <div className="p-2 mb-3">
         <MessageInput
           ref={messageInputRef}
           channelId={channelId}

@@ -9,6 +9,7 @@ import { useDMChannelsStore } from "@/stores/dmChannelStore";
 import { useMemo, useCallback } from "react";
 import { useChannelMessages } from "../hooks/useChannelMessages";
 import { MessageData } from "@shared/schemas/messages";
+import { Spinner } from "@/components/ui/spinner";
 
 interface DMChannelProps {
   channelId: string;
@@ -87,9 +88,10 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
   return (
     <div className="w-full grid grid-cols-[1fr_360px]">
       <div className="h-[calc(100vh-48px)] flex flex-col">
+        <div className="flex-1" />
         <div
           ref={messagesContainerRef}
-          className="overflow-y-auto py-4 space-y-2 relative no-scrollbar flex-1 min-w-[400px]"
+          className="overflow-y-auto py-4 space-y-2 relative no-scrollbarmin-w-[400px]"
         >
           <InfiniteScroll
             onLoadMore={loadOlderMessages}
@@ -99,14 +101,10 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             enabled={messages.length > 0}
             loadingComponent={
               <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-                Loading older messages...
+                <Spinner />
               </div>
             }
-            endComponent={
-              <div className="flex items-center justify-center py-2 text-xs text-muted-foreground">
-                No more messages
-              </div>
-            }
+            endComponent={<>?</>}
           />
           <MessagesList
             messages={messages}
@@ -116,14 +114,14 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             containerRef={messagesContainerRef}
           />
         </div>
-        <div className="p-4">
+        <div className="p-2 mb-3">
           <MessageInput
             ref={messageInputRef}
             channelId={channelId}
             channelType="dm"
             onSend={scrollToBottom}
           />
-        </div>  
+        </div>
       </div>
       <div className="p-6">
         <ProfileCard userId={otherUserId} variant="popover" />

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 import { useConversationPreview } from "@/contexts/conversationPreviewContext";
+import { Spinner } from "@/components/ui/spinner";
 
 type TabValue = "feed" | "recent" | "own";
 
@@ -94,60 +95,56 @@ const HomePage = () => {
   );
 
   return (
-      <section className="h-screen flex flex-col">
-        <MainHeader>
-          <div className="flex-1 max-w-2xl">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="pl-10 py-5 bg-secondary/50 ring-0 focus-visible:ring-0"
-              />
-            </div>
-          </div>
-        </MainHeader>
-        <div
-          ref={scrollContainerRef}
-          className="flex gap-4 w-full p-4 overflow-y-auto"
-        >
-          <div className="flex-1 px-2 max-w-2xl">
-            <div className="space-y-4">
-              {allPosts.length === 0 ? (
-                <div className="text-center text-muted-foreground py-12">
-                  <p>No posts yet. Be the first to post!</p>
-                </div>
-              ) : (
-                <>
-                  <VirtualList
-                    virtualizer={feedVirtualizer as unknown as Virtualizer<HTMLElement, Element>}
-                    items={allPosts}
-                    renderItem={(post) => (
-                      <PostCard
-                        post={post}
-                        userId={post.userId}
-                        onPreviewChat={handlePreviewChat}
-                      />
-                    )}
-                    itemSpacing={16}
-                  />
-
-                  <div
-                    id="feed-infinite-scroll-sentinel"
-                    className="h-8 flex items-center justify-center text-xs text-muted-foreground"
-                  >
-                    {isFeedLoading
-                      ? "Loading more..."
-                      : hasMoreFeed
-                        ? "Scroll to load more"
-                        : "No more posts"}
-                  </div>
-                </>
-              )}
-            </div>
+    <section className="h-screen flex flex-col">
+      <MainHeader>
+        <div className="flex-1 max-w-2xl">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="pl-10 py-5 bg-secondary/50 ring-0 focus-visible:ring-0"
+            />
           </div>
         </div>
-      </section>
+      </MainHeader>
+      <div
+        ref={scrollContainerRef}
+        className="flex gap-4 w-full p-4 overflow-y-auto"
+      >
+        <div className="flex-1 px-2 max-w-2xl">
+          <div className="space-y-4">
+            {allPosts.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">
+                <p>No posts yet. Be the first to post!</p>
+              </div>
+            ) : (
+              <>
+                <VirtualList
+                  virtualizer={feedVirtualizer as unknown as Virtualizer<HTMLElement, Element>}
+                  items={allPosts}
+                  renderItem={(post) => (
+                    <PostCard
+                      post={post}
+                      userId={post.userId}
+                      onPreviewChat={handlePreviewChat}
+                    />
+                  )}
+                  itemSpacing={16}
+                />
+
+                <div
+                  id="feed-infinite-scroll-sentinel"
+                  className="h-8 flex items-center justify-center text-xs text-muted-foreground"
+                >
+                  {isFeedLoading && <Spinner />}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 

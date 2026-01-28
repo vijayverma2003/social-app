@@ -24,6 +24,7 @@ export function VirtualList<T>({
         height: `${virtualizer.getTotalSize()}px`,
         width: "100%",
         position: "relative",
+        marginTop: "auto"
       }}
       className={className}
     >
