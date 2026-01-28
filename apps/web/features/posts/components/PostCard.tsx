@@ -36,6 +36,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ImageCollage } from "./ImageCollage";
 import { PostDeleteDialog } from "./PostDeleteDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PostCardProps {
   post: PostResponse;
@@ -309,7 +310,46 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
           </div>
         </div>
       </div>
-      <div className="px-8">
+      <div>
+        <Separator />
+      </div>
+    </>
+  );
+};
+
+export const PostCardSkeleton = () => {
+  return (
+    <>
+      <div className="w-full max-w-2xl bg-background rounded-2xl py-8 shadow-md shadow-background/30 group space-y-6">
+        {/* Header */}
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-12 rounded-full" />
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="flex flex-col gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-3/6" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/6" />
+          </div>
+
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-9 w-20 rounded-full" />
+          <div className="flex items-center gap-1">
+            <Skeleton className="size-9 rounded-full" />
+            <Skeleton className="h-9 w-20 rounded-full" />
+          </div>
+        </div>
+      </div>
+      <div>
         <Separator />
       </div>
     </>

@@ -1,13 +1,13 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PostCard } from "@/features/posts/components/PostCard";
+import { PostCard, PostCardSkeleton } from "@/features/posts/components/PostCard";
 import { VirtualList } from "@/features/posts/components/VirtualList";
 import { usePostsStore } from "@/features/posts/store/postsStore";
 import { useUser } from "@/providers/UserContextProvider";
 import { usePosts } from "@/hooks/usePosts";
 import { PostResponse } from "@shared/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useShallow } from "zustand/react/shallow";
 import MainHeader from "../components/MainHeader";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ import { Spinner } from "@/components/ui/spinner";
 type TabValue = "feed" | "recent" | "own";
 
 const HomePage = () => {
-  const { user } = useUser();
   const {
     feedOffset,
     isFeedLoading,
@@ -30,7 +29,7 @@ const HomePage = () => {
 
   const allPosts = usePostsStore(useShallow((state) => state.posts));
 
-  const [activeTab, setActiveTab] = useState<TabValue>("feed");
+  const [activeTab] = useState<TabValue>("feed");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { openConversation } = useConversationPreview();
 
@@ -114,7 +113,14 @@ const HomePage = () => {
       >
         <div className="flex-1 px-2 max-w-2xl">
           <div className="space-y-4">
-            {allPosts.length === 0 ? (
+
+            {isFeedLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <PostCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : hasLoadedInitialFeed() && allPosts.length === 0 ? (
               <div className="text-center text-muted-foreground py-12">
                 <p>No posts yet. Be the first to post!</p>
               </div>
@@ -141,10 +147,11 @@ const HomePage = () => {
                 </div>
               </>
             )}
+
           </div>
         </div>
       </div>
-    </section>
+    </section >
   );
 };
 

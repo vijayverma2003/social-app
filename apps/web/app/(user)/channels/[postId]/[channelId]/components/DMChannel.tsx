@@ -53,6 +53,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
     hasMoreOlderMessages,
     loadOlderMessages,
     scrollToBottom,
+    isInitialLoading,
   } = useChannelMessages({
     channelId,
     channelType: "dm",
@@ -112,6 +113,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             onEditMessage={handleEditMessage}
             onReplyMessage={handleReplyMessage}
             containerRef={messagesContainerRef}
+            isLoading={isInitialLoading && messages.length === 0}
           />
         </div>
         <div className="p-2 mb-3">

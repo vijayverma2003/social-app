@@ -6,6 +6,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef, useMemo } from "react";
 import { VirtualList } from "@/features/posts/components/VirtualList";
 import { useUser } from "@/providers/UserContextProvider";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MessagesListProps {
   messages: MessageData[];
@@ -18,6 +19,8 @@ interface MessagesListProps {
   ) => void;
   onReplyMessage?: (message: MessageData) => void;
   containerRef?: React.RefObject<HTMLElement | null>;
+  isLoading?: boolean;
+  skeletonCount?: number;
 }
 
 export const MessagesList = ({
@@ -27,10 +30,14 @@ export const MessagesList = ({
   onEditMessage,
   onReplyMessage,
   containerRef,
+  isLoading = false,
+  skeletonCount = 10,
 }: MessagesListProps) => {
   const { user } = useUser();
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollElement = containerRef || parentRef;
+
+
 
   const virtualizer = useVirtualizer({
     count: messages.length,
@@ -54,6 +61,26 @@ export const MessagesList = ({
     return map;
   }, [messages]);
 
+  // Loading state with skeletons
+  if (isLoading) {
+    return (
+      <div
+        ref={parentRef}
+        className={`flex flex-col space-y-3 ${className}`}
+      >
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <div className="flex items-start gap-4 px-4 space-y-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[80px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (messages.length === 0) {
     return (
       <p className="text-muted-foreground text-xs text-center py-8">
@@ -76,6 +103,7 @@ export const MessagesList = ({
           const highlight = repliedToMessage ? repliedToMessage.authorId === user?.id : false;
           return (
             <MessagePreview
+              key={message.id}
               message={message}
               lastMessage={lastMessage}
               onEdit={onEditMessage}

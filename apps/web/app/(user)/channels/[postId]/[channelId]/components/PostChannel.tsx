@@ -21,6 +21,7 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
     hasMoreOlderMessages,
     loadOlderMessages,
     scrollToBottom,
+    isInitialLoading,
   } = useChannelMessages({
     channelId,
     channelType: "post",
@@ -79,6 +80,7 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
           onEditMessage={handleEditMessage}
           onReplyMessage={handleReplyMessage}
           containerRef={messagesContainerRef}
+          isLoading={isInitialLoading && messages.length === 0}
         />
       </div>
       <div className="p-2 mb-3">

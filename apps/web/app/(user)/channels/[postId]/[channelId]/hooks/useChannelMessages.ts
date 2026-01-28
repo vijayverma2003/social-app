@@ -42,6 +42,7 @@ export const useChannelMessages = ({
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const [hasMoreOlderMessages, setHasMoreOlderMessages] = useState(true);
   const isLoadingOlderMessagesRef = useRef(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const scrollToBottom = useCallback(() => {
     if (!messagesContainerRef.current) return;
@@ -53,7 +54,15 @@ export const useChannelMessages = ({
   }, []);
 
   // Bootstrap messages
-  useMessagesBootstrap(channelId, channelType, scrollToBottom, scrollToBottom);
+  useMessagesBootstrap(
+    channelId,
+    channelType,
+    () => {
+      scrollToBottom();
+      setIsInitialLoading(false);
+    },
+    scrollToBottom
+  );
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -243,5 +252,6 @@ export const useChannelMessages = ({
     hasMoreOlderMessages,
     loadOlderMessages,
     scrollToBottom,
+    isInitialLoading,
   };
 };
