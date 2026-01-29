@@ -113,7 +113,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
           <p className="text-sm font-medium">{otherUser?.displayName}</p>
         </div>
       </MainHeader>
-      <div className={cn("w-full grid", isOpen ? "grid-cols-[1fr_0px]" : "grid-cols-[1fr_360px]")}>
+      <div className={cn("w-full grid", isOpen ? "grid-cols-[1fr_0px]" : "max-lg:grid-cols-1 grid-cols-[1fr_360px]")}>
         <div className="h-[calc(100vh-48px)] flex flex-col">
           <div className="flex-1" />
 

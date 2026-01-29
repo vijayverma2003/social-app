@@ -23,7 +23,7 @@ export const ConversationPreviewPanel = () => {
   const isPostChannel = !!postId;
 
   return (
-    <aside className="w-full md:w-[480px] md:max-w-[480px] border border-b-0 border-r-0 border-border bg-background h-full ml-2 rounded-tl-3xl flex flex-col overflow-hidden">
+    <aside className="w-full lg:w-[480px] lg:max-w-[480px] border border-b-0 border-r-0 border-border bg-background h-full ml-2 rounded-tl-3xl flex flex-col overflow-hidden">
       <header className="shrink-0 w-full py-2 px-4 border-b border-border bg-background flex items-center justify-between gap-4">
         <p className="text-sm font-medium">
           {isPostChannel ? post ? (post.content.slice(0, 30) + (post.content.length > 30 ? "..." : "")) : "Post Channel" : "DM Channel"}

@@ -54,7 +54,6 @@ const Navbar = () => {
       icon: Users,
       showBadge: true,
     },
-    // Only show Message Requests tab if there are any message requests
     ...(hasMessageRequests
       ? [
         {
@@ -68,14 +67,14 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="overflow-hidden">
-      <aside className="h-screen w-56 p-2 flex flex-col gap-4 overflow-y-auto no-scrollbar relative">
+    <div className="overflow-hidden shrink-0">
+      <aside className="h-screen w-16 xl:w-56 p-2 flex flex-col gap-4 overflow-y-auto no-scrollbar relative shrink-0 overflow-hidden">
         <div className="mb-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <span>Social App</span>
+          <Link href="/" className="flex items-center justify-center xl:justify-start gap-2 font-bold text-xl">
+            <span className="hidden xl:inline">Social App</span>
           </Link>
         </div>
-        <nav className="flex flex-col gap-2 flex-1 rounded-2xl max-h-fit">
+        <nav className="flex flex-col gap-2 flex-1 rounded-2xl max-h-fit max-xl:items-center">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -97,29 +96,32 @@ const Navbar = () => {
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start gap-3",
+                    "w-auto xl:w-full justify-center xl:justify-start gap-0 xl:gap-3 max-xl:size-10 max-xl:p-0 rounded-full",
                     showNotificationBadge && "relative",
-                    isActive && "bg-secondary"
+                    isActive && "bg-secondary",
                   )}
                 >
                   <Icon className="size-5" />
-                  <span>{item.label}</span>
+                  <span className="hidden xl:inline">{item.label}</span>
                   {showNotificationBadge && (
-                    <NotificationBadge count={badgeCount} />
+                    <NotificationBadge
+                      count={badgeCount}
+                      className="absolute -top-1 right-2 xl:static"
+                    />
                   )}
                 </Button>
               </Link>
             );
           })}
           <Button
+            variant="ghost"
             onClick={() => setIsCreatePostOpen(true)}
             className={cn(
-              buttonVariants({ variant: "default" }),
-              "w-full justify-start gap-3 mb-2"
+              "w-auto xl:w-full justify-center xl:justify-start gap-0 xl:gap-3 mb-2 max-xl:size-10 max-xl:p-0 rounded-full"
             )}
           >
             <Plus className="size-5" />
-            <span>Create Post</span>
+            <span className="hidden xl:inline">Create Post</span>
           </Button>
           <CreatePostDialog
             open={isCreatePostOpen}
@@ -142,7 +144,7 @@ const Navbar = () => {
               {user?.profile?.displayName?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-start max-xl:hidden">
             <p className="text-sm font-medium">{user?.profile?.displayName}</p>
             <p className="text-xs text-muted-foreground">
               {user?.username + "#" + user?.discriminator}

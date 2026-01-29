@@ -13,7 +13,7 @@ import { useProfilesBootstrap } from "@/hooks/useProfilesBootstrap";
 import { useMessageRequestsBootstrap } from "@/features/messages/hooks/useMessageRequestsBootstrap";
 import { useDMMessagesBootstrap } from "@/features/dms/hooks/useDMMessagesBootstrap";
 import { ConversationPreviewProvider } from "@/contexts/conversationPreviewContext";
-import { ConversationPreviewPanel } from "./components/ConversationPreviewPanel";
+import MainContent from "./components/MainContent";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
@@ -31,12 +31,7 @@ const Layout = ({ children }: PropsWithChildren) => {
         <ConversationPreviewProvider>
           <div className="flex h-screen">
             <Navbar />
-            <div className="flex flex-1 mt-2">
-              <main className="flex flex-1 overflow-hidden border border-border border-b-0 bg-background rounded-t-3xl">
-                <div className="flex-1">{children}</div>
-              </main>
-              <ConversationPreviewPanel />
-            </div>
+            <MainContent>{children}</MainContent>
           </div>
         </ConversationPreviewProvider >
       </ProfileCardViewerProvider >

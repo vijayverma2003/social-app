@@ -44,18 +44,23 @@ export const DMChannelNavItem = ({ channel }: DMChannelNavItemProps) => {
       <Button
         variant={isActive ? "secondary" : "ghost"}
         className={cn(
-          "w-full justify-start gap-3 relative h-auto py-2 px-3 mb-1",
+          "w-auto xl:w-full justify-center xl:justify-start gap-0 xl:gap-3 relative h-auto py-2 px-3 max-xl:size-10 max-xl:p-0",
           isActive && "bg-secondary"
         )}
       >
-        <Avatar className="h-8 w-8">
+        <Avatar className="size-8 max-xl:size-10">
           <AvatarImage src={avatarURL} />
           <AvatarFallback>{fallbackInitial}</AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0 text-left">
+        <div className="hidden xl:block flex-1 min-w-0 text-left">
           <p className="text-sm font-medium truncate">{displayName}</p>
         </div>
-        {unreadCount > 0 && <NotificationBadge count={unreadCount} />}
+        {unreadCount > 0 && (
+          <NotificationBadge
+            count={unreadCount}
+            className="absolute -top-1 -right-1 xl:static"
+          />
+        )}
       </Button>
     </Link>
   );
