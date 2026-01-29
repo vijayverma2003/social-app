@@ -31,8 +31,7 @@ const DMChannelNavigation = () => {
   }, [dmChannels, lastMessageTimestamps]);
 
   return (
-    <div className="flex flex-col gap-2 flex-1 rounded-2xl max-h-fit overflow-y-auto max-xl:gap-2 max-xl:items-center">
-
+    <div className="flex flex-col gap-2 flex-1 rounded-2xl max-h-fit max-xl:gap-2 max-xl:items-center">
 
       <p className="hidden xl:block text-xs font-semibold text-muted-foreground px-2">
         Direct Messages
@@ -40,7 +39,6 @@ const DMChannelNavigation = () => {
       {sortedDMChannels.map((channel) => (
         <DMChannelNavItem key={channel.id} channel={channel} />
       ))}
-
     </div>
   );
 };

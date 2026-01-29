@@ -44,21 +44,24 @@ export const DMChannelNavItem = ({ channel }: DMChannelNavItemProps) => {
       <Button
         variant={isActive ? "secondary" : "ghost"}
         className={cn(
-          "w-auto xl:w-full justify-center xl:justify-start gap-0 xl:gap-3 relative h-auto py-2 px-3 max-xl:size-10 max-xl:p-0",
-          isActive && "bg-secondary"
+          "w-auto xl:w-full items-center justify-center xl:justify-between gap-0 xl:gap-3 relative h-auto py-2 px-3 max-xl:size-10 max-xl:p-0",
+          isActive && "bg-secondary",
+          "max-xl:flex"
         )}
       >
-        <Avatar className="size-8 max-xl:size-10">
-          <AvatarImage src={avatarURL} />
-          <AvatarFallback>{fallbackInitial}</AvatarFallback>
-        </Avatar>
-        <div className="hidden xl:block flex-1 min-w-0 text-left">
-          <p className="text-sm font-medium truncate">{displayName}</p>
+        <div className="flex items-center gap-2" >
+          <Avatar className="size-8 max-xl:size-10">
+            <AvatarImage src={avatarURL} />
+            <AvatarFallback>{fallbackInitial}</AvatarFallback>
+          </Avatar>
+          <div className="hidden xl:block flex-1 min-w-0 text-left">
+            <p className="text-sm font-medium truncate">{displayName}</p>
+          </div>
         </div>
         {unreadCount > 0 && (
           <NotificationBadge
             count={unreadCount}
-            className="absolute -top-1 -right-1 xl:static"
+            className="absolute bottom-0 right-0 max-xl:translate-x-1/4 max-xl:translate-y-1/4 xl:static"
           />
         )}
       </Button>
