@@ -17,14 +17,6 @@ const ChannelPage = () => {
 
   return (
     <section className="h-screen overflow-hidden flex flex-col">
-      <MainHeader>
-        {channelType === "dm" ? (
-          <p className="text-sm font-medium">DM Channel</p>
-        ) : (
-          <p className="text-sm font-medium">Post Channel</p>
-        )}
-      </MainHeader>
-
       {channelType === "dm" ? (
         <DMChannel channelId={channelId} />
       ) : (

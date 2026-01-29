@@ -29,13 +29,13 @@ import { toast } from "sonner";
 // Friend Buttons Component
 interface FriendButtonsProps {
   variant: "popover" | "card";
-  fadeBackground: string;
-  mixColor: string;
+  fadeBackground?: string;
+  mixColor?: string;
   friendEntry: { id: string; channelId: string | null } | null;
   userId?: string;
 }
 
-const FriendButtons = ({
+export const FriendButtons = ({
   variant,
   fadeBackground,
   mixColor,

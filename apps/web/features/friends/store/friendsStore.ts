@@ -10,9 +10,10 @@ interface FriendsState {
   removeFriendById: (friendId: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+  isFriend: (friendId: string) => boolean;
 }
 
-export const useFriendsStore = create<FriendsState>((set) => ({
+export const useFriendsStore = create<FriendsState>((set, get) => ({
   friends: [],
   isLoading: false,
   error: null,
@@ -34,6 +35,11 @@ export const useFriendsStore = create<FriendsState>((set) => ({
     set((state) => ({
       friends: state.friends.filter((f) => f.id !== friendId),
     })),
+
+  isFriend: (userId: string) => {
+    console.log(get().friends);
+    return get().friends.some((f) => f.userId === userId)
+  },
 
   setLoading: (isLoading) => set({ isLoading }),
 

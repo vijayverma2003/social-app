@@ -43,7 +43,7 @@ export const MessagesList = ({
     count: messages.length,
     getScrollElement: () => scrollElement.current,
     estimateSize: () => 80, // Estimated height per message
-    overscan: 5,
+    overscan: 20,
     enabled: messages.length > 0,
     measureElement:
       typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
@@ -69,7 +69,7 @@ export const MessagesList = ({
         className={`flex flex-col space-y-3 ${className}`}
       >
         {Array.from({ length: skeletonCount }).map((_, index) => (
-          <div className="flex items-start gap-4 px-4 space-y-4">
+          <div key={"message-skeleton-" + index} className="flex items-start gap-4 px-4 space-y-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
               <Skeleton className="h-4 w-[80px]" />

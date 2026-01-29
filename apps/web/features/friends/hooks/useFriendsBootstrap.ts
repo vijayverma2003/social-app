@@ -18,6 +18,7 @@ export const useFriendsBootstrap = () => {
 
     const fetchFriends = async () => {
       const onComplete = (friends: FriendsList[]) => {
+        console.log("friends", friends);
         setFriends(friends);
       };
 
@@ -36,6 +37,8 @@ export const useFriendsBootstrap = () => {
         setLoading(false);
       }
     };
+
+    console.log("fetching friends");
 
     fetchFriends();
   }, [isConnected]);

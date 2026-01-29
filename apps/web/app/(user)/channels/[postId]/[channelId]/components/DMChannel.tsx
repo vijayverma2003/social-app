@@ -1,15 +1,24 @@
 "use client";
 
 import ProfileCard from "@/app/(user)/components/ProfileCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
+import { useProfileCardViewer } from "@/contexts/profileCardViewer";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
 import { MessageInput } from "@/features/messages/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useUser } from "@/providers/UserContextProvider";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";
-import { useMemo, useCallback } from "react";
-import { useChannelMessages } from "../hooks/useChannelMessages";
+import { useProfilesStore } from "@/stores/profilesStore";
 import { MessageData } from "@shared/schemas/messages";
-import { Spinner } from "@/components/ui/spinner";
+import { useCallback, useMemo } from "react";
+import { useChannelMessages } from "../hooks/useChannelMessages";
+import { useConversationPreview } from "@/contexts/conversationPreviewContext";
+import { cn } from "@/lib/utils";
+import MainHeader from "@/app/(user)/components/MainHeader";
 
 interface DMChannelProps {
   channelId: string;
@@ -21,6 +30,8 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
   const resetUnreadCount = useDMChannelsStore(
     (state) => state.resetUnreadCount
   );
+  const { openProfileCard } = useProfileCardViewer();
+  const { state: { isOpen } } = useConversationPreview()
 
   const otherUserId =
     dmChannel?.users.find((u) => u.userId !== currentUser?.id)?.userId || "";
@@ -60,6 +71,9 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
     onMarkAsReadSuccess: handleMarkAsReadSuccess,
   });
 
+  const otherUser = useProfilesStore((state) => state.getProfile(otherUserId));
+  const isFriend = useFriendsStore((state) => state.isFriend(otherUserId));
+
   const handleEditMessage = useCallback(
     (
       messageId: string,
@@ -86,48 +100,84 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
     []
   );
 
+  console.log('Conversation Preview Open:', isOpen);
+
   return (
-    <div className="w-full grid grid-cols-[1fr_360px]">
-      <div className="h-[calc(100vh-48px)] flex flex-col">
-        <div className="flex-1" />
-        <div
-          ref={messagesContainerRef}
-          className="overflow-y-auto py-4 space-y-2 relative no-scrollbarmin-w-[400px]"
-        >
-          <InfiniteScroll
-            onLoadMore={loadOlderMessages}
-            hasMore={hasMoreOlderMessages}
-            isLoading={isLoadingOlderMessages}
-            containerRef={messagesContainerRef}
-            enabled={messages.length > 0}
-            loadingComponent={
-              <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-                <Spinner />
+    <>
+      <MainHeader>
+        <div className="flex items-center gap-2">
+          <Avatar size="sm">
+            <AvatarImage src={otherUser?.avatarURL || undefined} />
+            <AvatarFallback>{otherUser?.displayName?.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <p className="text-sm font-medium">{otherUser?.displayName}</p>
+        </div>
+      </MainHeader>
+      <div className={cn("w-full grid", isOpen ? "grid-cols-[1fr_0px]" : "grid-cols-[1fr_360px]")}>
+        <div className="h-[calc(100vh-48px)] flex flex-col">
+          <div className="flex-1" />
+
+          <div
+            ref={messagesContainerRef}
+            className="overflow-y-auto py-4 space-y-2 relative no-scrollbarmin-w-[400px]"
+          >
+            <div className="p-4 flex flex-col gap-4 items-center">
+              <Avatar className="size-16">
+                <AvatarImage src={otherUser?.avatarURL || undefined} />
+                <AvatarFallback>{otherUser?.displayName?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col gap-2 items-center">
+                <h1 className="text-lg font-bold">{otherUser?.displayName}</h1>
+                <div className="flex items-center gap-1">
+                  <Button variant="secondary" size="sm" onClick={() => openProfileCard(otherUserId)}>View Profile</Button>
+                  {isFriend && <>
+                    <Button size="sm" variant="destructive">Remove Friend</Button>
+                  </>}
+                  {!isFriend && <>
+                    <Button size="sm" variant="secondary">Add Friend</Button>
+                  </>}
+                </div>
+                <p className="text-xs mt-4">This is the beginning of your direct message conversation with {otherUser?.displayName}.</p>
               </div>
-            }
-            endComponent={<>?</>}
-          />
-          <MessagesList
-            messages={messages}
-            emptyMessage="No messages yet. Start a conversation!"
-            onEditMessage={handleEditMessage}
-            onReplyMessage={handleReplyMessage}
-            containerRef={messagesContainerRef}
-            isLoading={isInitialLoading && messages.length === 0}
-          />
+            </div>
+            <div className="px-4">
+              <Separator />
+            </div>
+            <InfiniteScroll
+              onLoadMore={loadOlderMessages}
+              hasMore={hasMoreOlderMessages}
+              isLoading={isLoadingOlderMessages}
+              containerRef={messagesContainerRef}
+              enabled={messages.length > 0}
+              loadingComponent={
+                <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
+                  <Spinner />
+                </div>
+              }
+              endComponent={<></>}
+            />
+            <MessagesList
+              messages={messages}
+              emptyMessage="No messages yet. Start a conversation!"
+              onEditMessage={handleEditMessage}
+              onReplyMessage={handleReplyMessage}
+              containerRef={messagesContainerRef}
+              isLoading={isInitialLoading && messages.length === 0}
+            />
+          </div>
+          <div className="p-2 mb-3">
+            <MessageInput
+              ref={messageInputRef}
+              channelId={channelId}
+              channelType="dm"
+              onSend={scrollToBottom}
+            />
+          </div>
         </div>
-        <div className="p-2 mb-3">
-          <MessageInput
-            ref={messageInputRef}
-            channelId={channelId}
-            channelType="dm"
-            onSend={scrollToBottom}
-          />
-        </div>
+        {!isOpen && <div className="p-6">
+          <ProfileCard userId={otherUserId} variant="popover" />
+        </div>}
       </div>
-      <div className="p-6">
-        <ProfileCard userId={otherUserId} variant="popover" />
-      </div>
-    </div>
+    </>
   );
 };
