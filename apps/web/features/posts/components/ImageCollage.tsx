@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { FullScreenImageCarousel } from "./FullScreenImageCarousel";
+import ModalPortal from "@/app/(user)/components/ModalPortal";
 
 interface ImageAttachment {
   id: string;
@@ -35,15 +36,17 @@ export const ImageCollage = ({ images, className = "" }: ImageCollageProps) => {
 
   const totalImages = imageAttachments.length;
   const displayImages = imageAttachments.slice(0, 4);
-  const remainingCount = totalImages > 4 ? totalImages - 4 : 0;
+  const remainingCount = totalImages > 3 ? totalImages - 3 : 0;
 
   // Grid layout classes based on number of images
   const getGridClasses = (count: number) => {
     switch (count) {
       case 1:
         return "grid-cols-1";
-      default:
+      case 2:
         return "grid-cols-2";
+      default:
+        return "grid-cols-3";
     }
   };
 
@@ -54,63 +57,35 @@ export const ImageCollage = ({ images, className = "" }: ImageCollageProps) => {
 
   return (
     <>
-      <div
-        className={cn("relative w-full rounded-2xl overflow-hidden", className)}
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <div className={cn("grid gap-1", getGridClasses(displayImages.length))}>
-          {displayImages.map((attachment, index) => {
-            const isFourth = index === 3;
-            const shouldBlur = totalImages > 4 && isFourth;
-
-            let spanClass = "";
-            if (displayImages.length === 3 && index === 2)
-              spanClass = "col-span-3";
-
-            return (
-              <div
-                key={attachment.id}
-                className={cn(
-                  "relative overflow-hidden cursor-pointer transition-opacity hover:opacity-90 min-h-0",
-                  spanClass ? "aspect-video" : "",
-                  spanClass
-                )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleImageClick(index);
-                }}
-              >
-                <Image
-                  src={attachment.url}
-                  alt={attachment.fileName}
-                  width={300}
-                  height={300}
-                  className={cn(
-                    "object-cover w-full h-full",
-                    shouldBlur && "blur-md"
-                  )}
-                  style={{ maxHeight: "100%" }}
-                />
-                {shouldBlur && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
-                    <span className="text-white font-semibold text-lg drop-shadow-lg">
-                      +{remainingCount + 1} more
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+      <div className={cn("grid gap-1 rounded-2xl overflow-hidden", getGridClasses(displayImages.length))}>
+        {displayImages.slice(0, 3).map((image, index) => (
+          <div
+            onClick={() => handleImageClick(index)}
+            key={image.id}
+            className={cn("cursor-pointer relative", totalImages >= 2 && "aspect-square", totalImages >= 3 && index === 0 && "row-span-3 col-span-2 aspect-square")}
+          >
+            <Image
+              src={image.url}
+              alt={image.fileName}
+              width={image.width || 300}
+              height={image.height || 300}
+              className={cn("object-cover w-full h-full rounded-xl overflow-hidden")}
+            />
+            {totalImages > 3 && index === 2 && <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+              <p className="text-white text-sm">+{remainingCount} more</p>
+            </div>}
+          </div>
+        ))}
       </div>
 
-      <FullScreenImageCarousel
-        images={imageAttachments}
-        initialIndex={initialImageIndex}
-        isOpen={isCarouselOpen}
-        onClose={() => setIsCarouselOpen(false)}
-      />
+      <ModalPortal>
+        <FullScreenImageCarousel
+          images={imageAttachments}
+          initialIndex={initialImageIndex}
+          isOpen={isCarouselOpen}
+          onClose={() => setIsCarouselOpen(false)}
+        />
+      </ModalPortal>
     </>
   );
 };

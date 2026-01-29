@@ -114,13 +114,7 @@ const HomePage = () => {
         <div className="flex-1 px-2 max-w-2xl">
           <div className="space-y-4">
 
-            {isFeedLoading ? (
-              <div className="space-y-4">
-                {Array.from({ length: 8 }).map((_, index) => (
-                  <PostCardSkeleton key={index} />
-                ))}
-              </div>
-            ) : hasLoadedInitialFeed() && allPosts.length === 0 ? (
+            {(hasLoadedInitialFeed() && !isFeedLoading && allPosts.length === 0) ? (
               <div className="text-center text-muted-foreground py-12">
                 <p>No posts yet. Be the first to post!</p>
               </div>
@@ -139,14 +133,24 @@ const HomePage = () => {
                   itemSpacing={16}
                 />
 
-                <div
-                  id="feed-infinite-scroll-sentinel"
-                  className="h-8 flex items-center justify-center text-xs text-muted-foreground"
-                >
-                  {isFeedLoading && <Spinner />}
-                </div>
               </>
             )}
+
+
+            {isFeedLoading && (
+              <div className="space-y-4">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <PostCardSkeleton key={index} />
+                ))}
+              </div>
+            )}
+
+
+            <div
+              id="feed-infinite-scroll-sentinel"
+              className="flex items-center justify-center text-xs text-muted-foreground w-full"
+            >
+            </div>
 
           </div>
         </div>
