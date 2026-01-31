@@ -4,6 +4,7 @@ import {
   CreatePostPayloadSchema,
   GetFeedPayloadSchema,
   GetRecentPostsPayloadSchema,
+  SearchPostsPayloadSchema,
   UpdatePostPayloadSchema,
   DeletePostPayloadSchema,
   LikePostPayloadSchema,
@@ -77,6 +78,13 @@ type RemoveBookmarkData = Parameters<
 >[0];
 type RemoveBookmarkCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.UNBOOKMARK]
+>[1];
+
+type SearchPostsData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.SEARCH]
+>[0];
+type SearchPostsCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.SEARCH]
 >[1];
 
 // Helper function to format post with likes count, isLiked, and isBookmarked status.
@@ -194,6 +202,10 @@ export class PostHandlers extends BaseSocketHandler {
 
     socket.on(POST_EVENTS.GET_RECENT_POSTS, (data, callback) =>
       this.getRecentPosts(socket, data, callback)
+    );
+
+    socket.on(POST_EVENTS.SEARCH, (data, callback) =>
+      this.searchPosts(socket, data, callback)
     );
 
     socket.on(POST_EVENTS.DELETE, (data, callback) =>
@@ -620,6 +632,72 @@ export class PostHandlers extends BaseSocketHandler {
       callback({
         error:
           error instanceof Error ? error.message : "Failed to get recent posts",
+      });
+    }
+  }
+
+  private async searchPosts(
+    socket: AuthenticatedSocket,
+    data: SearchPostsData,
+    callback: SearchPostsCallback
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      const validation = SearchPostsPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { query, take, offset } = validation.data;
+
+      // Full-text search: get post ids ordered by ts_rank (uses per-row ts_language_code)
+      const rows = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id, ts_rank(searchable, query) as rank
+        FROM "Post", plainto_tsquery(ts_language_code::regconfig, ${query}) as query
+        WHERE searchable @@ query
+        ORDER BY rank DESC
+        LIMIT ${take} OFFSET ${offset}
+      `;
+
+      const ids = rows.map((r) => r.id);
+      if (ids.length === 0) {
+        return callback({ success: true, data: [] });
+      }
+
+      const formattedPosts = await prisma.$transaction(async (tx) => {
+        const posts = await tx.post.findMany({
+          where: { id: { in: ids } },
+          include: {
+            attachments: { include: { storageObject: true } },
+            user: {
+              select: {
+                id: true,
+                username: true,
+                discriminator: true,
+                profile: true,
+              },
+            },
+          },
+        });
+        // Preserve ranked order from raw query (ids are already DESC by ts_rank → index 0 = best match)
+        const orderMap = new Map(ids.map((id, i) => [id, i]));
+        posts.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)); // ascending index = best match first
+        return formatPostsWithLikes(tx, posts, socket.userId ?? null);
+      });
+
+      callback({ success: true, data: formattedPosts });
+    } catch (error) {
+      console.error("Error searching posts:", error);
+      callback({
+        error:
+          error instanceof Error ? error.message : "Failed to search posts",
       });
     }
   }

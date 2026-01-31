@@ -10,6 +10,7 @@ import {
   RemoveLikePayloadSchema,
   BookmarkPostPayloadSchema,
   RemoveBookmarkPayloadSchema,
+  SearchPostsPayloadSchema,
 } from "../schemas/posts";
 
 import { z } from "zod";
@@ -30,3 +31,4 @@ export type LikePostPayload = z.infer<typeof LikePostPayloadSchema>;
 export type RemoveLikePayload = z.infer<typeof RemoveLikePayloadSchema>;
 export type BookmarkPostPayload = z.infer<typeof BookmarkPostPayloadSchema>;
 export type RemoveBookmarkPayload = z.infer<typeof RemoveBookmarkPayloadSchema>;
+export type SearchPostsPayload = z.infer<typeof SearchPostsPayloadSchema>;

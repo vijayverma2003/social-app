@@ -55,6 +55,7 @@ import {
   RemoveLikePayload,
   BookmarkPostPayload,
   RemoveBookmarkPayload,
+  SearchPostsPayload,
 } from "./posts";
 import { GetUserProfilesPayload, UpdateUserProfilePayload } from "./users";
 
@@ -430,6 +431,16 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.GET_RECENT_POSTS]: (
     data: GetRecentPostsPayload,
+    callback: (response: SocketResponse<PostResponse[]>) => void
+  ) => void;
+
+  /**
+   * SEARCH: Full-text search posts by ranked results
+   * @param data - { query: string; take?: number; offset?: number } - query: search string (max 200 chars), take (default 20, max 50), offset (default 0)
+   * @param callback - SocketResponse<PostResponse[]> - Returns array of posts ordered by ts_rank
+   */
+  [POST_EVENTS.SEARCH]: (
+    data: SearchPostsPayload,
     callback: (response: SocketResponse<PostResponse[]>) => void
   ) => void;
 

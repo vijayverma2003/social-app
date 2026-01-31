@@ -71,6 +71,7 @@ export const POST_EVENTS = {
   UNBOOKMARK: "post:unbookmark",
   GET_FEED: "post:get_feed",
   GET_RECENT_POSTS: "post:get_recent_posts",
+  SEARCH: "post:search",
   RECENT_POST_ADD: "post:recent_post_add",
 
   // Server -> Client events (notifications)

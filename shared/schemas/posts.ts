@@ -121,3 +121,32 @@ export const RemoveBookmarkPayloadSchema = z
     postId: z.string().trim().min(1, "Post ID is required"),
   })
   .strict();
+
+// Search Posts Payload Schema (for socket events) - safe search string length
+const SEARCH_STRING_MAX_LENGTH = 200;
+
+export const SearchPostsPayloadSchema = z
+  .object({
+    query: z
+      .string()
+      .trim()
+      .min(1, "Search query is required")
+      .max(
+        SEARCH_STRING_MAX_LENGTH,
+        `Search query cannot exceed ${SEARCH_STRING_MAX_LENGTH} characters`
+      ),
+    take: z
+      .number()
+      .int()
+      .min(1, "Take must be at least 1")
+      .max(50, "Take cannot exceed 50")
+      .optional()
+      .default(20),
+    offset: z
+      .number()
+      .int()
+      .min(0, "Offset must be at least 0")
+      .optional()
+      .default(0),
+  })
+  .strict();
