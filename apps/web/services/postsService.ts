@@ -10,6 +10,7 @@ import {
   PostResponse,
   RemoveBookmarkPayload,
   RemoveLikePayload,
+  SearchPostsPayload,
 } from "@shared/types";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { fetchUserProfiles } from "./profilesService";
@@ -98,6 +99,27 @@ class PostsService {
       event: POST_EVENTS.GET_RECENT_POSTS,
       payload,
       defaultErrorMessage: "Failed to get recent posts",
+      options,
+    });
+  }
+
+  /**
+   * Search posts by full-text search (ranked by relevance)
+   * @param payload - { query: string; take?: number; offset?: number } - query: search string (max 200 chars), take (default 20, max 50), offset (default 0)
+   * @param options - Optional callbacks for success and error handling
+   * @returns Promise that resolves with array of posts ordered by ts_rank or rejects with error
+   */
+  searchPosts(
+    payload: SearchPostsPayload,
+    options?: ServiceOptions<PostResponse[]>
+  ): Promise<PostResponse[]> {
+    return socketService.emitWithResponse<
+      typeof POST_EVENTS.SEARCH,
+      PostResponse[]
+    >({
+      event: POST_EVENTS.SEARCH,
+      payload,
+      defaultErrorMessage: "Failed to search posts",
       options,
     });
   }
@@ -275,6 +297,7 @@ export const postsService = new PostsService();
 export const createPost = postsService.createPost.bind(postsService);
 export const getFeed = postsService.getFeed.bind(postsService);
 export const getRecentPosts = postsService.getRecentPosts.bind(postsService);
+export const searchPosts = postsService.searchPosts.bind(postsService);
 export const deletePost = postsService.deletePost.bind(postsService);
 export const likePost = postsService.likePost.bind(postsService);
 export const removeLike = postsService.removeLike.bind(postsService);
