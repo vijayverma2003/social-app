@@ -95,12 +95,16 @@ model StorageObject {
   storageKey      String              @db.VarChar(500)
   hash            String              @unique @db.VarChar(64)
   status          StorageObjectStatus @default(pending)
-  width           Int?
-  height          Int?
   createdByUserId String? // User who initiated the upload
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   refCount        Int                 @default(0)
+
+  // Image Metadata
+  width   Int?
+  height  Int?
+  caption String? @db.VarChar(1000)
+
   postAttachments PostAttachment[]
 
   @@index([hash])
@@ -161,7 +165,8 @@ model Post {
   @@index([channelId])
   @@index([searchable], type: Gin)
 }
-wmodel PostAttachment {
+
+model PostAttachment {
   id              String        @id @default(cuid())
   postId          String
   storageObjectId String

@@ -12,7 +12,7 @@ export type SupportedImageMimeType =
     (typeof SUPPORTED_IMAGE_MIME_TYPES)[keyof typeof SUPPORTED_IMAGE_MIME_TYPES];
 
 const CAPTION_MODEL = "gemini-2.5-flash-lite-preview-09-2025";
-const CAPTION_PROMPT = "Caption this image in less than 100 characters.";
+const CAPTION_PROMPT = "Generate a comprehensive caption for this image in less than 1000 characters";
 
 class GoogleGenAIService {
     private ai: GoogleGenAI;
