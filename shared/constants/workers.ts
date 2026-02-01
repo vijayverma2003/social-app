@@ -1,0 +1,1 @@
+export const POST_EMBEDDING_QUEUE = "post-embeddings" as const;

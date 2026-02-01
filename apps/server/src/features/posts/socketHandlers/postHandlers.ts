@@ -16,6 +16,7 @@ import { POST_EVENTS } from "@shared/socketEvents";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
+import { postEmbeddingQueue } from "../../../queues";
 
 type CreatePostData = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.CREATE]
@@ -328,6 +329,8 @@ export class PostHandlers extends BaseSocketHandler {
 
         return { post: formattedPost };
       });
+
+      await postEmbeddingQueue.add(`post-embedding:${post.id}`, { postId: post.id });
 
       // Broadcast to all users (posts are public)
       // Note: For broadcast, we don't include isLiked/isBookmarked since they're user-specific
