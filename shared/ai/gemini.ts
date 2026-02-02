@@ -1,6 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
-import { GEMINI_API_KEY } from "../utils/vars";
-import { normalizeVector } from "../utils/utils";
+import { normalizeVector } from "./utils";
+import dotenv from 'dotenv';
+import path from "node:path"
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") })
 
 export const SUPPORTED_IMAGE_MIME_TYPES = {
     PNG: "image/png",
@@ -23,7 +26,7 @@ class GeminiAIService {
     private ai: GoogleGenAI;
 
     constructor() {
-        this.ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+        this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     }
 
     /**

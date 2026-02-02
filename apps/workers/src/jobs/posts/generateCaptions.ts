@@ -4,7 +4,7 @@ import {
     geminiAIService,
     SUPPORTED_IMAGE_MIME_TYPES,
     type SupportedImageMimeType,
-} from "../../services/gemini";
+} from "@shared/ai/gemini";
 import { postEmbeddingQueue } from "../../services/queues";
 import { imageUrlToBase64 } from "../../utils/utils";
 

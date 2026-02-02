@@ -1,6 +1,5 @@
 import prisma from "@database/postgres";
-import { geminiAIService, } from "../../services/gemini";
-import { normalizeVector, } from "../../utils/utils";
+import { geminiAIService, } from "@shared/ai/gemini";
 
 const EMBEDDING_DIMENSIONALITY = 1536;
 

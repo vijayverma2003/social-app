@@ -13,10 +13,8 @@
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "@database/postgres": "workspace:*",
-    "@google/genai": "^1.39.0",
     "@shared": "workspace:*",
     "bullmq": "^5.67.2",
-    "dotenv": "^17.2.3",
     "ioredis": "^5.9.2"
   },
   "devDependencies": {
