@@ -4,8 +4,9 @@ import {
     geminiAIService,
     SUPPORTED_IMAGE_MIME_TYPES,
     type SupportedImageMimeType,
-} from "../services/gemini";
-import { imageUrlToBase64 } from "../utils/utils";
+} from "../../services/gemini";
+import { postEmbeddingQueue } from "../../services/queues";
+import { imageUrlToBase64 } from "../../utils/utils";
 
 const SUPPORTED_MIME_SET = new Set<string>(
     Object.values(SUPPORTED_IMAGE_MIME_TYPES)
@@ -13,11 +14,6 @@ const SUPPORTED_MIME_SET = new Set<string>(
 const CAPTION_MAX_LENGTH = 1000;
 const CAPTIONING_KEY_PREFIX = "captioning:storageObject:";
 const CAPTIONING_LOCK_TTL_SECONDS = 90; // 1.5 min – released on crash
-
-export async function createPostEmbeddingJob(postId: string) {
-    const post = await prisma.post.findUnique({ where: { id: postId } });
-    console.log(post ? "Post found in the worker" : "Post not found in the worker");
-}
 
 /**
  * Generates captions for a post's image attachments that are not yet captioned.
@@ -108,6 +104,8 @@ export async function generatePostCaptionsJob(
                 }
             }
         }
+
+        await postEmbeddingQueue.add(`post-embedding:${postId}`, { postId });
     } catch (error) {
         console.error(`[generatePostCaptionsJob] Error: ${error}`);
         throw error;

@@ -146,26 +146,29 @@ model ChannelUser {
 }
 
 model Post {
-  id             String                   @id @default(cuid())
-  userId         String
-  channelId      String?
-  content        String                   @db.VarChar(2000)
-  tsLanguageCode String                   @default("english") @map("ts_language_code") @db.VarChar(20)
-  searchable     Unsupported("tsvector")? @default(dbgenerated())
-  embedding      Unsupported("vector(1536)")?
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
-  user           User                     @relation(fields: [userId], references: [id])
-  channel        Channel?                 @relation(fields: [channelId], references: [id])
-  attachments    PostAttachment[]
-  joinedPosts    RecentPosts[]
-  postLikes      PostLike[]
-  postBookmarks  PostBookmark[]
+  id                   String                       @id @default(cuid())
+  userId               String
+  channelId            String?
+  content              String                       @db.VarChar(2000)
+  tsLanguageCode       String                       @default("english") @map("ts_language_code") @db.VarChar(20)
+  searchable           Unsupported("tsvector")?     @default(dbgenerated())
+  embedding            Unsupported("vector(1536)")?
+  embeddingGeneratedAt DateTime?
+  embeddingVersion     Int                          @default(1)
+  embeddingModel       String?                      @db.VarChar(255)
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  user                 User                         @relation(fields: [userId], references: [id])
+  channel              Channel?                     @relation(fields: [channelId], references: [id])
+  attachments          PostAttachment[]
+  joinedPosts          RecentPosts[]
+  postLikes            PostLike[]
+  postBookmarks        PostBookmark[]
 
   @@index([userId])
   @@index([channelId])
   @@index([searchable], type: Gin)
-  @@index([embedding], map: "Post_embedding_idx" )
+  @@index([embedding], map: "Post_embedding_idx")
 }
 
 model PostAttachment {

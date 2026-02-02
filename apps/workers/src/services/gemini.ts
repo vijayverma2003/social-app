@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { GEMINI_API_KEY } from "../utils/vars";
+import { normalizeVector } from "../utils/utils";
 
 export const SUPPORTED_IMAGE_MIME_TYPES = {
     PNG: "image/png",
@@ -15,11 +16,14 @@ export type SupportedImageMimeType =
 const CAPTION_MODEL = "gemini-2.5-flash-lite-preview-09-2025";
 const CAPTION_PROMPT = "Generate a comprehensive caption for this image in less than 1000 characters";
 
+const EMBEDDING_MODEL = "gemini-embedding-001";
+const EMBEDDING_DIMENSIONALITY = 1536;
+
 class GeminiAIService {
     private ai: GoogleGenAI;
 
-    constructor(options: ConstructorParameters<typeof GoogleGenAI>[0] = {}) {
-        this.ai = new GoogleGenAI(options);
+    constructor() {
+        this.ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
     }
 
     /**
@@ -52,8 +56,36 @@ class GeminiAIService {
             return null;
         }
     }
+
+    /**
+     * Generates an embedding vector for the given text using Gemini.
+     * @param content - Text to embed
+     * @returns Array of 1536 dimensions, or null if the request failed
+     */
+    async generateVectorEmbedding(content: string): Promise<{ vector: number[], model: string, version: number } | null> {
+        try {
+            const result = await this.ai.models.embedContent({
+                model: EMBEDDING_MODEL,
+                contents: content,
+                config: { outputDimensionality: EMBEDDING_DIMENSIONALITY },
+            });
+            const embedding = result.embeddings?.[0];
+            if (!embedding) {
+                console.error(`Error embedding content: No embedding returned`);
+                return null;
+            }
+
+            const normalisedEmbedding = normalizeVector(embedding?.values ?? []);
+            return {
+                vector: normalisedEmbedding,
+                model: EMBEDDING_MODEL,
+                version: 1,
+            }
+        } catch (error) {
+            console.error(`Error embedding content: ${error}`);
+            return null;
+        }
+    }
 }
 
-export const geminiAIService = new GeminiAIService({
-    apiKey: GEMINI_API_KEY,
-})
+export const geminiAIService = new GeminiAIService()

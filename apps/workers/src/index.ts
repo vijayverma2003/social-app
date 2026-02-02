@@ -1,9 +1,8 @@
 import { Worker } from 'bullmq'
-import Redis from 'ioredis'
 import { POST_EMBEDDING_QUEUE, POST_CAPTION_QUEUE } from '@shared/constants/workers'
-import { createPostEmbeddingJob, generatePostCaptionsJob } from './jobs/generateCaptions';
-
-const redis = new Redis({ maxRetriesPerRequest: null });
+import { createPostEmbeddingJob } from './jobs/posts/generateEmbedding';
+import { generatePostCaptionsJob } from './jobs/posts/generateCaptions';
+import { redis } from './services/redis';
 
 const embeddingWorker = new Worker(POST_EMBEDDING_QUEUE, async (job) => { await createPostEmbeddingJob(job.data.postId) }, { connection: redis })
 embeddingWorker.on('completed', (job) => console.log(`Job ${job.id} completed for post ${job.data.postId}`))

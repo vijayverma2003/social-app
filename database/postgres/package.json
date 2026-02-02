@@ -11,11 +11,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@prisma/adapter-pg": "^7.0.1",
-    "@prisma/client": "^7.0.1",
+    "@prisma/adapter-pg": "7.3.0",
+    "@prisma/client": "7.3.0",
     "dotenv": "^17.2.3",
     "pg": "^8.16.3",
-    "prisma": "^7.0.1"
+    "prisma": "7.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.25",

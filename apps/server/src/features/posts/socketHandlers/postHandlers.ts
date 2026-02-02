@@ -16,7 +16,7 @@ import { POST_EVENTS } from "@shared/socketEvents";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
-import { postEmbeddingQueue } from "../../../queues";
+import { postCaptionQueue, postEmbeddingQueue } from "../../../queues";
 
 type CreatePostData = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.CREATE]
@@ -101,23 +101,23 @@ const formatPostWithLikes = async (
     }),
     userId
       ? db.postLike.findUnique({
-          where: {
-            postId_userId: {
-              postId: post.id,
-              userId,
-            },
+        where: {
+          postId_userId: {
+            postId: post.id,
+            userId,
           },
-        })
+        },
+      })
       : null,
     userId
       ? db.postBookmark.findUnique({
-          where: {
-            postId_userId: {
-              postId: post.id,
-              userId,
-            },
+        where: {
+          postId_userId: {
+            postId: post.id,
+            userId,
           },
-        })
+        },
+      })
       : null,
   ]);
 
@@ -147,25 +147,25 @@ const formatPostsWithLikes = async (
     }),
     userId
       ? db.postLike.findMany({
-          where: {
-            postId: { in: postIds },
-            userId,
-          },
-          select: {
-            postId: true,
-          },
-        })
+        where: {
+          postId: { in: postIds },
+          userId,
+        },
+        select: {
+          postId: true,
+        },
+      })
       : [],
     userId
       ? db.postBookmark.findMany({
-          where: {
-            postId: { in: postIds },
-            userId,
-          },
-          select: {
-            postId: true,
-          },
-        })
+        where: {
+          postId: { in: postIds },
+          userId,
+        },
+        select: {
+          postId: true,
+        },
+      })
       : [],
   ]);
 
@@ -330,7 +330,9 @@ export class PostHandlers extends BaseSocketHandler {
         return { post: formattedPost };
       });
 
-      await postEmbeddingQueue.add(`post-embedding:${post.id}`, { postId: post.id });
+      if (storageObjectIds && storageObjectIds.length > 0) {
+        await postCaptionQueue.add(`post-caption:${post.id}`, { postId: post.id });
+      } else { await postEmbeddingQueue.add(`post-embedding:${post.id}`, { postId: post.id }); }
 
       // Broadcast to all users (posts are public)
       // Note: For broadcast, we don't include isLiked/isBookmarked since they're user-specific
