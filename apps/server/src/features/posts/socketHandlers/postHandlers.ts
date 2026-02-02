@@ -17,6 +17,7 @@ import { ClientToServerEvents } from "@shared/types/socket";
 import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
 import { postCaptionQueue, postEmbeddingQueue } from "../../../queues";
+import { geminiAIService } from "@shared/ai/gemini"
 
 type CreatePostData = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.CREATE]
@@ -662,14 +663,58 @@ export class PostHandlers extends BaseSocketHandler {
 
       const { query, take, offset } = validation.data;
 
-      // Full-text search: get post ids ordered by ts_rank (uses per-row ts_language_code)
-      const rows = await prisma.$queryRaw<{ id: string }[]>`
-        SELECT id, ts_rank(searchable, query) as rank
-        FROM "Post", plainto_tsquery(ts_language_code::regconfig, ${query}) as query
-        WHERE searchable @@ query
-        ORDER BY rank DESC
-        LIMIT ${take} OFFSET ${offset}
+      const queryEmbedding = await geminiAIService.generateVectorEmbedding(query);
+
+      let rows;
+
+      if (queryEmbedding && queryEmbedding?.vector && queryEmbedding?.vector.length >= 0) {
+        console.log('Vector Search for query -', query)
+        const queryVector = `[${queryEmbedding.vector.join(',')}]`;
+
+        rows = await prisma.$queryRaw<{ id: string }[]>`
+        WITH scored AS (
+          SELECT p.id,
+
+          -- Text Relevance Score
+          ts_rank_cd(p.searchable, query) AS text_score,
+
+          -- Vector cosine similarity score (1 - cosine distance = similarity)
+          COALESCE(1 - (p.embedding <=> ${queryVector}::vector)) AS vector_score,
+
+          -- Recency score (7 day half life)
+          exp(- EXTRACT(EPOCH FROM (NOW() - p."createdAt")) / (7 * 24 * 60 * 60)) AS recency_score
+
+          FROM "Post" p, plainto_tsquery(ts_language_code::regconfig, ${query}) as query
+          WHERE p.embedding IS NOT NULL OR p.searchable @@ query
+        )
+
+        SELECT id, (0.6 * vector_score + 0.25 * text_score + 0.15 * recency_score) AS score
+        FROM scored
+        ORDER BY score DESC
+        LIMIT ${take} OFFSET ${offset};
       `;
+      } else {
+        console.log('Text Search for query -', query)
+        rows = await prisma.$queryRaw<{ id: string }[]>`
+        WITH scored AS (
+          SELECT p.id,
+
+          -- Text Relevance Score
+          ts_rank_cd(p.searchable, query) AS text_score,
+        
+          -- Recency score (7 day half life)
+          exp(- EXTRACT(EPOCH FROM (NOW() - p."createdAt")) / (7 * 24 * 60 * 60)) AS recency_score
+
+          FROM "Post" p, plainto_tsquery(ts_language_code::regconfig, ${query}) as query
+          WHERE p.searchable @@ query
+        )
+
+        SELECT id, (0.7 * text_score + 0.3 * recency_score) AS score
+        FROM scored
+        ORDER BY score DESC
+        LIMIT ${take} OFFSET ${offset};
+      `;
+      }
 
       const ids = rows.map((r) => r.id);
       if (ids.length === 0) {
