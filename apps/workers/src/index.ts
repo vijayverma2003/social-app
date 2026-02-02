@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq'
 import Redis from 'ioredis'
 import { POST_EMBEDDING_QUEUE, POST_CAPTION_QUEUE } from '@shared/constants/workers'
-import { createPostEmbeddingJob, generatePostCaptionsJob } from './jobs/posts';
+import { createPostEmbeddingJob, generatePostCaptionsJob } from './jobs/generateCaptions';
 
 const redis = new Redis({ maxRetriesPerRequest: null });
 

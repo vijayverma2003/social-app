@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { GEMINI_API_KEY } from "../utils/vars";
 
 export const SUPPORTED_IMAGE_MIME_TYPES = {
     PNG: "image/png",
@@ -14,7 +15,7 @@ export type SupportedImageMimeType =
 const CAPTION_MODEL = "gemini-2.5-flash-lite-preview-09-2025";
 const CAPTION_PROMPT = "Generate a comprehensive caption for this image in less than 1000 characters";
 
-class GoogleGenAIService {
+class GeminiAIService {
     private ai: GoogleGenAI;
 
     constructor(options: ConstructorParameters<typeof GoogleGenAI>[0] = {}) {
@@ -53,6 +54,6 @@ class GoogleGenAIService {
     }
 }
 
-export const googleGenAIService = new GoogleGenAIService({
-    apiKey: process.env.GOOGLE_GENAI_API_KEY ?? "",
+export const geminiAIService = new GeminiAIService({
+    apiKey: GEMINI_API_KEY,
 })
