@@ -1,6 +1,7 @@
 "use client";
 
 import ProfileCard from "@/app/(user)/components/ProfileCard";
+import { AddFriendButton } from "@/features/friends/components/AddFriendButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -130,12 +131,12 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
                 <h1 className="text-lg font-bold">{otherUser?.displayName}</h1>
                 <div className="flex items-center gap-1">
                   <Button variant="secondary" size="sm" onClick={() => openProfileCard(otherUserId)}>View Profile</Button>
-                  {isFriend && <>
+                  {isFriend && (
                     <Button size="sm" variant="destructive">Remove Friend</Button>
-                  </>}
-                  {!isFriend && <>
-                    <Button size="sm" variant="secondary">Add Friend</Button>
-                  </>}
+                  )}
+                  {!isFriend && otherUserId && (
+                    <AddFriendButton userId={otherUserId} size="sm" variant="secondary" />
+                  )}
                 </div>
                 <p className="text-xs mt-4">This is the beginning of your direct message conversation with {otherUser?.displayName}.</p>
               </div>

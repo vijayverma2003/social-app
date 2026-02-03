@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import { useSettings } from "@/contexts/settingsContext";
+import { AddFriendButton } from "@/features/friends/components/AddFriendButton";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
-import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { getDMChannel } from "@/services/channelService";
 import { cn, isLightColor } from "@/lib/utils";
@@ -141,30 +141,7 @@ const NonFriendButtons = ({
   discriminator,
 }: NonFriendButtonsProps) => {
   const router = useRouter();
-  const { sendFriendRequest, sendFriendRequestByUserId } = useFriendActions();
-  const sentRequests = useFriendRequestsStore((state) => state.sent);
-
-  // Check if there's a pending friend request for this user
-  const pendingRequest = useMemo(() => {
-    if (!userId) return undefined;
-    return sentRequests.find((request) => request.userId === userId);
-  }, [sentRequests, userId]);
-
-  const isPending = !!pendingRequest;
-
-  const handleAddFriend = () => {
-    if (userId) {
-      sendFriendRequestByUserId(userId, () => {
-        // Success callback - the store will be updated automatically
-      });
-      return;
-    }
-
-    const receiverTag = `${username}#${discriminator}`;
-    sendFriendRequest(receiverTag, () => {
-      // Success callback - the store will be updated automatically
-    });
-  };
+  const { sendFriendRequest } = useFriendActions();
 
   const handleSendMessage = async () => {
     if (!userId) return;
@@ -178,23 +155,37 @@ const NonFriendButtons = ({
     }
   };
 
+  const buttonSize = variant === "popover" ? "sm" : "default";
+  const buttonClass = cn(
+    "cursor-pointer",
+    mixColor === "#ffffff"
+      ? "text-black border-black/10"
+      : "text-white border-white/10"
+  );
+
   return (
     <>
-      <Button
-        size={variant === "popover" ? "sm" : "default"}
-        onClick={handleAddFriend}
-        variant="secondary"
-        style={{ background: fadeBackground }}
-        className={cn(
-          "cursor-pointer",
-          mixColor === "#ffffff"
-            ? "text-black border-black/10"
-            : "text-white border-white/10"
-        )}
-        disabled={isPending}
-      >
-        {isPending ? "Pending Request" : "Add Friend"}
-      </Button>
+      {userId ? (
+        <AddFriendButton
+          userId={userId}
+          size={variant === "popover" ? "sm" : "default"}
+          variant="secondary"
+          style={{ background: fadeBackground }}
+          className={cn(buttonClass, variant === "popover" ? "h-8 text-xs" : "h-9")}
+        />
+      ) : (
+        <Button
+          size={buttonSize}
+          onClick={() =>
+            sendFriendRequest(`${username}#${discriminator}`, () => { })
+          }
+          variant="secondary"
+          style={{ background: fadeBackground }}
+          className={buttonClass}
+        >
+          Add Friend
+        </Button>
+      )}
       <Button
         size={variant === "popover" ? "icon-sm" : "icon"}
         onClick={handleSendMessage}
@@ -433,7 +424,7 @@ export const ProfileCardContent = ({
         <div
           className={cn(
             `z-50`,
-            variant === "popover" ? "px-4 pb-3" : "px-8 pb-6"
+            variant === "popover" ? "px-2 pb-3" : "px-6 pb-6"
           )}
         >
           <div className="flex items-center gap-2">{buttons}</div>

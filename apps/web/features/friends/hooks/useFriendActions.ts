@@ -47,7 +47,7 @@ export const useFriendActions = () => {
   );
 
   const sendFriendRequestByUserId = useCallback(
-    (receiverId: string, onSuccess: () => void) => {
+    (receiverId: string, onSuccess?: () => void) => {
       emit(FRIEND_REQUEST_EVENTS.SEND, { receiverId }, ((response) => {
         if (response.error) {
           toast.error("Failed to send friend request", {
@@ -55,8 +55,8 @@ export const useFriendActions = () => {
           });
         } else if (response.success && response.data) {
           addSentRequest(response.data);
-          onSuccess();
         }
+        onSuccess?.();
       }) as SendFriendRequestCallback);
     },
     [emit, addSentRequest]
