@@ -237,6 +237,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 url: att.storageObject.url || "",
                 fileName: att.storageObject.filename,
                 contentType: att.storageObject.mimeType,
+                alt: att.storageObject.caption
               }))}
             />
           )}

@@ -6,7 +6,7 @@ export const CreatePostPayloadSchema = z
     content: z.string().trim(),
     storageObjectIds: z
       .array(z.string().trim().min(1))
-      .max(10, "Maximum 10 attachments allowed"),
+      .max(5, "Maximum 5 attachments allowed"),
   })
   .strict()
   .refine(
@@ -27,7 +27,7 @@ export const UpdatePostPayloadSchema = z
     content: z.string().trim().max(2000),
     storageObjectIds: z
       .array(z.string().trim().min(1))
-      .max(10, "Maximum 10 attachments allowed"),
+      .max(5, "Maximum 5 attachments allowed"),
   })
   .strict()
   .refine(

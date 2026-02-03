@@ -19,6 +19,7 @@ interface ImageAttachment {
   contentType: string;
   width?: number | null | undefined;
   height?: number | null | undefined;
+  alt: string | null;
 }
 
 interface FullScreenImageCarouselProps {
@@ -189,7 +190,7 @@ export const FullScreenImageCarousel = ({
                 <div className="relative w-full h-full flex items-center justify-center">
                   <Image
                     src={attachment.url}
-                    alt={attachment.fileName}
+                    alt={attachment.alt || attachment.fileName}
                     width={attachment.width || 672}
                     height={attachment.height || 672}
                     className="object-contain max-w-2xl max-h-[80vh]"

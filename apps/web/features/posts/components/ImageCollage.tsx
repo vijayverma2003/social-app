@@ -13,6 +13,7 @@ interface ImageAttachment {
   contentType: string;
   width?: number | null | undefined;
   height?: number | null | undefined;
+  alt: string | null;
 }
 
 interface ImageCollageProps {
@@ -66,10 +67,11 @@ export const ImageCollage = ({ images, className = "" }: ImageCollageProps) => {
           >
             <Image
               src={image.url}
-              alt={image.fileName}
+              alt={image.alt || image.fileName}
               width={image.width || 300}
               height={image.height || 300}
               className={cn("object-cover w-full h-full rounded-xl overflow-hidden")}
+              unoptimized={image.contentType === "image/gif"}
             />
             {totalImages > 3 && index === 2 && <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
               <p className="text-white text-sm">+{remainingCount} more</p>

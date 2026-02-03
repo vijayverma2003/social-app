@@ -38,6 +38,7 @@ export const CreatePostForm = ({
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<CreatePostPayload>({
     resolver: zodResolver(CreatePostPayloadSchema),
     defaultValues: {
@@ -49,6 +50,7 @@ export const CreatePostForm = ({
   const content = watch("content");
 
   const onSubmit = async (data: CreatePostPayload) => {
+    console.log(data);
     const trimmedContent = data.content.trim();
     const hasFiles = selectedFiles.length > 0;
 
@@ -117,7 +119,7 @@ export const CreatePostForm = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 overflow-hidden">
-      
+
       <div className="space-y-2">
         <Textarea
           id="content"
@@ -137,22 +139,22 @@ export const CreatePostForm = ({
         )}
       </div>
 
-     
-        
-          {selectedFiles.length > 0 && (
-            <div className="flex overflow-x-auto no-scrollbar gap-2">
-              {selectedFiles.map((selectedFile) => (
-                <PostAttachmentPreview
-                  key={selectedFile.id}
-                  file={selectedFile}
-                  onRemove={removeFile}
-                  disabled={isSubmitting || isUploading}
-                />
-              ))}
-            </div>
-          )}
-        
-      
+
+
+      {selectedFiles.length > 0 && (
+        <div className="flex overflow-x-auto no-scrollbar gap-2">
+          {selectedFiles.map((selectedFile) => (
+            <PostAttachmentPreview
+              key={selectedFile.id}
+              file={selectedFile}
+              onRemove={removeFile}
+              disabled={isSubmitting || isUploading}
+            />
+          ))}
+        </div>
+      )}
+
+
 
       {isUploading && (
         <div className="text-sm text-muted-foreground">Uploading files...</div>
@@ -161,7 +163,7 @@ export const CreatePostForm = ({
       <div className="flex items-center justify-between gap-2">
         <UploadButton
           maxFiles={10}
-          onFilesChange={setSelectedFiles}
+          onFilesChange={(files) => { setSelectedFiles(files); setValue("storageObjectIds", files.map((f) => f.file.name)); }}
           disabled={isSubmitting || isUploading}
           onUploadFilesReady={(fn) => {
             uploadFilesFnRef.current = fn;
@@ -186,7 +188,7 @@ export const CreatePostForm = ({
           </Button>
         </div>
       </div>
-     
+
     </form>
   );
 };
