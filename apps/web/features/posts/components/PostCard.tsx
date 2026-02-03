@@ -10,8 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
 import { Separator } from "@/components/ui/separator";
-import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import {
@@ -46,7 +46,6 @@ interface PostCardProps {
 
 export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
   const { user } = useUser();
-  const { openProfileCard } = useProfileCardViewer();
 
   const profile = useProfilesStore((state) => state.getProfile(userId));
   const [isLiked, setIsLiked] = useState(post.isLiked);
@@ -186,9 +185,11 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 <EllipsisVerticalIcon />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => openProfileCard(userId)}>
-                  View Author
-                </DropdownMenuItem>
+                <ViewProfileButton
+                  userId={userId}
+                  as="dropdown-item"
+                  text="View Author"
+                />
                 <DropdownMenuItem onClick={handleLike}>
                   {isLiked ? "Remove Like" : "Like Post"}
                 </DropdownMenuItem>

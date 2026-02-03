@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { useProfileCardViewer } from "@/contexts/profileCardViewer";
+import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import {
@@ -50,7 +50,6 @@ export const LandscapePostCard = ({
   onPreviewChat,
 }: LandscapePostCardProps) => {
   const { user } = useUser();
-  const { openProfileCard } = useProfileCardViewer();
 
   const profile = useProfilesStore((state) => state.getProfile(userId));
   const [isLiked, setIsLiked] = useState(post.isLiked);
@@ -77,8 +76,9 @@ export const LandscapePostCard = ({
         url: att.storageObject.url || "",
         fileName: att.storageObject.filename,
         contentType: att.storageObject.mimeType,
-        width: null,
-        height: null,
+        width: att.storageObject.width || null,
+        height: att.storageObject.height || null,
+        alt: att.storageObject.caption || null,
       }));
   }, [post.attachments]);
 
@@ -217,9 +217,11 @@ export const LandscapePostCard = ({
                 <EllipsisVerticalIcon />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => openProfileCard(userId)}>
-                  View Author
-                </DropdownMenuItem>
+                <ViewProfileButton
+                  userId={userId}
+                  as="dropdown-item"
+                  text="View Author"
+                />
                 <DropdownMenuItem onClick={handleLike}>
                   {isLiked ? "Remove Like" : "Like Post"}
                 </DropdownMenuItem>

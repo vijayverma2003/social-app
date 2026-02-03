@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useProfileCardViewer } from "@/contexts/profileCardViewer";
+import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
 import { useSettings } from "@/contexts/settingsContext";
 import { AddFriendButton } from "@/features/friends/components/AddFriendButton";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
@@ -43,7 +43,6 @@ export const FriendButtons = ({
   userId,
 }: FriendButtonsProps) => {
   const router = useRouter();
-  const { openProfileCard } = useProfileCardViewer();
   const { removeFriend } = useFriendActions();
 
   const handleSendMessage = () => {
@@ -55,12 +54,6 @@ export const FriendButtons = ({
   const handleRemoveFriend = () => {
     if (friendEntry) {
       removeFriend(friendEntry.id);
-    }
-  };
-
-  const handleViewProfile = () => {
-    if (variant === "popover" && userId) {
-      openProfileCard(userId);
     }
   };
 
@@ -95,13 +88,12 @@ export const FriendButtons = ({
           <EllipsisVerticalIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {variant === "popover" && (
-            <DropdownMenuItem
-              onClick={handleViewProfile}
-              className="cursor-pointer"
-            >
-              View Profile
-            </DropdownMenuItem>
+          {variant === "popover" && userId && (
+            <ViewProfileButton
+              userId={userId}
+              as="dropdown-item"
+              text="View Profile"
+            />
           )}
           <DropdownMenuItem
             onClick={handleSendMessage}

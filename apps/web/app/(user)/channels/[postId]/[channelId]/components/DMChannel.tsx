@@ -1,12 +1,12 @@
 "use client";
 
 import ProfileCard from "@/app/(user)/components/ProfileCard";
+import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
 import { AddFriendButton } from "@/features/friends/components/AddFriendButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { useProfileCardViewer } from "@/contexts/profileCardViewer";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
 import { MessageInput } from "@/features/messages/components/MessageInput";
@@ -31,7 +31,6 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
   const resetUnreadCount = useDMChannelsStore(
     (state) => state.resetUnreadCount
   );
-  const { openProfileCard } = useProfileCardViewer();
   const { state: { isOpen } } = useConversationPreview()
 
   const otherUserId =
@@ -130,7 +129,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
               <div className="flex flex-col gap-2 items-center">
                 <h1 className="text-lg font-bold">{otherUser?.displayName}</h1>
                 <div className="flex items-center gap-1">
-                  <Button variant="secondary" size="sm" onClick={() => openProfileCard(otherUserId)}>View Profile</Button>
+                  <ViewProfileButton userId={otherUserId} as="button" size="sm" text="View Profile" variant="secondary" />
                   {isFriend && (
                     <Button size="sm" variant="destructive">Remove Friend</Button>
                   )}
