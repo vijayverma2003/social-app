@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export const MainContent = ({ children }: PropsWithChildren) => {
   const { state: { isOpen } } = useConversationPreview();
-  console.log('Conversation Preview Open:', isOpen);
+
   return (
     <div className="flex flex-1 mt-2">
       <main className={cn("flex flex-1 overflow-hidden border border-border border-b-0 bg-background rounded-t-3xl", isOpen && "max-lg:hidden")}>

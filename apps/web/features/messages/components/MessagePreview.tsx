@@ -7,7 +7,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { ImageCollage } from "@/features/posts/components/ImageCollage";
-import { cn } from "@/lib/utils";
+import { cn, graphemeLengthWithoutSpaces, isOnlyEmojisAndWhitespace } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { createMessage, deleteMessage } from "@/services/messagesService";
 import { useProfilesStore } from "@/stores/profilesStore";
@@ -83,9 +83,12 @@ const MessagePreview = memo(({
     return timeDiff > 5 * 60 * 1000;
   }, [lastMessage, message.authorId, message.createdAt]);
 
+  const hasEmotesOnly = useMemo(() => isOnlyEmojisAndWhitespace(message.content), [message.content]);
+  const hasManyEmotes = useMemo(() => hasEmotesOnly ? graphemeLengthWithoutSpaces(message.content) > 10 : false, [message.content, hasEmotesOnly]);
+  console.log(message.content, hasEmotesOnly, hasManyEmotes);
   return (
     <ContextMenu>
-      <ContextMenuTrigger>
+      <ContextMenuTrigger className="select-text">
         <div
           className={cn(
             "p-0 flex items-start gap-3 hover:bg-accent/15 rounded-sm px-4",
@@ -177,6 +180,7 @@ const MessagePreview = memo(({
                     contentType: attachment.contentType,
                     width: null,
                     height: null,
+                    alt: attachment.fileName,
                   }))}
                   className="mb-2"
                 />
@@ -208,9 +212,10 @@ const MessagePreview = memo(({
             <div className="flex items-center gap-2">
               <p
                 className={cn(
-                  "text-sm whitespace-pre-wrap",
+                  "text-base whitespace-pre-wrap",
                   isOptimistic && !hasError && "text-muted-foreground",
-                  hasError && "text-destructive"
+                  hasError && "text-destructive",
+                  hasEmotesOnly ? !hasManyEmotes ? "text-5xl" : "text-2xl" : ""
                 )}
               >
                 {message.content}

@@ -8,21 +8,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SendMessageButton } from "@/app/(user)/components/SendMessageButton";
 import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
 import { useSettings } from "@/contexts/settingsContext";
 import { AddFriendButton } from "@/features/friends/components/AddFriendButton";
 import { useFriendActions } from "@/features/friends/hooks/useFriendActions";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
-import { getDMChannel } from "@/services/channelService";
 import { cn, isLightColor } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { useProfilesStore } from "@/stores/profilesStore";
-import {
-  Dot,
-  EllipsisVerticalIcon,
-  MessageCircleIcon,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Dot, EllipsisVerticalIcon, MessageCircleIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
@@ -42,14 +37,7 @@ export const FriendButtons = ({
   friendEntry,
   userId,
 }: FriendButtonsProps) => {
-  const router = useRouter();
   const { removeFriend } = useFriendActions();
-
-  const handleSendMessage = () => {
-    if (friendEntry?.channelId) {
-      router.push(`/channels/@me/${friendEntry.channelId}`);
-    }
-  };
 
   const handleRemoveFriend = () => {
     if (friendEntry) {
@@ -57,23 +45,27 @@ export const FriendButtons = ({
     }
   };
 
+  const buttonClass = cn(
+    "cursor-pointer",
+    mixColor === "#ffffff"
+      ? "text-black border-black/10"
+      : "text-white border-white/10"
+  );
+
   return (
     <>
-      <Button
+      <SendMessageButton
+        userId={userId ?? ""}
+        channelId={friendEntry?.channelId ?? null}
+        as="button"
         size={variant === "popover" ? "sm" : "default"}
-        onClick={handleSendMessage}
         variant="secondary"
         style={{ background: fadeBackground }}
-        className={cn(
-          "cursor-pointer",
-          mixColor === "#ffffff"
-            ? "text-black border-black/10"
-            : "text-white border-white/10"
-        )}
+        className={buttonClass}
         disabled={!friendEntry?.channelId}
       >
         Send Message
-      </Button>
+      </SendMessageButton>
       <DropdownMenu>
         <DropdownMenuTrigger
           className={cn(
@@ -95,13 +87,14 @@ export const FriendButtons = ({
               text="View Profile"
             />
           )}
-          <DropdownMenuItem
-            onClick={handleSendMessage}
-            className="cursor-pointer"
+          <SendMessageButton
+            userId={userId ?? ""}
+            channelId={friendEntry?.channelId ?? null}
+            as="dropdown-item"
             disabled={!friendEntry?.channelId}
           >
             Send Message
-          </DropdownMenuItem>
+          </SendMessageButton>
           <DropdownMenuItem
             onClick={handleRemoveFriend}
             className="cursor-pointer text-destructive focus:text-destructive"
@@ -132,20 +125,7 @@ const NonFriendButtons = ({
   username,
   discriminator,
 }: NonFriendButtonsProps) => {
-  const router = useRouter();
   const { sendFriendRequest } = useFriendActions();
-
-  const handleSendMessage = async () => {
-    if (!userId) return;
-
-    try {
-      const channel = await getDMChannel(userId);
-      router.push(`/channels/@me/${channel.id}`);
-    } catch (error) {
-      toast.error("Failed to open DM channel");
-      console.error("Failed to open DM channel:", error);
-    }
-  };
 
   const buttonSize = variant === "popover" ? "sm" : "default";
   const buttonClass = cn(
@@ -178,20 +158,18 @@ const NonFriendButtons = ({
           Add Friend
         </Button>
       )}
-      <Button
-        size={variant === "popover" ? "icon-sm" : "icon"}
-        onClick={handleSendMessage}
-        variant="secondary"
-        style={{ background: fadeBackground }}
-        className={cn(
-          "cursor-pointer",
-          mixColor === "#ffffff"
-            ? "text-black border-black/10"
-            : "text-white border-white/10"
-        )}
-      >
-        <MessageCircleIcon />
-      </Button>
+      {userId && (
+        <SendMessageButton
+          userId={userId}
+          as="button"
+          size={variant === "popover" ? "sm" : "default"}
+          variant="secondary"
+          style={{ background: fadeBackground }}
+          className={buttonClass}
+        >
+          <MessageCircleIcon />
+        </SendMessageButton>
+      )}
       <Button
         size={variant === "popover" ? "icon-sm" : "icon"}
         onClick={() => {

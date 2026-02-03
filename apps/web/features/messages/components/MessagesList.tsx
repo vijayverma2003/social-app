@@ -113,7 +113,7 @@ export const MessagesList = ({
             />
           );
         }}
-        itemSpacing={4}
+        itemSpacing={1}
       />
     </div>
   );

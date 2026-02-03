@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
 function hexToRgb(hex: string): [number, number, number] | null {
   // Remove # if present
   const cleanHex = hex.replace("#", "");
-  
+
   // Handle 3-digit hex
   if (cleanHex.length === 3) {
     const r = parseInt(cleanHex[0] + cleanHex[0], 16);
@@ -21,7 +21,7 @@ function hexToRgb(hex: string): [number, number, number] | null {
     const b = parseInt(cleanHex[2] + cleanHex[2], 16);
     return [r, g, b];
   }
-  
+
   // Handle 6-digit hex
   if (cleanHex.length === 6) {
     const r = parseInt(cleanHex.substring(0, 2), 16);
@@ -29,7 +29,7 @@ function hexToRgb(hex: string): [number, number, number] | null {
     const b = parseInt(cleanHex.substring(4, 6), 16);
     return [r, g, b];
   }
-  
+
   return null;
 }
 
@@ -49,7 +49,7 @@ function getLuminance(r: number, g: number, b: number): number {
       ? normalized / 12.92
       : Math.pow((normalized + 0.055) / 1.055, 2.4);
   });
-  
+
   // Calculate relative luminance
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
@@ -61,13 +61,13 @@ function getLuminance(r: number, g: number, b: number): number {
  */
 export function isLightColor(color: string): boolean {
   if (!color) return false;
-  
+
   const rgb = hexToRgb(color);
   if (!rgb) return false;
-  
+
   const [r, g, b] = rgb;
   // const luminance = getLuminance(r, g, b);
-  
+
   // // Threshold of 0.5 - colors above are considered light, below are dark
   // return luminance > 0.25;
 
@@ -75,4 +75,38 @@ export function isLightColor(color: string): boolean {
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
   return brightness > 128 ? true : false;
+}
+
+/**
+ * Checks whether a string contains only emojis and whitespace.
+ * Uses Intl.Segmenter for grapheme-aware segmentation; a grapheme is treated as emoji
+ * if it consists of Extended_Pictographic code points (and ZWJ / variation selectors).
+ * @param str - String to check
+ * @returns true if the string is empty, only whitespace, or only emojis (and whitespace)
+ */
+export function isOnlyEmojisAndWhitespace(str: string): boolean {
+  const noSpaces = str.replace(/\s/g, "");
+  if (noSpaces.length === 0) return true;
+
+  const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+  const segments = [...segmenter.segment(noSpaces)];
+
+  // Grapheme is emoji if it starts with Extended_Pictographic and only contains
+  // Extended_Pictographic, ZWJ (U+200D), or variation selector 16 (U+FE0F)
+  const emojiGraphemeRegex = /^[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Component}\s]+$/u;
+  console.log(str, segments.length, segments.every((seg) => emojiGraphemeRegex.test(seg.segment)));
+  return segments.every((seg) => emojiGraphemeRegex.test(seg.segment));
+}
+
+/**
+ * Returns the number of grapheme clusters in the string, excluding whitespace.
+ * Uses Intl.Segmenter for grapheme-based counting.
+ * @param str - String to measure
+ * @returns Count of non-whitespace graphemes
+ */
+export function graphemeLengthWithoutSpaces(str: string): number {
+  const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+  const segments = [...segmenter.segment(str.replace(/\s/g, ""))];
+  console.log(str, segments.length, segments.map((seg) => seg.segment));
+  return segments.length
 }

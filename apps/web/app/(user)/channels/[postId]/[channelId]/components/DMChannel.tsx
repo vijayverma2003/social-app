@@ -100,8 +100,6 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
     []
   );
 
-  console.log('Conversation Preview Open:', isOpen);
-
   return (
     <>
       <MainHeader>
