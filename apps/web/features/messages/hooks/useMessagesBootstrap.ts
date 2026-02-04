@@ -13,7 +13,8 @@ export const useMessagesBootstrap = (
   channelId: string,
   channelType: ChannelType,
   onLoadComplete?: () => void,
-  onNewMessage?: () => void
+  onNewMessage?: () => void,
+  aroundMessageId?: string
 ) => {
   const { socket, emit } = useSocket();
   const { addMessage, setMessages, removeMessage, replaceOptimisticMessage } =
@@ -72,14 +73,28 @@ export const useMessagesBootstrap = (
     };
 
   useEffect(() => {
-    fetchMessages(
-      { channelId, channelType, limit: 50, before: undefined },
-      {
-        onSuccess: () => onLoadCompleteRef.current?.(),
-        onError: (error) => toast.error(error),
-      }
-    );
-  }, [channelId, channelType]);
+    if (!channelId) return;
+
+    const { clearChannel } = useMessagesStore.getState();
+
+    // Build payload for initial messages load
+    const basePayload: any = {
+      channelId,
+      channelType,
+      limit: 50,
+    };
+
+    if (aroundMessageId) {
+      // Reset messages for this channel when loading around a specific message
+      clearChannel(channelId);
+      basePayload.aroundMessageId = aroundMessageId;
+    }
+
+    fetchMessages(basePayload, {
+      onSuccess: () => onLoadCompleteRef.current?.(),
+      onError: (error) => toast.error(error),
+    });
+  }, [channelId, channelType, aroundMessageId]);
 
   useEffect(() => {
     if (!socket || !channelId || !channelType) return;

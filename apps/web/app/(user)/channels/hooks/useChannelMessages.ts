@@ -11,7 +11,15 @@ import {
 import { fetchMessages } from "@/services/messagesService";
 import { ChannelType } from "@shared/schemas/messages";
 import { MessageInputRef } from "@/features/messages/components/MessageInput";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Virtualizer } from "@tanstack/react-virtual";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 
@@ -19,15 +27,27 @@ interface UseChannelMessagesOptions {
   channelId: string;
   channelType: ChannelType;
   onMarkAsReadSuccess?: () => void;
+  /** When provided, initial load will fetch messages around this message ID instead of latest */
+  aroundMessageId?: string;
+  /** Optional external scroll container ref (owned by the channel component) */
+  messagesContainerRef?: RefObject<HTMLDivElement | null>;
+  /** Optional virtualizer; if provided, used for scrollToBottom instead of raw DOM scroll. */
+  virtualizer?: Virtualizer<HTMLElement, Element>;
 }
 
-export const useChannelMessages = ({
-  channelId,
-  channelType,
-  onMarkAsReadSuccess,
-}: UseChannelMessagesOptions) => {
+export const useChannelMessages = (options: UseChannelMessagesOptions) => {
+  const {
+    channelId,
+    channelType,
+    onMarkAsReadSuccess,
+    aroundMessageId,
+    messagesContainerRef: externalMessagesContainerRef,
+    virtualizer,
+  } = options;
   const { user: currentUser } = useUser();
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const internalMessagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef =
+    externalMessagesContainerRef ?? internalMessagesContainerRef;
   const messageInputRef = useRef<MessageInputRef>(null);
   const hasMarkedAsReadRef = useRef(false);
 
@@ -45,24 +65,50 @@ export const useChannelMessages = ({
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const scrollToBottom = useCallback(() => {
+    // Prefer virtualizer-based scroll if available
+    if (virtualizer && messages.length > 0) {
+      virtualizer.scrollToIndex(messages.length - 1, {
+        align: "end",
+        behavior: "smooth",
+      });
+      return;
+    }
+
     if (!messagesContainerRef.current) return;
 
     messagesContainerRef.current.scrollTo({
       top: messagesContainerRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, []);
+  }, [virtualizer, messages.length]);
 
   // Bootstrap messages
   useMessagesBootstrap(
     channelId,
     channelType,
     () => {
-      scrollToBottom();
+      // Mark initial load as done; actual scrolling is handled below so it
+      // happens after the list has been rendered.
       setIsInitialLoading(false);
     },
-    scrollToBottom
+    scrollToBottom,
+    aroundMessageId
   );
+
+  // After the initial messages have been loaded and rendered, scroll to bottom
+  // for the normal case (no aroundMessageId).
+  const hasInitialScrolledRef = useRef(false);
+  useEffect(() => {
+    if (aroundMessageId) return; // handled by MessagesList
+    if (isInitialLoading) return;
+    if (hasInitialScrolledRef.current) return;
+    if (!messages.length) return;
+
+    requestAnimationFrame(() => {
+      scrollToBottom();
+      hasInitialScrolledRef.current = true;
+    });
+  }, [aroundMessageId, isInitialLoading, messages.length, scrollToBottom]);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -214,7 +260,7 @@ export const useChannelMessages = ({
     isLoadingOlderMessagesRef.current = false;
   }, [channelId]);
 
-  // Check if initial load already got all messages (if less than 100, there are no more)
+  // Check if initial load already got all messages (if less than 50, there are no more)
   useEffect(() => {
     if (messages.length > 0 && messages.length < 50)
       setHasMoreOlderMessages(false);

@@ -39,7 +39,7 @@ export function ViewProfileButton(props: ViewProfileButtonProps) {
     );
   }
 
-  const { as: _as, size = "default", ...rest } = props;
+  const { as, userId: _userId, size = "default", ...rest } = props;
   return (
     <Button
       type="button"

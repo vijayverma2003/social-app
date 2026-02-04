@@ -2,8 +2,8 @@
 
 import { MessageData } from "@shared/schemas/messages";
 import MessagePreview from "./MessagePreview";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef, useMemo } from "react";
+import type { Virtualizer } from "@tanstack/react-virtual";
+import { useRef, useMemo, useEffect } from "react";
 import { VirtualList } from "@/features/posts/components/VirtualList";
 import { useUser } from "@/providers/UserContextProvider";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +21,10 @@ interface MessagesListProps {
   containerRef?: React.RefObject<HTMLElement | null>;
   isLoading?: boolean;
   skeletonCount?: number;
+  /** Optional message ID to scroll to on initial render (e.g. for message links) */
+  initialScrollToMessageId?: string;
+  /** Virtualizer instance, created by the parent channel component */
+  virtualizer: Virtualizer<HTMLElement, Element>;
 }
 
 export const MessagesList = ({
@@ -32,25 +36,40 @@ export const MessagesList = ({
   containerRef,
   isLoading = false,
   skeletonCount = 10,
+  initialScrollToMessageId,
+  virtualizer,
 }: MessagesListProps) => {
   const { user } = useUser();
   const parentRef = useRef<HTMLDivElement>(null);
   const scrollElement = containerRef || parentRef;
 
+  // Scroll to a specific message on initial render (for message links / aroundMessageId)
+  const hasScrolledToInitialRef = useRef(false);
 
+  // Reset the scroll flag whenever the target message ID changes
+  useEffect(() => {
+    hasScrolledToInitialRef.current = false;
+  }, [initialScrollToMessageId]);
 
-  const virtualizer = useVirtualizer({
-    count: messages.length,
-    getScrollElement: () => scrollElement.current,
-    estimateSize: () => 80, // Estimated height per message
-    overscan: 20,
-    enabled: messages.length > 0,
-    measureElement:
-      typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
-        ? (element: Element | null) => element?.getBoundingClientRect().height ?? 80
-        : undefined,
+  useEffect(() => {
+    if (!initialScrollToMessageId || hasScrolledToInitialRef.current) return;
+    if (!messages.length) return;
 
-  });
+    const index = messages.findIndex((m) => m.id === initialScrollToMessageId);
+    if (index >= 0) {
+      // Defer scrolling to the next animation frame so that
+      // all virtualized rows have been rendered and measured.
+      requestAnimationFrame(() => {
+        virtualizer.scrollToIndex(index, {
+          align: "center",
+          behavior: "auto",
+        });
+        setTimeout(() => {
+          hasScrolledToInitialRef.current = true;
+        }, 100)
+      });
+    }
+  }, [initialScrollToMessageId, messages, virtualizer]);
 
   // Create a map of message IDs to messages for quick lookup
   const messagesMap = useMemo(() => {
@@ -62,7 +81,7 @@ export const MessagesList = ({
   }, [messages]);
 
   // Loading state with skeletons
-  if (isLoading) {
+  if (isLoading || (initialScrollToMessageId && !hasScrolledToInitialRef.current)) {
     return (
       <div
         ref={parentRef}

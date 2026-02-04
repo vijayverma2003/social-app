@@ -2,8 +2,8 @@
 
 import MainHeader from "@/app/(user)/components/MainHeader";
 import { useParams } from "next/navigation";
-import { DMChannel } from "./components/DMChannel";
-import { PostChannel } from "./components/PostChannel";
+import { DMChannel } from "../../components/DMChannel";
+import { PostChannel } from "../../components/PostChannel";
 
 const ChannelPage = () => {
   const params = useParams();

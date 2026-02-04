@@ -87,7 +87,11 @@ export const GetMessagesPayloadSchema = z
     channelId: z.string().trim().min(1, "Channel ID is required"),
     channelType: ChannelTypeSchema,
     limit: z.number().int().min(1).max(100).optional().default(50),
-    before: z.string().datetime().optional(), // ISO date string for pagination
+    // ISO date strings for pagination
+    before: z.string().datetime().optional(), // messages strictly before this timestamp
+    after: z.string().datetime().optional(), // messages strictly after this timestamp
+    // When provided, fetch messages around this message ID (overrides before/after logic)
+    aroundMessageId: z.string().trim().optional(),
   })
   .strict();
 

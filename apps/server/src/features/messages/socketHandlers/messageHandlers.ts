@@ -389,7 +389,14 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      const { channelId, channelType, limit, before } = validation.data;
+      const {
+        channelId,
+        channelType,
+        limit,
+        before,
+        after,
+        aroundMessageId,
+      } = validation.data;
 
       // Verify user is a member of the channel
       if (channelType === "dm") {
@@ -409,15 +416,34 @@ export class MessageHandlers extends BaseSocketHandler {
         }
       }
 
-      // Parse before date if provided
-      const beforeDate = before ? new Date(before) : undefined;
+      // If aroundMessageId is provided, fetch messages around that message
+      if (aroundMessageId) {
+        const messages = await Message.findAroundMessage(
+          channelId,
+          channelType,
+          aroundMessageId,
+          limit
+        );
 
-      // Get messages
+        const mappedMessages = messages.map(mapMessageId);
+
+        return callback({
+          success: true,
+          data: mappedMessages,
+        });
+      }
+
+      // Parse before/after dates if provided
+      const beforeDate = before ? new Date(before) : undefined;
+      const afterDate = after ? new Date(after) : undefined;
+
+      // Get messages for standard pagination
       const messages = await Message.findByChannelIdAndType(
         channelId,
         channelType,
         limit,
-        beforeDate
+        beforeDate,
+        afterDate
       );
 
       // Map _id to id for all messages

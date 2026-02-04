@@ -68,13 +68,20 @@ export class Message {
     channelId: string,
     channelType: ChannelType,
     limit: number = 50,
-    before?: Date
+    before?: Date,
+    after?: Date
   ) {
     const collection = await getCollection(COLLECTION_NAME);
     const query: any = { channelId, channelType };
 
-    if (before) {
-      query.createdAt = { $lt: before };
+    if (before || after) {
+      query.createdAt = {};
+      if (before) {
+        query.createdAt.$lt = before;
+      }
+      if (after) {
+        query.createdAt.$gt = after;
+      }
     }
 
     const messages = await collection
@@ -87,6 +94,69 @@ export class Message {
       ...message,
       _id: message._id.toString(),
     }));
+  }
+
+  static async findAroundMessage(
+    channelId: string,
+    channelType: ChannelType,
+    messageId: string,
+    limit: number = 50
+  ) {
+    const collection = await getCollection(COLLECTION_NAME);
+
+    const center = await collection.findOne<MessageData & { _id: ObjectId }>({
+      _id: new ObjectId(messageId),
+    });
+
+    if (!center) {
+      return [];
+    }
+
+    // Ensure the message belongs to the same channel and type
+    if (center.channelId !== channelId || center.channelType !== channelType) {
+      return [];
+    }
+
+    const createdAt = center.createdAt;
+    const half = Math.floor(limit / 2);
+
+    // Messages before the center (earlier)
+    const beforeMessages = await collection
+      .find<MessageData & { _id: ObjectId }>({
+        channelId,
+        channelType,
+        createdAt: { $lt: createdAt },
+      })
+      .sort({ createdAt: -1 })
+      .limit(half)
+      .toArray();
+
+    const remainingAfter = limit - beforeMessages.length - 1; // -1 for the center message
+
+    // Messages after the center (later)
+    const afterMessages =
+      remainingAfter > 0
+        ? await collection
+          .find<MessageData & { _id: ObjectId }>({
+            channelId,
+            channelType,
+            createdAt: { $gt: createdAt },
+          })
+          .sort({ createdAt: 1 })
+          .limit(remainingAfter)
+          .toArray()
+        : [];
+
+    const orderedBefore = beforeMessages
+      .reverse()
+      .map((message) => ({ ...message, _id: message._id.toString() }));
+    const centerMapped = { ...center, _id: center._id.toString() };
+    const orderedAfter = afterMessages.map((message) => ({
+      ...message,
+      _id: message._id.toString(),
+    }));
+
+    return [...orderedBefore, centerMapped, ...orderedAfter];
   }
 
   static async update(id: string, data: UpdateMessageData) {

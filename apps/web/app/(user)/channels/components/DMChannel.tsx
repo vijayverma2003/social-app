@@ -11,6 +11,7 @@ import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
 import { MessageInput } from "@/features/messages/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useUser } from "@/providers/UserContextProvider";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";
 import { useProfilesStore } from "@/stores/profilesStore";
@@ -23,9 +24,10 @@ import MainHeader from "@/app/(user)/components/MainHeader";
 
 interface DMChannelProps {
   channelId: string;
+  aroundMessageId?: string;
 }
 
-export const DMChannel = ({ channelId }: DMChannelProps) => {
+export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
   const { user: currentUser } = useUser();
   const dmChannel = useDMChannelsStore((state) => state.dmChannels[channelId]);
   const resetUnreadCount = useDMChannelsStore(
@@ -69,10 +71,25 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
     channelId,
     channelType: "dm",
     onMarkAsReadSuccess: handleMarkAsReadSuccess,
+    aroundMessageId,
   });
 
   const otherUser = useProfilesStore((state) => state.getProfile(otherUserId));
   const isFriend = useFriendsStore((state) => state.isFriend(otherUserId));
+
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => messagesContainerRef.current,
+    estimateSize: () => 80,
+    overscan: 20,
+    enabled: messages.length > 0,
+    measureElement:
+      typeof window !== "undefined" &&
+        navigator.userAgent.indexOf("Firefox") === -1
+        ? (element: Element | null) =>
+          element?.getBoundingClientRect().height ?? 80
+        : undefined,
+  });
 
   const handleEditMessage = useCallback(
     (
@@ -119,7 +136,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             ref={messagesContainerRef}
             className="overflow-y-auto py-4 space-y-2 relative no-scrollbarmin-w-[400px]"
           >
-            <div className="p-4 flex flex-col gap-4 items-center">
+            {/* <div className="p-4 flex flex-col gap-4 items-center">
               <Avatar className="size-16">
                 <AvatarImage src={otherUser?.avatarURL || undefined} />
                 <AvatarFallback>{otherUser?.displayName?.charAt(0)}</AvatarFallback>
@@ -140,7 +157,7 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
             </div>
             <div className="px-4">
               <Separator />
-            </div>
+            </div> */}
             <InfiniteScroll
               onLoadMore={loadOlderMessages}
               hasMore={hasMoreOlderMessages}
@@ -161,6 +178,8 @@ export const DMChannel = ({ channelId }: DMChannelProps) => {
               onReplyMessage={handleReplyMessage}
               containerRef={messagesContainerRef}
               isLoading={isInitialLoading && messages.length === 0}
+              initialScrollToMessageId={aroundMessageId}
+              virtualizer={virtualizer as any}
             />
           </div>
           <div className="p-2 mb-3">

@@ -14,6 +14,7 @@ import { useProfilesStore } from "@/stores/profilesStore";
 import { OptimistcMessageData } from "@/features/messages/store/messagesStore";
 import { Loader2, RotateCcw, Pencil } from "lucide-react";
 import { memo, useMemo } from "react";
+import { usePathname } from "next/navigation";
 
 interface MessagePreviewProps {
   message: OptimistcMessageData;
@@ -36,10 +37,13 @@ const MessagePreview = memo(({
   repliedToMessage,
   highlight
 }: MessagePreviewProps) => {
+  const pathname = usePathname();
   const { user } = useUser();
   const profile = useProfilesStore((state) =>
     state.getProfile(message.authorId)
   );
+
+  const messageLink = message.channelType === "post" ? `/channels/${pathname.split('/')[2]}/${message.channelId}/${message.id}` : `/channels/@me/${message.channelId}/${message.id}`;
 
   const isOptimistic = message.id.startsWith("optimistic-");
   const hasError = !!message.error;
@@ -247,15 +251,24 @@ const MessagePreview = memo(({
           Copy Text
         </ContextMenuItem>
         {!isOptimistic && (
-          <ContextMenuItem
-            onClick={() => {
-              if (onReply) {
-                onReply(message);
-              }
-            }}
-          >
-            Reply
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem
+              onClick={() => {
+                if (onReply) {
+                  onReply(message);
+                }
+              }}
+            >
+              Reply
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_APP_URL}${messageLink}`)
+              }}
+            >
+              Copy Link
+            </ContextMenuItem>
+          </>
         )}
         {user && message.authorId === user.id && !isOptimistic && (
           <>

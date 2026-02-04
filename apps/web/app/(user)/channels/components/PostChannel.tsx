@@ -3,6 +3,7 @@
 import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
 import { MessageInput } from "@/features/messages/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useChannelMessages } from "../hooks/useChannelMessages";
 import { MessageData } from "@shared/schemas/messages";
 import { useCallback } from "react";
@@ -10,9 +11,10 @@ import { Spinner } from "@/components/ui/spinner";
 
 interface PostChannelProps {
   channelId: string;
+  aroundMessageId?: string;
 }
 
-export const PostChannel = ({ channelId }: PostChannelProps) => {
+export const PostChannel = ({ channelId, aroundMessageId }: PostChannelProps) => {
   const {
     messagesContainerRef,
     messageInputRef,
@@ -25,6 +27,21 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
   } = useChannelMessages({
     channelId,
     channelType: "post",
+    aroundMessageId,
+  });
+
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => messagesContainerRef.current,
+    estimateSize: () => 80,
+    overscan: 20,
+    enabled: messages.length > 0,
+    measureElement:
+      typeof window !== "undefined" &&
+        navigator.userAgent.indexOf("Firefox") === -1
+        ? (element: Element | null) =>
+          element?.getBoundingClientRect().height ?? 80
+        : undefined,
   });
 
   const handleEditMessage = useCallback(
@@ -81,6 +98,8 @@ export const PostChannel = ({ channelId }: PostChannelProps) => {
           onReplyMessage={handleReplyMessage}
           containerRef={messagesContainerRef}
           isLoading={isInitialLoading && messages.length === 0}
+          initialScrollToMessageId={aroundMessageId}
+          virtualizer={virtualizer as any}
         />
       </div>
       <div className="p-2 mb-3">

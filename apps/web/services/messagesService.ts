@@ -99,13 +99,18 @@ export const fetchMessages = (
       useMessagesStore.getState();
 
     const messages = messagesByChannel[payload.channelId] || [];
-    console.log("FetchMessages 1", messages.length);
-    if (messages.length > 0 && !options?.prepend) {
+
+    // If we already have messages and this is a basic initial load (no before/after/around),
+    // reuse the cached messages instead of fetching again.
+    const hasDirectionalParams =
+      !!(payload.before || (payload as any).after || (payload as any).aroundMessageId);
+
+    if (messages.length > 0 && !options?.prepend && !hasDirectionalParams) {
       options?.onSuccess?.();
       resolve(messages);
       return;
     }
-    console.log("FetchMessages 2", messages.length);
+
     socketService.emit(MESSAGE_EVENTS.GET, payload, ((response) => {
       if (response.success && response.data) {
         if (options?.prepend) {
