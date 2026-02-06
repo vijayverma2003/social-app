@@ -10,8 +10,8 @@ import {
   MessageData,
 } from "@shared/schemas/messages";
 import { ClientToServerEvents } from "@shared/types/socket";
-import { useMessagesStore } from "@/features/messages/store/messagesStore";
-import { MessageRequest } from "@/features/messages/store/messageRequestsStore";
+import { useMessagesStore } from "@/stores/messagesStore";
+import { MessageRequest } from "@/stores/messageRequestsStore";
 import { fetchUserProfiles } from "./profilesService";
 import { ChannelWithUsers } from "@shared/types/responses";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";

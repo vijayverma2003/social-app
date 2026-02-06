@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useSocket } from "@/contexts/socket";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
-import { useMessageRequestsStore } from "../store/messageRequestsStore";
+import { useMessageRequestsStore } from "../../../stores/messageRequestsStore";
 import { fetchMessageRequests } from "@/services/messagesService";
 import { toast } from "sonner";
 

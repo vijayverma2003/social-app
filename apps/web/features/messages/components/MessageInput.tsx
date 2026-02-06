@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { OptimistcMessageData } from "@/features/messages/store/messagesStore";
+import { OptimistcMessageData } from "@/stores/messagesStore";
 import { useMessageForm } from "@/hooks/useMessageForm";
 import { useProfilesStore } from "@/stores/profilesStore";
 import {

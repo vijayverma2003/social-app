@@ -9,6 +9,11 @@ type GetDMsListCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DMS_LIST]
 >[1];
 
+type GetDMChannelCallback = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DM_CHANNEL]
+>[1];
+
+
 /**
  * Extract unique user IDs from DM channels
  * @param channels - Array of channels with users
@@ -62,5 +67,47 @@ export const fetchDMChannels = (): Promise<ChannelWithUsers[]> => {
         reject(new Error("Failed to get DM channels"));
       }
     }) as GetDMsListCallback);
+  });
+};
+
+
+/**
+ * Get a DM channel with another user.
+ * - First checks the local DM channel store for an existing channel with that user
+ * - If not found, emits GET_DM_CHANNEL, stores the returned channel in the store, and returns it
+ */
+export const getDMChannel = (
+  otherUserId: string
+): Promise<ChannelWithUsers> => {
+  return new Promise<ChannelWithUsers>((resolve, reject) => {
+    const { dmChannels, addDMChannel } = useDMChannelsStore.getState();
+
+    // Check if a DM channel with this user already exists in the store
+    const existingChannel = Object.values(dmChannels).find(
+      (channel) =>
+        channel.type === "dm" &&
+        channel.users?.some((user) => user.userId === otherUserId)
+    );
+
+    if (existingChannel) {
+      resolve(existingChannel);
+      return;
+    }
+
+    // Otherwise, ask the server to get or create the DM channel
+    socketService.emit(
+      CHANNEL_EVENTS.GET_DM_CHANNEL,
+      { otherUserId },
+      ((response) => {
+        if (response.success && response.data) {
+          const channel = response.data;
+          addDMChannel(channel);
+          resolve(channel);
+        } else {
+          const error = response.error || "Failed to get DM channel";
+          reject(new Error(error));
+        }
+      }) as GetDMChannelCallback
+    );
   });
 };

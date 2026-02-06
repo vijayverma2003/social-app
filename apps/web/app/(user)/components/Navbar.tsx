@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useSettings } from "@/contexts/settingsContext";
 import { useFriendRequestsStore } from "@/features/friends/store/friendRequestsStore";
-import { useMessageRequestsStore } from "@/features/messages/store/messageRequestsStore";
+import { useMessageRequestsStore } from "@/stores/messageRequestsStore";
 import { CreatePostDialog } from "@/features/posts/components/CreatePostDialog";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";

@@ -134,7 +134,7 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
 
           <div
             ref={messagesContainerRef}
-            className="overflow-y-auto py-4 space-y-2 relative no-scrollbarmin-w-[400px]"
+            className="overflow-y-auto py-4 space-y-2 relative no-scrollbar min-w-[400px]"
           >
             {/* <div className="p-4 flex flex-col gap-4 items-center">
               <Avatar className="size-16">

@@ -1,6 +1,7 @@
 import prisma from "@database/postgres";
 import {
   GetDMChannelPayloadSchema,
+  GetPostChannelPayloadSchema,
   JoinChannelPayloadSchema,
   LeaveChannelPayloadSchema,
   MarkChannelAsReadPayloadSchema,
@@ -25,11 +26,11 @@ type GetDMChannelCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DM_CHANNEL]
 >[1];
 
-type GetPostsListData = Parameters<
-  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_POSTS_LIST]
+type GetPostChannelData = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_POST_CHANNEL]
 >[0];
-type GetPostsListCallback = Parameters<
-  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_POSTS_LIST]
+type GetPostChannelCallback = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_POST_CHANNEL]
 >[1];
 
 type JoinChannelData = Parameters<
@@ -59,8 +60,8 @@ export class ChannelHandlers extends BaseSocketHandler {
       this.getDMChannels(socket, data, callback)
     );
 
-    socket.on(CHANNEL_EVENTS.GET_POSTS_LIST, (data, callback) =>
-      this.getPostChannels(socket, data, callback)
+    socket.on(CHANNEL_EVENTS.GET_POST_CHANNEL, (data, callback) =>
+      this.getPostChannel(socket, data, callback)
     );
 
     socket.on(CHANNEL_EVENTS.GET_DM_CHANNEL, (data, callback) =>
@@ -232,10 +233,10 @@ export class ChannelHandlers extends BaseSocketHandler {
     }
   }
 
-  private async getPostChannels(
+  private async getPostChannel(
     socket: AuthenticatedSocket,
-    data: GetPostsListData,
-    cb: GetPostsListCallback
+    data: GetPostChannelData,
+    cb: GetPostChannelCallback
   ) {
     try {
       if (!socket.userId) {
@@ -243,29 +244,37 @@ export class ChannelHandlers extends BaseSocketHandler {
         return;
       }
 
-      // Get all post channels where the user is a member
-      const channels = await prisma.channel.findMany({
-        where: {
-          type: "post",
-          users: {
-            some: {
-              userId: socket.userId,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: 50, // Max 50 items
+      const validationResult = GetPostChannelPayloadSchema.safeParse(data);
+      if (!validationResult.success) {
+        cb({
+          error: validationResult.error.issues[0]?.message || "Invalid input",
+        });
+        return;
+      }
+
+      const { channelId } = validationResult.data;
+
+      const channel = await prisma.channel.findUnique({
+        where: { id: channelId },
       });
+
+      if (!channel) {
+        cb({ error: "Channel not found" });
+        return;
+      }
+
+      if (channel.type !== "post") {
+        cb({ error: "Channel is not a post channel" });
+        return;
+      }
 
       cb({
         success: true,
-        data: channels,
+        data: channel,
       });
     } catch (error) {
-      console.error("Error getting post channels list:", error);
-      cb({ error: "Failed to get post channels list" });
+      console.error("Error getting post channel:", error);
+      cb({ error: "Failed to get post channel" });
     }
   }
 

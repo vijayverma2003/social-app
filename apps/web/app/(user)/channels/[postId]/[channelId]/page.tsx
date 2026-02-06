@@ -1,29 +1,20 @@
-"use client";
+'use client'
 
-import MainHeader from "@/app/(user)/components/MainHeader";
-import { useParams } from "next/navigation";
-import { DMChannel } from "../../components/DMChannel";
-import { PostChannel } from "../../components/PostChannel";
+import { ChannelType } from '@shared/schemas/messages'
+import { useParams } from 'next/navigation'
+import Channel from '../../components/Channel'
 
-const ChannelPage = () => {
-  const params = useParams();
-  const postId = params?.postId as string;
-  const channelId = params?.channelId as string;
+const page = () => {
+    const params = useParams()
+    const postId = params?.postId as string
+    const channelId = params?.channelId as string
+    const channelType: ChannelType = postId === '%40me' ? "dm" : "post"
 
-  // Determine channel type: if postId is "@me", it's a DM channel, otherwise it's a post channel
-  const channelType = postId === "%40me" ? "dm" : "post";
 
-  if (!channelId) return <div>Invalid channel</div>;
 
-  return (
-    <section className="h-screen overflow-hidden flex flex-col">
-      {channelType === "dm" ? (
-        <DMChannel channelId={channelId} />
-      ) : (
-        <PostChannel channelId={channelId} />
-      )}
-    </section>
-  );
-};
+    return (
+        <Channel channelType={channelType} channelId={channelId} postId={postId} />
+    )
+}
 
-export default ChannelPage;
+export default page

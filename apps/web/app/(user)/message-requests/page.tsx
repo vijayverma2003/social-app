@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useMessageRequestsStore } from "@/features/messages/store/messageRequestsStore";
+import { useMessageRequestsStore } from "@/stores/messageRequestsStore";
 import { ConversationPreview } from "@/features/posts/components/ConversationPreview";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";

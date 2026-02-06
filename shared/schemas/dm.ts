@@ -24,9 +24,16 @@ export const GetDMChannelPayloadSchema = z
   })
   .strict();
 
+export const GetPostChannelPayloadSchema = z
+  .object({
+    channelId: z.string().trim().min(1, "Channel ID is required"),
+  })
+  .strict();
+
 export type JoinChannelPayload = z.infer<typeof JoinChannelPayloadSchema>;
 export type LeaveChannelPayload = z.infer<typeof LeaveChannelPayloadSchema>;
 export type MarkChannelAsReadPayload = z.infer<
   typeof MarkChannelAsReadPayloadSchema
 >;
 export type GetDMChannelPayload = z.infer<typeof GetDMChannelPayloadSchema>;
+export type GetPostChannelPayload = z.infer<typeof GetPostChannelPayloadSchema>;

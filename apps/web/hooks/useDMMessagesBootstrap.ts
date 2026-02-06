@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";
-import { useMessagesStore } from "@/features/messages/store/messagesStore";
+import { useMessagesStore } from "@/stores/messagesStore";
 import { useEffect } from "react";
 
 export const useDMMessagesBootstrap = () => {

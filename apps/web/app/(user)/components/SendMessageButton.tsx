@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { getDMChannel } from "@/services/channelService";
+import { getDMChannel } from "@/services/dmChannelsService";
 import { usePathname, useRouter } from "next/navigation";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { toast } from "sonner";

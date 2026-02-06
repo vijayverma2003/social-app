@@ -24,6 +24,7 @@ import {
 } from "../schemas/friends";
 import {
   GetDMChannelPayload,
+  GetPostChannelPayload,
   JoinChannelPayload,
   LeaveChannelPayload,
   MarkChannelAsReadPayload,
@@ -160,13 +161,13 @@ export interface ClientToServerEvents {
   ) => void;
 
   /**
-   * GET_POSTS_LIST: Get list of post channels for the authenticated user
-   * @param data - {} - No payload required
-   * @param callback - SocketResponse<Channel[]>
+   * GET_POST_CHANNEL: Get a post channel by channel ID (if user has access).
+   * @param data - { channelId: string }
+   * @param callback - SocketResponse<Channel>
    */
-  [CHANNEL_EVENTS.GET_POSTS_LIST]: (
-    data: {},
-    callback: (response: SocketResponse<Channel[]>) => void
+  [CHANNEL_EVENTS.GET_POST_CHANNEL]: (
+    data: GetPostChannelPayload,
+    callback: (response: SocketResponse<Channel>) => void
   ) => void;
 
   /**

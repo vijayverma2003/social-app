@@ -1,16 +1,21 @@
 import { CHANNEL_EVENTS } from "@shared/socketEvents";
 import { socketService } from "./socketService";
 import {
+  GetPostChannelPayload,
   JoinChannelPayload,
   LeaveChannelPayload,
   MarkChannelAsReadPayload,
 } from "@shared/schemas/dm";
-import { ChannelWithUsers } from "@shared/types/responses";
+import { Channel } from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";
-import { useDMChannelsStore } from "@/stores/dmChannelStore";
+import { usePostChannelsStore } from "@/stores/postChannelStore";
 
 type JoinChannelCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.JOIN]
+>[1];
+
+type GetPostChannelCallback = Parameters<
+  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_POST_CHANNEL]
 >[1];
 
 type LeaveChannelCallback = Parameters<
@@ -21,47 +26,32 @@ type MarkChannelAsReadCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.MARK_AS_READ]
 >[1];
 
-type GetDMChannelCallback = Parameters<
-  ClientToServerEvents[typeof CHANNEL_EVENTS.GET_DM_CHANNEL]
->[1];
-
 /**
- * Get a DM channel with another user.
- * - First checks the local DM channel store for an existing channel with that user
- * - If not found, emits GET_DM_CHANNEL, stores the returned channel in the store, and returns it
+ * Get a post channel by channel ID.
+ * Checks postChannelStore first; if not found, emits GET_POST_CHANNEL and stores the result.
+ * @param channelId - The channel ID
+ * @returns Promise that resolves with the Channel or rejects with error
  */
-export const getDMChannel = (
-  otherUserId: string
-): Promise<ChannelWithUsers> => {
-  return new Promise<ChannelWithUsers>((resolve, reject) => {
-    const { dmChannels, addDMChannel } = useDMChannelsStore.getState();
+export const getPostChannel = (channelId: string): Promise<Channel> => {
+  return new Promise<Channel>((resolve, reject) => {
+    const { postChannels, addPostChannel } = usePostChannelsStore.getState();
+    const existing = postChannels[channelId];
 
-    // Check if a DM channel with this user already exists in the store
-    const existingChannel = Object.values(dmChannels).find(
-      (channel) =>
-        channel.type === "dm" &&
-        channel.users?.some((user) => user.userId === otherUserId)
-    );
-
-    if (existingChannel) {
-      resolve(existingChannel);
+    if (existing) {
+      resolve(existing);
       return;
     }
-
-    // Otherwise, ask the server to get or create the DM channel
     socketService.emit(
-      CHANNEL_EVENTS.GET_DM_CHANNEL,
-      { otherUserId },
+      CHANNEL_EVENTS.GET_POST_CHANNEL,
+      { channelId } as GetPostChannelPayload,
       ((response) => {
         if (response.success && response.data) {
-          const channel = response.data;
-          addDMChannel(channel);
-          resolve(channel);
+          addPostChannel(response.data);
+          resolve(response.data);
         } else {
-          const error = response.error || "Failed to get DM channel";
-          reject(new Error(error));
+          reject(new Error(response.error || "Failed to get post channel"));
         }
-      }) as GetDMChannelCallback
+      }) as GetPostChannelCallback
     );
   });
 };

@@ -11,7 +11,7 @@ import { cn, graphemeLengthWithoutSpaces, isOnlyEmojisAndWhitespace } from "@/li
 import { useUser } from "@/providers/UserContextProvider";
 import { createMessage, deleteMessage } from "@/services/messagesService";
 import { useProfilesStore } from "@/stores/profilesStore";
-import { OptimistcMessageData } from "@/features/messages/store/messagesStore";
+import { OptimistcMessageData } from "@/stores/messagesStore";
 import { Loader2, RotateCcw, Pencil } from "lucide-react";
 import { memo, useMemo } from "react";
 import { usePathname } from "next/navigation";

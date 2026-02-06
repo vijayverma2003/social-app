@@ -1,7 +1,7 @@
 "use client";
 
-import { useMessagesBootstrap } from "@/features/messages/hooks/useMessagesBootstrap";
-import { useMessagesStore } from "@/features/messages/store/messagesStore";
+import { useMessagesBootstrap } from "@/features/messages/hooks/usePostChannelsMessages";
+import { useMessagesStore } from "@/stores/messagesStore";
 import { useUser } from "@/providers/UserContextProvider";
 import {
   markChannelAsRead,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useChannelsStore } from "@/features/dms/store/channelsStore";
 import { useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";
@@ -8,7 +7,6 @@ import { fetchDMChannels } from "@/services/dmChannelsService";
 import { DMChannelNavItem } from "./DMChannelNavItem";
 
 const DMChannelNavigation = () => {
-  const channels = useChannelsStore(useShallow((state) => state.channels));
   const { dmChannels, lastMessageTimestamps } = useDMChannelsStore(
     useShallow((state) => ({
       dmChannels: state.dmChannels,

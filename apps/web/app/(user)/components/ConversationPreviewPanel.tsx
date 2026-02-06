@@ -1,8 +1,8 @@
 "use client";
 
 import { useConversationPreview } from "@/contexts/conversationPreviewContext";
-import { PostChannel } from "@/app/(user)/channels/components/PostChannel";
-import { DMChannel } from "@/app/(user)/channels/components/DMChannel";
+import { PostChannel } from "@/app/(user)/channels-archived/components/PostChannel";
+import { DMChannel } from "@/app/(user)/channels-archived/components/DMChannel";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { usePostsStore } from "@/features/posts/store/postsStore";

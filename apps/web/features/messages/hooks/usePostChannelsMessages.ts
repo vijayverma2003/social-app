@@ -5,7 +5,7 @@ import { ChannelType, MessageData } from "@shared/schemas/messages";
 import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ServerToClientEvents } from "@shared/types/socket";
 import { useEffect, useRef } from "react";
-import { useMessagesStore } from "../store/messagesStore";
+import { useMessagesStore } from "../../../stores/messagesStore";
 import { fetchMessages } from "@/services/messagesService";
 import { toast } from "sonner";
 

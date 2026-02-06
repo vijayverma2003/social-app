@@ -1,13 +1,13 @@
 "use client";
 
 import { SelectedFile } from "@/features/messages/components/UploadButton";
-import { useMessagesStore } from "@/features/messages/store/messagesStore";
+import { useMessagesStore } from "@/stores/messagesStore";
 import { useUser } from "@/providers/UserContextProvider";
 import { createMessage, editMessage } from "@/services/messagesService";
 import { ChannelType, MessageData, Attachment } from "@shared/schemas/messages";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { OptimistcMessageData } from "@/features/messages/store/messagesStore";
+import { OptimistcMessageData } from "@/stores/messagesStore";
 
 const MAX_PENDING_MESSAGES = 5;
 const ERROR_SEND_MESSAGE = "Failed to send message. Click to retry.";
