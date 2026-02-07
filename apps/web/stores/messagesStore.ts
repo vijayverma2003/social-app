@@ -30,6 +30,7 @@ interface MessagesState {
     error: string
   ) => void;
   prependMessages: (channelId: string, messages: MessageData[]) => void;
+  appendMessages: (channelId: string, messages: MessageData[]) => void;
   updateMessage: (
     channelId: string,
     messageId: string,
@@ -147,7 +148,6 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   prependMessages: (channelId, messages) =>
     set((state) => {
       const existingMessages = state.messagesByChannel[channelId] || [];
-      // Filter out duplicates
       const newMessageIds = new Set(messages.map((m) => m.id));
       const filteredExisting = existingMessages.filter(
         (m) => !newMessageIds.has(m.id)
@@ -156,6 +156,21 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         messagesByChannel: {
           ...state.messagesByChannel,
           [channelId]: [...messages, ...filteredExisting],
+        },
+      };
+    }),
+
+  appendMessages: (channelId, messages) =>
+    set((state) => {
+      const existingMessages = state.messagesByChannel[channelId] || [];
+      const newMessageIds = new Set(messages.map((m) => m.id));
+      const filteredExisting = existingMessages.filter(
+        (m) => !newMessageIds.has(m.id)
+      );
+      return {
+        messagesByChannel: {
+          ...state.messagesByChannel,
+          [channelId]: [...filteredExisting, ...messages],
         },
       };
     }),

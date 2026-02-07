@@ -94,7 +94,6 @@ export function isOnlyEmojisAndWhitespace(str: string): boolean {
   // Grapheme is emoji if it starts with Extended_Pictographic and only contains
   // Extended_Pictographic, ZWJ (U+200D), or variation selector 16 (U+FE0F)
   const emojiGraphemeRegex = /^[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Component}\s]+$/u;
-  console.log(str, segments.length, segments.every((seg) => emojiGraphemeRegex.test(seg.segment)));
   return segments.every((seg) => emojiGraphemeRegex.test(seg.segment));
 }
 
@@ -107,6 +106,5 @@ export function isOnlyEmojisAndWhitespace(str: string): boolean {
 export function graphemeLengthWithoutSpaces(str: string): number {
   const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
   const segments = [...segmenter.segment(str.replace(/\s/g, ""))];
-  console.log(str, segments.length, segments.map((seg) => seg.segment));
   return segments.length
 }

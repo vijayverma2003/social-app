@@ -1,6 +1,5 @@
 "use client";
 
-import { InfiniteScroll } from "@/app/(user)/components/InfiniteScroll";
 import { MessageInput } from "@/app/(user)/channels/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -78,7 +77,7 @@ export const PostChannel = ({ channelId, aroundMessageId }: PostChannelProps) =>
         className="overflow-y-auto py-4 space-y-2 relative no-scrollbar min-w-[400px]"
       >
 
-        <InfiniteScroll
+        {/* <InfiniteScroll
           onLoadMore={loadOlderMessages}
           hasMore={hasMoreOlderMessages}
           isLoading={isLoadingOlderMessages}
@@ -90,7 +89,7 @@ export const PostChannel = ({ channelId, aroundMessageId }: PostChannelProps) =>
             </div>
           }
           endComponent={<>?</>}
-        />
+        /> */}
         <MessagesList
           messages={messages}
           emptyMessage="No messages yet. Start a conversation!"

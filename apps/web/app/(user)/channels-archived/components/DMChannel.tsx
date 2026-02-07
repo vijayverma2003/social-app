@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { useFriendsStore } from "@/features/friends/store/friendsStore";
-import { InfiniteScroll } from "@/app/(user)/components/InfiniteScroll";
 import { MessageInput } from "@/app/(user)/channels/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -158,7 +157,7 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
             <div className="px-4">
               <Separator />
             </div> */}
-            <InfiniteScroll
+            {/* <InfiniteScroll
               onLoadMore={loadOlderMessages}
               hasMore={hasMoreOlderMessages}
               isLoading={isLoadingOlderMessages}
@@ -170,7 +169,7 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
                 </div>
               }
               endComponent={<></>}
-            />
+            /> */}
             <MessagesList
               messages={messages}
               emptyMessage="No messages yet. Start a conversation!"

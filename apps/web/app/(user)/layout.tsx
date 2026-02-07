@@ -12,12 +12,14 @@ import { useMessageRequestsBootstrap } from "@/features/messages/hooks/useMessag
 import { useDMMessagesBootstrap } from "@/hooks/useDMMessagesBootstrap";
 import { ConversationPreviewProvider } from "@/contexts/conversationPreviewContext";
 import MainContent from "./components/MainContent";
+import { useMessagesBootstrap } from "@/hooks/messages/useMessagesBootstrap";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();
   useFriendsBootstrap();
   usePostsBootstrap();
   useProfilesBootstrap();
+  useMessagesBootstrap();
   useMessageRequestsBootstrap();
 
   return (

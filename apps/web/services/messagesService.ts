@@ -83,19 +83,20 @@ export const createMessage = (
  * Fetch messages from a channel with pagination
  * Stores messages in the messages store automatically
  * @param payload - { channelId: string, channelType: "dm" | "post", limit?: number, before?: string }
- * @param options - { prepend?: boolean, onSuccess?: () => void, onError?: (error: string) => void }
+ * @param options - { prepend?: boolean, append?: boolean, onSuccess?: () => void, onError?: (error: string) => void }
  * @returns Promise that resolves with array of messages or rejects with error
  */
 export const fetchMessages = (
   payload: GetMessagesPayload,
   options?: {
     prepend?: boolean;
+    append?: boolean;
     onSuccess?: () => void;
     onError?: (error: string) => void;
   }
 ): Promise<MessageData[]> => {
   return new Promise<MessageData[]>((resolve, reject) => {
-    const { setMessages, prependMessages, messagesByChannel } =
+    const { setMessages, prependMessages, appendMessages, messagesByChannel } =
       useMessagesStore.getState();
 
     const messages = messagesByChannel[payload.channelId] || [];
@@ -115,6 +116,8 @@ export const fetchMessages = (
       if (response.success && response.data) {
         if (options?.prepend) {
           prependMessages(payload.channelId, response.data);
+        } else if (options?.append) {
+          appendMessages(payload.channelId, response.data);
         } else {
           setMessages(payload.channelId, response.data);
         }

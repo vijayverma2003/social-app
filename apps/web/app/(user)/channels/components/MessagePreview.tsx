@@ -17,24 +17,20 @@ import { memo, useMemo } from "react";
 import { usePathname } from "next/navigation";
 
 interface MessagePreviewProps {
-  message: OptimistcMessageData;
-  lastMessage?: OptimistcMessageData | null;
+  message: OptimistcMessageData & { lastMessage?: OptimistcMessageData | null; repliedToMessage?: OptimistcMessageData | null };
   onEdit?: (
     messageId: string,
     messageContent: string,
     attachments?: OptimistcMessageData["attachments"]
   ) => void;
   onReply?: (message: OptimistcMessageData) => void;
-  repliedToMessage?: OptimistcMessageData | null;
   highlight?: boolean;
 }
 
 const MessagePreview = memo(({
   message,
-  lastMessage,
   onEdit,
   onReply,
-  repliedToMessage,
   highlight
 }: MessagePreviewProps) => {
   const pathname = usePathname();
@@ -50,7 +46,7 @@ const MessagePreview = memo(({
   const uploadingFiles = message.uploadingFiles || [];
 
   const repliedToProfile = useProfilesStore((state) =>
-    repliedToMessage ? state.getProfile(repliedToMessage.authorId) : null
+    message.repliedToMessage ? state.getProfile(message.repliedToMessage.authorId) : null
   );
 
   const handleRetry = () => {
@@ -75,28 +71,27 @@ const MessagePreview = memo(({
     new Date(message.createdAt).toDateString() === new Date().toDateString();
 
   const showAvatar = useMemo(() => {
-    if (!lastMessage) return true;
+    if (!message.lastMessage) return true;
 
-    const isSameAuthor = lastMessage.authorId === message.authorId;
+    const isSameAuthor = message.lastMessage.authorId === message.authorId;
     if (!isSameAuthor) return true;
 
     const timeDiff =
       new Date(message.createdAt).getTime() -
-      new Date(lastMessage.createdAt).getTime();
+      new Date(message.lastMessage.createdAt).getTime();
 
     return timeDiff > 5 * 60 * 1000;
-  }, [lastMessage, message.authorId, message.createdAt]);
+  }, [message.lastMessage, message.authorId, message.createdAt]);
 
   const hasEmotesOnly = useMemo(() => isOnlyEmojisAndWhitespace(message.content), [message.content]);
   const hasManyEmotes = useMemo(() => hasEmotesOnly ? graphemeLengthWithoutSpaces(message.content) > 10 : false, [message.content, hasEmotesOnly]);
-  console.log(message.content, hasEmotesOnly, hasManyEmotes);
   return (
     <ContextMenu>
       <ContextMenuTrigger className="select-text">
         <div
           className={cn(
             "p-0 flex items-start gap-3 hover:bg-accent/15 rounded-sm px-4",
-            showAvatar && "mt-4",
+            showAvatar && "pt-4",
             highlight && "bg-primary/10 border-l-2 border-primary"
           )}
         >
@@ -138,13 +133,13 @@ const MessagePreview = memo(({
             {/* Show reply preview */}
             {message.replyToMessageId && (
               <div className="flex items-center gap-2 mb-2 h-6 px-2 bg-muted/50 rounded border-l-2 border-primary/50">
-                {repliedToMessage ? (
+                {message.repliedToMessage ? (
                   <>
                     <p className="text-xs font-medium text-primary">
                       {repliedToProfile?.displayName || "Unknown User"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                      {repliedToMessage.content}
+                      {message.repliedToMessage.content}
                     </p>
                   </>
                 ) : (

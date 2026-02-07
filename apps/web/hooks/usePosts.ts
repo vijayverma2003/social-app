@@ -24,7 +24,7 @@ export const usePosts = () => {
 
       try {
         setIsFeedLoading(true);
-        const take = 4;
+        const take = 10;
         const posts = await getFeed(
           { take, offset },
           { onComplete: onFetchPostsComplete }

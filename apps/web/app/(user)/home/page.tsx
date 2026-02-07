@@ -122,7 +122,7 @@ const HomePage = () => {
       searchPosts({ query: q, take: 20, offset: 0 })
         .then((posts) => {
           setSearchResults(posts);
-          fetchPostAuthorProfiles(posts).catch(() => {});
+          fetchPostAuthorProfiles(posts).catch(() => { });
         })
         .catch(() => setSearchResults([]))
         .finally(() => setIsSearchLoading(false));
