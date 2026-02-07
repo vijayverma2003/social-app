@@ -12,7 +12,7 @@ import { CreatePostPayload, PostResponse } from "@shared/types";
 import {
   UploadButton,
   SelectedFile,
-} from "@/features/messages/components/UploadButton";
+} from "@/app/(user)/channels/components/UploadButton";
 import { createPost } from "@/services/postsService";
 import { PostAttachmentPreview } from "./PostAttachmentPreview";
 

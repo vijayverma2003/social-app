@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageData } from "@shared/schemas/messages";
-import MessagePreview from "./MessagePreview";
+import MessagePreview from "../../../app/(user)/channels/components/MessagePreview";
 import type { Virtualizer } from "@tanstack/react-virtual";
 import { useRef, useMemo, useEffect } from "react";
 import { VirtualList } from "@/features/posts/components/VirtualList";

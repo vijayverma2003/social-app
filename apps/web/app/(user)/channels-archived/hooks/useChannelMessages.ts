@@ -10,7 +10,7 @@ import {
 } from "@/services/channelService";
 import { fetchMessages } from "@/services/messagesService";
 import { ChannelType } from "@shared/schemas/messages";
-import { MessageInputRef } from "@/features/messages/components/MessageInput";
+import { MessageInputRef } from "@/app/(user)/channels/components/MessageInput";
 import type { Virtualizer } from "@tanstack/react-virtual";
 import {
   useCallback,

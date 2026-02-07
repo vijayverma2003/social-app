@@ -1,6 +1,6 @@
 "use client";
 
-import { SelectedFile } from "@/features/messages/components/UploadButton";
+import { SelectedFile } from "@/app/(user)/channels/components/UploadButton";
 import { useMessagesStore } from "@/stores/messagesStore";
 import { useUser } from "@/providers/UserContextProvider";
 import { createMessage, editMessage } from "@/services/messagesService";

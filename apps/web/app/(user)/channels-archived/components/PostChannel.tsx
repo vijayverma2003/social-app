@@ -1,7 +1,7 @@
 "use client";
 
-import { InfiniteScroll } from "@/features/messages/components/InfiniteScroll";
-import { MessageInput } from "@/features/messages/components/MessageInput";
+import { InfiniteScroll } from "@/app/(user)/components/InfiniteScroll";
+import { MessageInput } from "@/app/(user)/channels/components/MessageInput";
 import { MessagesList } from "@/features/messages/components/MessagesList";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useChannelMessages } from "../hooks/useChannelMessages";

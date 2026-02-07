@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   UploadButton,
   type SelectedFile,
-} from "@/features/messages/components/UploadButton";
+} from "@/app/(user)/channels/components/UploadButton";
 import { updateProfile } from "@/services/profilesService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UpdateUserProfilePayloadSchema } from "@shared/schemas";

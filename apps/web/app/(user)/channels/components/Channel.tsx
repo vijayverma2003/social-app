@@ -10,9 +10,10 @@ import { useMessagesStore } from "@/stores/messagesStore";
 import { useShallow } from "zustand/react/shallow";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Chat from "./Chat";
-import { MessageInput } from "@/features/messages/components/MessageInput";
+import { MessageInput, MessageInputRef } from "@/app/(user)/channels/components/MessageInput";
 import { useConversationPreview } from "@/contexts/conversationPreviewContext";
 import { cn } from "@/lib/utils";
+
 
 interface ChannelProps {
     channelType: ChannelType;
@@ -21,6 +22,7 @@ interface ChannelProps {
 }
 
 const Channel = ({ channelType, channelId }: ChannelProps) => {
+    const messageInputRef = useRef<MessageInputRef>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const { state: { isOpen } } = useConversationPreview()
     const [channel, setChannel] = useState<Channel | ChannelWithUsers | null>(
@@ -58,7 +60,22 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
                 : undefined,
     });
 
-    console.log(channelId, channel, messages)
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            const active = document.activeElement as HTMLElement | null;
+            if (active?.closest("textarea") || active?.closest("input")
+
+            ) {
+                return;
+            }
+            if (e.key.length !== 1 || ["Enter", "Escape", "Tab"].includes(e.key)) return;
+            e.preventDefault();
+            messageInputRef.current?.focus();
+            messageInputRef.current?.appendText(e.key);
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, []);
 
     return (
         <main className="h-full min-h-0 flex flex-col">
@@ -73,7 +90,7 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
                         <Chat virtualizer={virtualizer} messages={messages} />
                     </div>
                     <div className="p-2 shrink-0">
-                        <MessageInput channelId={channelId} channelType={channelType} />
+                        <MessageInput ref={messageInputRef} channelId={channelId} channelType={channelType} />
                     </div>
                 </div>
             </div>

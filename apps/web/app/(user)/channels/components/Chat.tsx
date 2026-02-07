@@ -1,4 +1,4 @@
-import MessagePreview from "@/features/messages/components/MessagePreview";
+import MessagePreview from "@/app/(user)/channels/components/MessagePreview";
 import { VirtualList } from "@/features/posts/components/VirtualList";
 import { MessageData } from "@shared/schemas/messages";
 import { Virtualizer } from "@tanstack/react-virtual";

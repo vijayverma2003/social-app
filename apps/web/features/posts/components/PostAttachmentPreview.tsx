@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { FileIcon, X } from "lucide-react";
-import { SelectedFile } from "@/features/messages/components/UploadButton";
+import { SelectedFile } from "@/app/(user)/channels/components/UploadButton";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
