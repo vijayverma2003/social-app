@@ -8,15 +8,11 @@ import { fetchMessages } from "@/services/messagesService";
 import { useMessagesStore } from "@/stores/messagesStore";
 import { ChannelType } from "@shared/schemas/messages";
 import type { Channel } from "@shared/types/responses";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import Chat from "./Chat";
 
 const PAGE_SIZE = 50;
-const LOAD_MORE_THRESHOLD = 3;
-
-
 interface ChannelProps {
     channelType: ChannelType;
     channelId: string;
@@ -45,17 +41,13 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
 
     const { state: { isOpen } } = useConversationPreview();
     const messages = useMessagesStore(useShallow((state) => state.messagesByChannel[channelId] || []));
-    const [hasMoreOlder, setHasMoreOlder] = useState(true);
-    const [isLoadingOlder, setIsLoadingOlder] = useState(false);
-    const [initialLoadDone, setInitialLoadDone] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     const fetchMessagesData = useCallback(async () => {
-        setIsInitialLoading(true);
         try {
+            setIsInitialLoading(true);
             await fetchMessages({ channelId, channelType, limit: PAGE_SIZE });
         } finally {
-            setInitialLoadDone(true);
             setIsInitialLoading(false);
         }
     }, [channelId, channelType]);
@@ -64,38 +56,7 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
         fetchMessagesData();
     }, [fetchMessagesData, channelId]);
 
-    const prependedCountRef = useRef<number | null>(null);
-    const prevFirstIndexRef = useRef<number | null>(null);
 
-
-    // const virtualizer = useVirtualizer<HTMLElement, Element>({
-    //     count: messages.length,
-    //     getScrollElement: () => messagesContainerRef.current,
-    //     estimateSize: () => 40,
-    //     overscan: 5,
-    //     enabled: messages.length > 0,
-    //     measureElement:
-    //         typeof window !== "undefined" &&
-    //             navigator.userAgent.indexOf("Firefox") === -1
-    //             ? (element: Element | null) =>
-    //                 element?.getBoundingClientRect().height ?? 80
-    //             : undefined,
-    // });
-
-    // const virtualItems = virtualizer.getVirtualItems();
-    // const firstIndex = virtualItems[0]?.index ?? 0;
-
-    // // Load more when user scrolls near the top (virtualizer-driven infinite scroll)
-    // useEffect(() => {
-    //     if (!initialLoadDone || messages.length === 0 || !hasMoreOlder || isLoadingOlder) return;
-    //     const prev = prevFirstIndexRef.current;
-    //     prevFirstIndexRef.current = firstIndex;
-    //     if (firstIndex > LOAD_MORE_THRESHOLD) return;
-    //     if (prev !== null && prev <= LOAD_MORE_THRESHOLD) return;
-    //     loadOlder();
-    // }, [firstIndex, initialLoadDone, messages.length, hasMoreOlder, isLoadingOlder, loadOlder]);
-
-    // Focus on input on key down
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             const active = document.activeElement as HTMLElement | null;
@@ -119,19 +80,11 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
             </header>
 
             <div
-                className={cn(
-                    "grid flex-1 min-h-0",
-                    isOpen
-                        ? "grid-cols-[1fr_0px]"
-                        : "max-lg:grid-cols-1 grid-cols-[1fr_360px]",
+                className={cn("grid flex-1 min-h-0",
+                    isOpen ? "grid-cols-[1fr_0px]" : "max-lg:grid-cols-1 grid-cols-[1fr_360px]",
                 )}
             >
                 <div className="flex flex-col w-full h-full min-h-0">
-                    {isLoadingOlder && (
-                        <div className="shrink-0 flex items-center justify-center py-1.5 text-xs text-muted-foreground border-b">
-                            Loading older messages…
-                        </div>
-                    )}
                     <div
                         ref={messagesContainerRef}
                         className="min-h-0 h-full overflow-y-auto mb-4"
@@ -142,6 +95,7 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
                             <Chat channelId={channelId} channelType={channelType} messages={messages} />
                         )}
                     </div>
+
                     <div className="p-2 shrink-0">
                         <MessageInput
                             ref={messageInputRef}

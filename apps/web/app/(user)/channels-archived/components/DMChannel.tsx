@@ -1,25 +1,20 @@
 "use client";
 
-import ProfileCard from "@/app/(user)/components/ProfileCard";
-import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
-import { AddFriendButton } from "@/features/friends/components/AddFriendButton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
-import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { MessageInput } from "@/app/(user)/channels/components/MessageInput";
+import MainHeader from "@/app/(user)/components/MainHeader";
+import ProfileCard from "@/app/(user)/components/ProfileCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useConversationPreview } from "@/contexts/conversationPreviewContext";
+import { useFriendsStore } from "@/features/friends/store/friendsStore";
 import { MessagesList } from "@/features/messages/components/MessagesList";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";
 import { useProfilesStore } from "@/stores/profilesStore";
 import { MessageData } from "@shared/schemas/messages";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useMemo } from "react";
 import { useChannelMessages } from "../hooks/useChannelMessages";
-import { useConversationPreview } from "@/contexts/conversationPreviewContext";
-import { cn } from "@/lib/utils";
-import MainHeader from "@/app/(user)/components/MainHeader";
 
 interface DMChannelProps {
   channelId: string;

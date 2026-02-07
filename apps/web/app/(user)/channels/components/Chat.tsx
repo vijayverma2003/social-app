@@ -1,7 +1,6 @@
 import MessagePreview from "@/app/(user)/channels/components/MessagePreview";
 import { fetchMessages } from "@/services/messagesService";
 import { ChannelType, MessageData } from "@shared/schemas/messages";
-import { Virtualizer } from "@tanstack/react-virtual";
 import { useCallback, useMemo, useState } from "react";
 import { Virtuoso } from 'react-virtuoso';
 

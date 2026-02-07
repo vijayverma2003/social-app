@@ -1,18 +1,17 @@
 "use client";
 
-import { PropsWithChildren } from "react";
-import Navbar from "./components/Navbar";
+import { ConversationPreviewProvider } from "@/contexts/conversationPreviewContext";
 import { ProfileCardViewerProvider } from "@/contexts/profileCardViewer";
 import { SettingsProvider } from "@/contexts/settingsContext";
 import { useFriendRequestsBootstrap } from "@/features/friends/hooks/useFriendRequestsBootstrap";
 import { useFriendsBootstrap } from "@/features/friends/hooks/useFriendsBootstrap";
-import { usePostsBootstrap } from "@/features/posts/hooks/usePostsBootstrap";
-import { useProfilesBootstrap } from "@/hooks/useProfilesBootstrap";
 import { useMessageRequestsBootstrap } from "@/features/messages/hooks/useMessageRequestsBootstrap";
-import { useDMMessagesBootstrap } from "@/hooks/useDMMessagesBootstrap";
-import { ConversationPreviewProvider } from "@/contexts/conversationPreviewContext";
-import MainContent from "./components/MainContent";
+import { usePostsBootstrap } from "@/features/posts/hooks/usePostsBootstrap";
 import { useMessagesBootstrap } from "@/hooks/messages/useMessagesBootstrap";
+import { useProfilesBootstrap } from "@/hooks/useProfilesBootstrap";
+import { PropsWithChildren } from "react";
+import MainContent from "./components/MainContent";
+import Navbar from "./components/Navbar";
 
 const Layout = ({ children }: PropsWithChildren) => {
   useFriendRequestsBootstrap();

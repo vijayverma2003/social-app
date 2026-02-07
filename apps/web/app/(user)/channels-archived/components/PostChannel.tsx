@@ -18,9 +18,6 @@ export const PostChannel = ({ channelId, aroundMessageId }: PostChannelProps) =>
     messagesContainerRef,
     messageInputRef,
     messages,
-    isLoadingOlderMessages,
-    hasMoreOlderMessages,
-    loadOlderMessages,
     scrollToBottom,
     isInitialLoading,
   } = useChannelMessages({
