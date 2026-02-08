@@ -3,7 +3,7 @@
 import { SelectedFile } from "@/app/(user)/channels/components/UploadButton";
 import { useUser } from "@/providers/UserContextProvider";
 import { createMessage } from "@/services/messagesService";
-import { useMessagesStore } from "@/stores/messagesStore";
+import { OptimistcMessageData, useMessagesStore } from "@/stores/messagesStore";
 import {
   ChannelType,
   CreateMessagePayload,
@@ -30,6 +30,7 @@ const createOptimisticMessage = (
   content: string,
   authorId: string,
   files: SelectedFile[],
+  replyToMessageId?: string,
 ): Omit<MessageData, "id"> & {
   id: string;
   uploadingFiles?: Array<{ id: string; name: string; size: number }>;
@@ -42,6 +43,7 @@ const createOptimisticMessage = (
   createdAt: new Date(),
   updatedAt: new Date(),
   authorId,
+  replyToMessageId,
   uploadingFiles: files.map((f) => ({
     id: f.id,
     name: f.file.name,
@@ -104,8 +106,13 @@ export const useMessageForm = ({
 
   const content = watch("content");
 
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const [replyingToMessage, setReplyingToMessage] =
+    useState<OptimistcMessageData | null>(null);
+
   // Reset form when channel changes
   useEffect(() => {
+    setReplyingToMessage(null);
     reset({
       channelId,
       channelType,
@@ -114,7 +121,6 @@ export const useMessageForm = ({
     });
   }, [channelId, channelType, reset]);
 
-  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const uploadFilesFnRef = useRef<
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
   >(null);
@@ -196,7 +202,9 @@ export const useMessageForm = ({
     ): void => {
       const onComplete = (messageId: string | null) => {
         pendingMessagesRef.current.delete(optimisticId);
-        if (messageId) onSend?.();
+        if (messageId) {
+          setReplyingToMessage(null)
+        }
       };
 
       const payload = {
@@ -205,12 +213,23 @@ export const useMessageForm = ({
         content,
         storageObjectIds,
         optimisticId,
+        replyToMessageId: replyingToMessage?.id,
       };
 
       createMessage(payload, { onComplete, optimisticId });
     },
-    [channelId, channelType, onSend],
+    [channelId, channelType, replyingToMessage],
   );
+
+  const startReply = useCallback((message: OptimistcMessageData) => {
+    setReplyingToMessage(message);
+    setSelectedFiles([]);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  }, []);
+
+  const cancelReply = useCallback(() => {
+    setReplyingToMessage(null);
+  }, []);
 
   const onSubmit = useCallback(
     async (data: CreateMessageFormValues) => {
@@ -233,12 +252,13 @@ export const useMessageForm = ({
         messageContent,
         user!.id,
         attachments,
+        replyingToMessage?.id,
       );
 
       const optimisticId = addOptimisticMessage(channelId, optimisticMessage);
       pendingMessagesRef.current.add(optimisticId);
 
-      // Clear form and files immediately for better UX
+      // Clear form, files, and reply state immediately for better UX
       reset({
         channelId,
         channelType,
@@ -246,6 +266,7 @@ export const useMessageForm = ({
         storageObjectIds: [],
       });
       setSelectedFiles([]);
+      setReplyingToMessage(null);
 
       try {
         // Upload files and get storage object IDs
@@ -296,11 +317,14 @@ export const useMessageForm = ({
     content,
     selectedFiles,
     setSelectedFiles: setSelectedFilesSafe,
+    replyingToMessage,
     // Refs
     textareaRef,
     uploadFilesFnRef,
     // Handlers
     removeFile,
     handleSubmit,
+    startReply,
+    cancelReply,
   };
 };

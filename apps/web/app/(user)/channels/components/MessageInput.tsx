@@ -3,24 +3,28 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useMessageForm } from "@/hooks/useMessageForm";
+import { useProfilesStore } from "@/stores/profilesStore";
 import { ChannelType } from "@shared/schemas/messages";
-import { SendHorizonal } from "lucide-react";
+import { SendHorizonal, X } from "lucide-react";
 import { forwardRef, useCallback, useImperativeHandle } from "react";
 import { UploadButton } from "./UploadButton";
+import type { OptimistcMessageData } from "@/stores/messagesStore";
 
 interface MessageInputProps {
   channelId: string;
   channelType: ChannelType;
-  onSend?: () => void;
 }
 
 export interface MessageInputRef {
   focus: () => void;
   appendText: (text: string) => void;
+  startReply: (
+    message: OptimistcMessageData,
+  ) => void;
 }
 
 export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
-  ({ channelId, channelType, onSend }, ref) => {
+  ({ channelId, channelType }, ref) => {
     const {
       form,
       content,
@@ -28,7 +32,14 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       textareaRef,
       uploadFilesFnRef,
       handleSubmit,
-    } = useMessageForm({ channelId, channelType, onSend });
+      replyingToMessage,
+      startReply,
+      cancelReply,
+    } = useMessageForm({ channelId, channelType });
+
+    const repliedToProfile = useProfilesStore((state) =>
+      replyingToMessage ? state.getProfile(replyingToMessage.authorId) : null,
+    );
 
     useImperativeHandle(
       ref,
@@ -38,8 +49,9 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           form.setValue("content", form.getValues("content") + text);
           textareaRef.current?.focus();
         },
+        startReply,
       }),
-      [form, textareaRef],
+      [form, textareaRef, startReply],
     );
 
     const handleKeyDown = useCallback(
@@ -54,6 +66,33 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
 
     return (
       <div className="bg-secondary rounded-3xl">
+        {replyingToMessage && (
+          <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/20 rounded-t-3xl">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground shrink-0">
+                Replying to
+              </p>
+              <p className="text-xs font-medium text-primary shrink-0">
+                {repliedToProfile?.displayName ?? "Unknown"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {replyingToMessage.content.slice(0, 80)}
+                {replyingToMessage.content.length > 80 ? "…" : ""}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={cancelReply}
+              className="h-6 px-2"
+              aria-label="Cancel reply"
+            >
+              <X className="size-3" />
+            </Button>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="flex items-start p-2">
           {channelType === "dm" && (
             <UploadButton

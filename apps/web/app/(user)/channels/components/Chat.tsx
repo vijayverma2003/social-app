@@ -89,9 +89,9 @@ const Chat = ({ channelId, channelType, messages }: ChatProps) => {
       initialTopMostItemIndex={messages.length - 1}
       overscan={10}
       className="flex justify-end"
-      itemContent={(index, message) => {
-        return <MessagePreview key={message.id} message={message} />;
-      }}
+      itemContent={(index, message) => (
+        <MessagePreview key={message.id} message={message} />
+      )}
     />
   );
 };

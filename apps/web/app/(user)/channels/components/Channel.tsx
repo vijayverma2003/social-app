@@ -1,15 +1,15 @@
 "use client";
 
 import {
-    MessageInput,
-    MessageInputRef,
+  MessageInput,
+  MessageInputRef,
 } from "@/app/(user)/channels/components/MessageInput";
+import { MessageInputProvider } from "@/app/(user)/channels/contexts/MessageInputContext";
 import { useConversationPreview } from "@/contexts/conversationPreviewContext";
 import { cn } from "@/lib/utils";
 import { fetchMessages } from "@/services/messagesService";
 import { useMessagesStore } from "@/stores/messagesStore";
 import { ChannelType } from "@shared/schemas/messages";
-import type { Channel } from "@shared/types/responses";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import Chat from "./Chat";
@@ -77,30 +77,32 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
             : "max-lg:grid-cols-1 grid-cols-[1fr_360px]",
         )}
       >
-        <div className="flex flex-col w-full h-full min-h-0">
-          <div
-            ref={messagesContainerRef}
-            className="min-h-0 h-full overflow-y-auto mb-4"
-          >
-            {isInitialLoading && messages.length === 0 ? (
-              <ChatSkeleton skeletonCount={10} />
-            ) : (
-              <Chat
+        <MessageInputProvider messageInputRef={messageInputRef}>
+          <div className="flex flex-col w-full h-full min-h-0">
+            <div
+              ref={messagesContainerRef}
+              className="min-h-0 h-full overflow-y-auto mb-4"
+            >
+              {isInitialLoading && messages.length === 0 ? (
+                <ChatSkeleton skeletonCount={10} />
+              ) : (
+                <Chat
+                  channelId={channelId}
+                  channelType={channelType}
+                  messages={messages}
+                />
+              )}
+            </div>
+
+            <div className="p-2 shrink-0">
+              <MessageInput
+                ref={messageInputRef}
                 channelId={channelId}
                 channelType={channelType}
-                messages={messages}
               />
-            )}
+            </div>
           </div>
-
-          <div className="p-2 shrink-0">
-            <MessageInput
-              ref={messageInputRef}
-              channelId={channelId}
-              channelType={channelType}
-            />
-          </div>
-        </div>
+        </MessageInputProvider>
       </div>
     </main>
   );
