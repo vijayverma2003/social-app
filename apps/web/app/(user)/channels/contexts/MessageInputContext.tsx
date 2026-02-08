@@ -1,6 +1,7 @@
 "use client";
 
 import type { OptimistcMessageData } from "@/stores/messagesStore";
+import type { Attachment } from "@shared/schemas/messages";
 import {
   createContext,
   useCallback,
@@ -12,6 +13,11 @@ import type { MessageInputRef } from "../components/MessageInput";
 
 interface MessageInputContextValue {
   startReply: (message: OptimistcMessageData) => void;
+  startEditing: (
+    messageId: string,
+    messageContent: string,
+    attachments?: Attachment[],
+  ) => void;
 }
 
 const MessageInputContext = createContext<MessageInputContextValue | null>(
@@ -34,9 +40,24 @@ export function MessageInputProvider({
     [messageInputRef],
   );
 
+  const startEditing = useCallback(
+    (
+      messageId: string,
+      messageContent: string,
+      attachments?: Attachment[],
+    ) => {
+      messageInputRef.current?.startEditing(
+        messageId,
+        messageContent,
+        attachments,
+      );
+    },
+    [messageInputRef],
+  );
+
   const value = useMemo<MessageInputContextValue>(
-    () => ({ startReply }),
-    [startReply],
+    () => ({ startReply, startEditing }),
+    [startReply, startEditing],
   );
 
   return (

@@ -2,9 +2,10 @@
 
 import { SelectedFile } from "@/app/(user)/channels/components/UploadButton";
 import { useUser } from "@/providers/UserContextProvider";
-import { createMessage } from "@/services/messagesService";
+import { createMessage, editMessage } from "@/services/messagesService";
 import { OptimistcMessageData, useMessagesStore } from "@/stores/messagesStore";
 import {
+  Attachment,
   ChannelType,
   CreateMessagePayload,
   CreateMessagePayloadSchema,
@@ -20,6 +21,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const MAX_PENDING_MESSAGES = 5;
+const MAX_PENDING_EDITS = 3;
 const ERROR_SEND_MESSAGE = "Failed to send message. Click to retry.";
 const ERROR_UPLOAD_FILES = "Failed to upload files, retry again.";
 
@@ -76,13 +78,11 @@ const extractStorageObjectIds = (files: SelectedFile[]): string[] => {
 interface UseMessageFormProps {
   channelId: string;
   channelType: ChannelType;
-  onSend?: () => void;
 }
 
 export const useMessageForm = ({
   channelId,
   channelType,
-  onSend,
 }: UseMessageFormProps) => {
   const form = useForm<CreateMessageFormValues>({
     resolver: zodResolver(
@@ -96,23 +96,23 @@ export const useMessageForm = ({
     },
   });
 
-  const {
-    watch,
-    setValue,
-    getValues,
-    handleSubmit: formHandleSubmit,
-    reset,
-  } = form;
+  const { watch, setValue, handleSubmit: formHandleSubmit, reset } = form;
 
   const content = watch("content");
 
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [replyingToMessage, setReplyingToMessage] =
     useState<OptimistcMessageData | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>(
+    [],
+  );
 
   // Reset form when channel changes
   useEffect(() => {
     setReplyingToMessage(null);
+    setEditingMessageId(null);
+    setExistingAttachments([]);
     reset({
       channelId,
       channelType,
@@ -127,8 +127,13 @@ export const useMessageForm = ({
   const pendingMessagesRef = useRef<Set<string>>(new Set());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { addOptimisticMessage, markMessageAsError, updateMessage } =
-    useMessagesStore();
+  const {
+    addOptimisticMessage,
+    markMessageAsError,
+    updateMessage,
+    incrementPendingEditRequests,
+    pendingEditRequests,
+  } = useMessagesStore();
   const { user } = useUser();
 
   const removeFile = useCallback((id: string) => {
@@ -203,7 +208,7 @@ export const useMessageForm = ({
       const onComplete = (messageId: string | null) => {
         pendingMessagesRef.current.delete(optimisticId);
         if (messageId) {
-          setReplyingToMessage(null)
+          setReplyingToMessage(null);
         }
       };
 
@@ -231,21 +236,92 @@ export const useMessageForm = ({
     setReplyingToMessage(null);
   }, []);
 
+  const startEditing = useCallback(
+    (
+      messageId: string,
+      messageContent: string,
+      attachments: Attachment[] = [],
+    ) => {
+      if (pendingEditRequests >= MAX_PENDING_EDITS) {
+        toast.error("Please wait for previous edits to complete");
+        return;
+      }
+      setEditingMessageId(messageId);
+      setExistingAttachments(attachments);
+      setValue("content", messageContent);
+      setSelectedFiles([]);
+      setReplyingToMessage(null);
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    },
+    [pendingEditRequests, setValue],
+  );
+
+  const cancelEditing = useCallback(() => {
+    setValue("content", "");
+    setEditingMessageId(null);
+    setExistingAttachments([]);
+  }, []);
+
+  const removeExistingAttachment = useCallback((storageObjectId: string) => {
+    setExistingAttachments((prev) =>
+      prev.filter((a) => a.storageObjectId !== storageObjectId),
+    );
+  }, []);
+
   const onSubmit = useCallback(
     async (data: CreateMessageFormValues) => {
       const messageContent = data.content.trim();
+
+      // Edit flow
+      if (editingMessageId) {
+        const hasAttachments = existingAttachments.length > 0;
+        if (!messageContent && !hasAttachments) {
+          toast.error("Message must have either content or attachments");
+          return;
+        }
+        if (pendingEditRequests >= MAX_PENDING_EDITS) {
+          toast.error("Please wait for previous edits to complete");
+          return;
+        }
+        incrementPendingEditRequests();
+        const storageObjectIds = existingAttachments.map(
+          (a) => a.storageObjectId,
+        );
+        try {
+          await editMessage(
+            {
+              messageId: editingMessageId,
+              channelId,
+              channelType,
+              content: messageContent,
+              storageObjectIds,
+            },
+            {
+              onComplete: (success) => {
+                if (success) {
+                  cancelEditing();
+                }
+              },
+            },
+          );
+        } catch (err) {
+          console.error("Error editing message:", err);
+          toast.error("Failed to edit message");
+        }
+        textareaRef.current?.focus();
+        return;
+      }
+
+      // New message flow
       const attachments = [...selectedFiles];
       const hasAttachments = attachments.length > 0;
 
-      // Validate submission (rate limits, user, channel rules)
       const validationError = validateSubmission(
         messageContent,
         hasAttachments,
       );
-
       if (validationError) return toast.error(validationError);
 
-      // Create optimistic message
       const optimisticMessage = createOptimisticMessage(
         channelId,
         channelType,
@@ -267,9 +343,10 @@ export const useMessageForm = ({
       });
       setSelectedFiles([]);
       setReplyingToMessage(null);
+      setEditingMessageId(null);
+      setExistingAttachments([]);
 
       try {
-        // Upload files and get storage object IDs
         const storageObjectIds = await handleFileUpload(
           attachments,
           optimisticId,
@@ -286,10 +363,15 @@ export const useMessageForm = ({
       textareaRef.current?.focus();
     },
     [
-      selectedFiles,
-      validateSubmission,
+      editingMessageId,
+      existingAttachments,
+      pendingEditRequests,
+      incrementPendingEditRequests,
+      cancelEditing,
       channelId,
       channelType,
+      selectedFiles,
+      validateSubmission,
       user,
       addOptimisticMessage,
       reset,
@@ -302,29 +384,36 @@ export const useMessageForm = ({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      // Satisfy schema refine (content or attachments) when user sends only files
-      if (selectedFiles.length > 0) {
+      if (!editingMessageId && selectedFiles.length > 0) {
         setValue("storageObjectIds", ["pending"]);
       }
       formHandleSubmit(onSubmit)(e);
     },
-    [formHandleSubmit, onSubmit, selectedFiles.length, setValue],
+    [
+      formHandleSubmit,
+      onSubmit,
+      editingMessageId,
+      selectedFiles.length,
+      setValue,
+    ],
   );
 
   return {
-    // State
     form,
     content,
     selectedFiles,
     setSelectedFiles: setSelectedFilesSafe,
     replyingToMessage,
-    // Refs
+    editingMessageId,
+    existingAttachments,
     textareaRef,
     uploadFilesFnRef,
-    // Handlers
     removeFile,
+    removeExistingAttachment,
     handleSubmit,
     startReply,
     cancelReply,
+    startEditing,
+    cancelEditing,
   };
 };

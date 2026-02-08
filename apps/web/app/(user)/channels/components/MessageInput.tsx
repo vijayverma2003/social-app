@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useMessageForm } from "@/hooks/useMessageForm";
 import { useProfilesStore } from "@/stores/profilesStore";
+import type { OptimistcMessageData } from "@/stores/messagesStore";
 import { ChannelType } from "@shared/schemas/messages";
+import type { Attachment } from "@shared/schemas/messages";
 import { SendHorizonal, X } from "lucide-react";
 import { forwardRef, useCallback, useImperativeHandle } from "react";
+import { ExistingAttachmentPreview } from "./ExistingAttachmentPreview";
 import { UploadButton } from "./UploadButton";
-import type { OptimistcMessageData } from "@/stores/messagesStore";
 
 interface MessageInputProps {
   channelId: string;
@@ -18,8 +20,11 @@ interface MessageInputProps {
 export interface MessageInputRef {
   focus: () => void;
   appendText: (text: string) => void;
-  startReply: (
-    message: OptimistcMessageData,
+  startReply: (message: OptimistcMessageData) => void;
+  startEditing: (
+    messageId: string,
+    messageContent: string,
+    attachments?: Attachment[],
   ) => void;
 }
 
@@ -35,6 +40,11 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
       replyingToMessage,
       startReply,
       cancelReply,
+      editingMessageId,
+      existingAttachments,
+      removeExistingAttachment,
+      startEditing,
+      cancelEditing,
     } = useMessageForm({ channelId, channelType });
 
     const repliedToProfile = useProfilesStore((state) =>
@@ -50,8 +60,9 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
           textareaRef.current?.focus();
         },
         startReply,
+        startEditing,
       }),
-      [form, textareaRef, startReply],
+      [form, textareaRef, startReply, startEditing],
     );
 
     const handleKeyDown = useCallback(
@@ -66,7 +77,22 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
 
     return (
       <div className="bg-secondary rounded-3xl">
-        {replyingToMessage && (
+        {editingMessageId && (
+          <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/20 rounded-t-3xl">
+            <p className="text-xs text-muted-foreground">Editing message</p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={cancelEditing}
+              className="h-6 px-2"
+              aria-label="Cancel edit"
+            >
+              <X className="size-3" />
+            </Button>
+          </div>
+        )}
+        {replyingToMessage && !editingMessageId && (
           <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/20 rounded-t-3xl">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <p className="text-xs text-muted-foreground shrink-0">
@@ -92,9 +118,19 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             </Button>
           </div>
         )}
-        
+        {editingMessageId && existingAttachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 p-2">
+            {existingAttachments.map((attachment) => (
+              <ExistingAttachmentPreview
+                key={attachment.storageObjectId}
+                attachment={attachment}
+                onRemove={removeExistingAttachment}
+              />
+            ))}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="flex items-start p-2">
-          {channelType === "dm" && (
+          {channelType === "dm" && !editingMessageId && (
             <UploadButton
               maxFiles={10}
               onFilesChange={setSelectedFiles}
@@ -109,11 +145,22 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             onChange={(e) => form.setValue("content", e.target.value)}
             ref={textareaRef}
             onKeyDown={handleKeyDown}
+            placeholder={
+              editingMessageId
+                ? "Edit message..."
+                : replyingToMessage
+                  ? "Type a reply..."
+                  : "Type a message..."
+            }
             className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none py-2 max-h-[300px]"
             autoComplete="off"
             maxLength={1000}
           />
-          <Button type="submit" size="icon" aria-label="Send message">
+          <Button
+            type="submit"
+            size="icon"
+            aria-label={editingMessageId ? "Save edit" : "Send message"}
+          >
             <SendHorizonal />
           </Button>
         </form>
