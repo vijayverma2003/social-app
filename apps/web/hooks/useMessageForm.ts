@@ -4,8 +4,19 @@ import { SelectedFile } from "@/app/(user)/channels/components/UploadButton";
 import { useUser } from "@/providers/UserContextProvider";
 import { createMessage } from "@/services/messagesService";
 import { useMessagesStore } from "@/stores/messagesStore";
-import { ChannelType, MessageData } from "@shared/schemas/messages";
-import { useCallback, useRef, useState } from "react";
+import {
+  ChannelType,
+  CreateMessagePayload,
+  CreateMessagePayloadSchema,
+  MessageData,
+} from "@shared/schemas/messages";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Form shape: schema output with required storageObjectIds for defaultValues
+type CreateMessageFormValues = CreateMessagePayload;
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const MAX_PENDING_MESSAGES = 5;
@@ -71,7 +82,38 @@ export const useMessageForm = ({
   channelType,
   onSend,
 }: UseMessageFormProps) => {
-  const [content, setContent] = useState("");
+  const form = useForm<CreateMessageFormValues>({
+    resolver: zodResolver(
+      CreateMessagePayloadSchema,
+    ) as Resolver<CreateMessageFormValues>,
+    defaultValues: {
+      channelId,
+      channelType,
+      content: "",
+      storageObjectIds: [],
+    },
+  });
+
+  const {
+    watch,
+    setValue,
+    getValues,
+    handleSubmit: formHandleSubmit,
+    reset,
+  } = form;
+
+  const content = watch("content");
+
+  // Reset form when channel changes
+  useEffect(() => {
+    reset({
+      channelId,
+      channelType,
+      content: "",
+      storageObjectIds: [],
+    });
+  }, [channelId, channelType, reset]);
+
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const uploadFilesFnRef = useRef<
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
@@ -170,15 +212,13 @@ export const useMessageForm = ({
     [channelId, channelType, onSend],
   );
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      const messageContent = content.trim();
+  const onSubmit = useCallback(
+    async (data: CreateMessageFormValues) => {
+      const messageContent = data.content.trim();
       const attachments = [...selectedFiles];
       const hasAttachments = attachments.length > 0;
 
-      // Validate submission
+      // Validate submission (rate limits, user, channel rules)
       const validationError = validateSubmission(
         messageContent,
         hasAttachments,
@@ -198,8 +238,13 @@ export const useMessageForm = ({
       const optimisticId = addOptimisticMessage(channelId, optimisticMessage);
       pendingMessagesRef.current.add(optimisticId);
 
-      // Clear input immediately for better UX
-      setContent("");
+      // Clear form and files immediately for better UX
+      reset({
+        channelId,
+        channelType,
+        content: "",
+        storageObjectIds: [],
+      });
       setSelectedFiles([]);
 
       try {
@@ -220,25 +265,35 @@ export const useMessageForm = ({
       textareaRef.current?.focus();
     },
     [
-      content,
       selectedFiles,
       validateSubmission,
       channelId,
       channelType,
       user,
       addOptimisticMessage,
+      reset,
       handleFileUpload,
       sendMessage,
       markMessageAsError,
     ],
   );
 
-  // Handle submit on enter key
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      // Satisfy schema refine (content or attachments) when user sends only files
+      if (selectedFiles.length > 0) {
+        setValue("storageObjectIds", ["pending"]);
+      }
+      formHandleSubmit(onSubmit)(e);
+    },
+    [formHandleSubmit, onSubmit, selectedFiles.length, setValue],
+  );
 
   return {
     // State
+    form,
     content,
-    setContent,
     selectedFiles,
     setSelectedFiles: setSelectedFilesSafe,
     // Refs

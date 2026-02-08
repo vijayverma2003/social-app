@@ -22,21 +22,25 @@ export interface MessageInputRef {
 export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
   ({ channelId, channelType, onSend }, ref) => {
     const {
+      form,
       content,
-      setContent,
       setSelectedFiles,
       textareaRef,
       uploadFilesFnRef,
       handleSubmit,
     } = useMessageForm({ channelId, channelType, onSend });
 
-    useImperativeHandle(ref, () => ({
-      focus: () => textareaRef.current?.focus(),
-      appendText: (text: string) => {
-        setContent((prev) => prev + text);
-        textareaRef.current?.focus();
-      },
-    }));
+    useImperativeHandle(
+      ref,
+      () => ({
+        focus: () => textareaRef.current?.focus(),
+        appendText: (text: string) => {
+          form.setValue("content", form.getValues("content") + text);
+          textareaRef.current?.focus();
+        },
+      }),
+      [form, textareaRef],
+    );
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -61,9 +65,10 @@ export const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(
             />
           )}
           <Textarea
-            ref={textareaRef}
+            name="content"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => form.setValue("content", e.target.value)}
+            ref={textareaRef}
             onKeyDown={handleKeyDown}
             className="flex-1 border-none bg-transparent ring-0 focus-visible:ring-0 focus-visible:border-none py-2 max-h-[300px]"
             autoComplete="off"
