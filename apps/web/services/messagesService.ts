@@ -1,20 +1,20 @@
-import { MESSAGE_EVENTS } from "@shared/socketEvents";
-import { socketService } from "./socketService";
+import { useDMChannelsStore } from "@/stores/dmChannelStore";
+import { MessageRequest } from "@/stores/messageRequestsStore";
+import { useMessagesStore } from "@/stores/messagesStore";
 import {
+  AcceptMessageRequestPayload,
   CreateMessagePayload,
-  GetMessagesPayload,
   DeleteMessagePayload,
   EditMessagePayload,
-  AcceptMessageRequestPayload,
-  RejectMessageRequestPayload,
+  GetMessagesPayload,
   MessageData,
+  RejectMessageRequestPayload,
 } from "@shared/schemas/messages";
-import { ClientToServerEvents } from "@shared/types/socket";
-import { useMessagesStore } from "@/stores/messagesStore";
-import { MessageRequest } from "@/stores/messageRequestsStore";
-import { fetchUserProfiles } from "./profilesService";
+import { MESSAGE_EVENTS } from "@shared/socketEvents";
 import { ChannelWithUsers } from "@shared/types/responses";
-import { useDMChannelsStore } from "@/stores/dmChannelStore";
+import { ClientToServerEvents } from "@shared/types/socket";
+import { fetchUserProfiles } from "./profilesService";
+import { socketService } from "./socketService";
 
 type CreateMessageCallback = Parameters<
   ClientToServerEvents[typeof MESSAGE_EVENTS.CREATE]

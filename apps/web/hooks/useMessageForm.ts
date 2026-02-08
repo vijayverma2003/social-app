@@ -1,13 +1,12 @@
 "use client";
 
 import { SelectedFile } from "@/app/(user)/channels/components/UploadButton";
-import { useMessagesStore } from "@/stores/messagesStore";
 import { useUser } from "@/providers/UserContextProvider";
-import { createMessage, editMessage } from "@/services/messagesService";
-import { ChannelType, MessageData, Attachment } from "@shared/schemas/messages";
+import { createMessage } from "@/services/messagesService";
+import { useMessagesStore } from "@/stores/messagesStore";
+import { ChannelType, MessageData } from "@shared/schemas/messages";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { OptimistcMessageData } from "@/stores/messagesStore";
 
 const MAX_PENDING_MESSAGES = 5;
 const ERROR_SEND_MESSAGE = "Failed to send message. Click to retry.";
@@ -19,7 +18,7 @@ const createOptimisticMessage = (
   channelType: ChannelType,
   content: string,
   authorId: string,
-  files: SelectedFile[]
+  files: SelectedFile[],
 ): Omit<MessageData, "id"> & {
   id: string;
   uploadingFiles?: Array<{ id: string; name: string; size: number }>;
@@ -41,7 +40,7 @@ const createOptimisticMessage = (
 
 // Helper: Convert uploaded files to message attachments
 const convertFilesToAttachments = (
-  files: SelectedFile[]
+  files: SelectedFile[],
 ): MessageData["attachments"] => {
   return files
     .filter((f) => f.url && f.storageObjectId)
@@ -74,22 +73,14 @@ export const useMessageForm = ({
 }: UseMessageFormProps) => {
   const [content, setContent] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
-  const [replyingToMessage, setReplyingToMessage] = useState<OptimistcMessageData | null>(null);
   const uploadFilesFnRef = useRef<
     ((files: SelectedFile[]) => Promise<SelectedFile[]>) | null
   >(null);
   const pendingMessagesRef = useRef<Set<string>>(new Set());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const {
-    addOptimisticMessage,
-    markMessageAsError,
-    updateMessage,
-    pendingEditRequests,
-    incrementPendingEditRequests,
-  } = useMessagesStore();
+  const { addOptimisticMessage, markMessageAsError, updateMessage } =
+    useMessagesStore();
   const { user } = useUser();
 
   const removeFile = useCallback((id: string) => {
@@ -99,18 +90,14 @@ export const useMessageForm = ({
   // Wrapper for setSelectedFiles that prevents file selection for post channels
   const setSelectedFilesSafe = useCallback(
     (files: SelectedFile[] | ((prev: SelectedFile[]) => SelectedFile[])) => {
-      if (channelType === "post") {
-        // Silently ignore file selection for post channels
-        return;
-      }
+      if (channelType === "post") return;
       setSelectedFiles(files);
     },
-    [channelType]
+    [channelType],
   );
 
   const validateSubmission = useCallback(
     (messageContent: string, hasAttachments: boolean): string | null => {
-      // Validate that message has content or attachments
       if (!messageContent && !hasAttachments) {
         return "Message must have either content or attachments";
       }
@@ -120,14 +107,13 @@ export const useMessageForm = ({
 
       if (!user) return "You must be logged in to send messages";
 
-      // Prevent attachments for post channels
       if (channelType === "post" && hasAttachments) {
         return "File attachments are not allowed in post channels";
       }
 
       return null;
     },
-    [user, channelType]
+    [user, channelType],
   );
 
   const handleFileUpload = useCallback(
@@ -157,21 +143,18 @@ export const useMessageForm = ({
 
       return storageObjectIds;
     },
-    [channelId, channelType, markMessageAsError, updateMessage]
+    [channelId, channelType, markMessageAsError, updateMessage],
   );
 
   const sendMessage = useCallback(
     (
       content: string,
       storageObjectIds: string[],
-      optimisticId: string
+      optimisticId: string,
     ): void => {
       const onComplete = (messageId: string | null) => {
         pendingMessagesRef.current.delete(optimisticId);
-        if (messageId) {
-          setReplyingToMessage(null); // Clear reply state after successful send
-          onSend?.();
-        }
+        if (messageId) onSend?.();
       };
 
       const payload = {
@@ -180,132 +163,16 @@ export const useMessageForm = ({
         content,
         storageObjectIds,
         optimisticId,
-        replyToMessageId: replyingToMessage?.id,
       };
 
       createMessage(payload, { onComplete, optimisticId });
     },
-    [channelId, channelType, onSend, replyingToMessage]
-  );
-
-  const startEditing = useCallback(
-    (messageId: string, messageContent: string, attachments: Attachment[] = []) => {
-      if (pendingEditRequests >= MAX_PENDING_MESSAGES) {
-        toast.error("Please wait for previous edits to complete");
-        return;
-      }
-      setEditingMessageId(messageId);
-      setContent(messageContent || "");
-      setSelectedFiles([]);
-      setExistingAttachments(attachments);
-      setTimeout(() => textareaRef.current?.focus(), 0);
-    },
-    [pendingEditRequests]
-  );
-
-  const cancelEditing = useCallback(() => {
-    setEditingMessageId(null);
-    setContent("");
-    setSelectedFiles([]);
-    setExistingAttachments([]);
-  }, []);
-
-  const startReply = useCallback((message: OptimistcMessageData) => {
-    setReplyingToMessage(message);
-    setEditingMessageId(null); // Cancel any editing
-    setSelectedFiles([]);
-    setTimeout(() => textareaRef.current?.focus(), 0);
-  }, []);
-
-  const cancelReply = useCallback(() => {
-    setReplyingToMessage(null);
-  }, []);
-
-  const removeExistingAttachment = useCallback((storageObjectId: string) => {
-    setExistingAttachments((prev) =>
-      prev.filter((att) => att.storageObjectId !== storageObjectId)
-    );
-  }, []);
-
-  const handleEditSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!editingMessageId) return;
-
-      const messageContent = content.trim();
-      // When editing, only use existing attachments (user cannot add new files)
-      const remainingAttachments = existingAttachments;
-      const hasAttachments = remainingAttachments.length > 0;
-
-      // Validate that message has content or attachments
-      if (!messageContent && !hasAttachments) {
-        toast.error("Message must have either content or attachments");
-        return;
-      }
-
-      // Check pending edit requests limit
-      if (pendingEditRequests >= MAX_PENDING_MESSAGES) {
-        toast.error("Please wait for previous edits to complete");
-        return;
-      }
-
-      incrementPendingEditRequests();
-
-      try {
-        // Get storage object IDs from remaining attachments
-        const storageObjectIds = remainingAttachments.map(
-          (att) => att.storageObjectId
-        );
-
-        // Edit message
-        await editMessage(
-          {
-            messageId: editingMessageId,
-            channelId,
-            channelType,
-            content: messageContent,
-            storageObjectIds,
-          },
-          {
-            onComplete: (success) => {
-              if (success) {
-                cancelEditing();
-                onSend?.();
-              }
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error editing message:", error);
-        toast.error("Failed to edit message");
-      } finally {
-        // Decrement will be handled by editMessage service on success/error
-      }
-
-      textareaRef.current?.focus();
-    },
-    [
-      editingMessageId,
-      content,
-      selectedFiles,
-      channelId,
-      channelType,
-      pendingEditRequests,
-      incrementPendingEditRequests,
-      cancelEditing,
-      onSend,
-    ]
+    [channelId, channelType, onSend],
   );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-
-      // If editing, handle edit submission
-      if (editingMessageId) {
-        return handleEditSubmit(e);
-      }
 
       const messageContent = content.trim();
       const attachments = [...selectedFiles];
@@ -314,7 +181,7 @@ export const useMessageForm = ({
       // Validate submission
       const validationError = validateSubmission(
         messageContent,
-        hasAttachments
+        hasAttachments,
       );
 
       if (validationError) return toast.error(validationError);
@@ -325,7 +192,7 @@ export const useMessageForm = ({
         channelType,
         messageContent,
         user!.id,
-        attachments
+        attachments,
       );
 
       const optimisticId = addOptimisticMessage(channelId, optimisticMessage);
@@ -334,13 +201,12 @@ export const useMessageForm = ({
       // Clear input immediately for better UX
       setContent("");
       setSelectedFiles([]);
-      setReplyingToMessage(null); // Clear reply state
 
       try {
         // Upload files and get storage object IDs
         const storageObjectIds = await handleFileUpload(
           attachments,
-          optimisticId
+          optimisticId,
         );
 
         // Send message
@@ -354,8 +220,6 @@ export const useMessageForm = ({
       textareaRef.current?.focus();
     },
     [
-      editingMessageId,
-      handleEditSubmit,
       content,
       selectedFiles,
       validateSubmission,
@@ -366,18 +230,10 @@ export const useMessageForm = ({
       handleFileUpload,
       sendMessage,
       markMessageAsError,
-    ]
+    ],
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSubmit(e as any);
-      }
-    },
-    [handleSubmit]
-  );
+  // Handle submit on enter key
 
   return {
     // State
@@ -385,20 +241,11 @@ export const useMessageForm = ({
     setContent,
     selectedFiles,
     setSelectedFiles: setSelectedFilesSafe,
-    editingMessageId,
-    existingAttachments,
-    replyingToMessage,
     // Refs
     textareaRef,
     uploadFilesFnRef,
     // Handlers
     removeFile,
-    removeExistingAttachment,
     handleSubmit,
-    handleKeyDown,
-    startEditing,
-    cancelEditing,
-    startReply,
-    cancelReply,
   };
 };

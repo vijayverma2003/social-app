@@ -10,11 +10,11 @@ import { ImageCollage } from "@/features/posts/components/ImageCollage";
 import { cn, graphemeLengthWithoutSpaces, isOnlyEmojisAndWhitespace } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import { createMessage, deleteMessage } from "@/services/messagesService";
-import { useProfilesStore } from "@/stores/profilesStore";
 import { OptimistcMessageData } from "@/stores/messagesStore";
-import { Loader2, RotateCcw, Pencil } from "lucide-react";
-import { memo, useMemo } from "react";
+import { useProfilesStore } from "@/stores/profilesStore";
+import { Loader2, RotateCcw } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { memo, useMemo } from "react";
 
 interface MessagePreviewProps {
   message: OptimistcMessageData & { lastMessage?: OptimistcMessageData | null; repliedToMessage?: OptimistcMessageData | null };

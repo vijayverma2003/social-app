@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
-import { toast } from "sonner";
 import uploadFilesService from "@/services/uploadService";
+import { Plus } from "lucide-react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export interface SelectedFile {
   file: File;
