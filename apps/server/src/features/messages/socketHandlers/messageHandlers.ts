@@ -78,38 +78,38 @@ const mapMessageId = (message: any): any => {
 export class MessageHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(MESSAGE_EVENTS.CREATE, (data, callback) =>
-      this.createMessage(socket, data, callback)
+      this.createMessage(socket, data, callback),
     );
 
     socket.on(MESSAGE_EVENTS.GET, (data, callback) =>
-      this.getMessages(socket, data, callback)
+      this.getMessages(socket, data, callback),
     );
 
     socket.on(MESSAGE_EVENTS.EDIT, (data, callback) =>
-      this.editMessage(socket, data, callback)
+      this.editMessage(socket, data, callback),
     );
 
     socket.on(MESSAGE_EVENTS.DELETE, (data, callback) =>
-      this.deleteMessage(socket, data, callback)
+      this.deleteMessage(socket, data, callback),
     );
 
     socket.on(MESSAGE_EVENTS.GET_MESSAGE_REQUESTS, (data, callback) =>
-      this.getMessageRequests(socket, data, callback)
+      this.getMessageRequests(socket, data, callback),
     );
 
     socket.on(MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST, (data, callback) =>
-      this.acceptMessageRequest(socket, data, callback)
+      this.acceptMessageRequest(socket, data, callback),
     );
 
     socket.on(MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST, (data, callback) =>
-      this.rejectMessageRequest(socket, data, callback)
+      this.rejectMessageRequest(socket, data, callback),
     );
   }
 
   private async createMessage(
     socket: AuthenticatedSocket,
     data: CreateMessageData,
-    callback: CreateMessageCallback
+    callback: CreateMessageCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -252,7 +252,7 @@ export class MessageHandlers extends BaseSocketHandler {
         if (dmChannel?.isRequest) {
           // Find the other user in the DM channel
           const receiverUser = dmChannel.users.find(
-            (u) => u.userId !== socket.userId
+            (u) => u.userId !== socket.userId,
           );
 
           if (receiverUser) {
@@ -353,7 +353,9 @@ export class MessageHandlers extends BaseSocketHandler {
         }
       } else {
         // For post channels, still emit to channel room
-        this.io.to(`channel:${channelId}`).emit(MESSAGE_EVENTS.CREATED, messageData);
+        this.io
+          .to(`channel:${channelId}`)
+          .emit(MESSAGE_EVENTS.CREATED, messageData);
       }
 
       callback({
@@ -372,7 +374,7 @@ export class MessageHandlers extends BaseSocketHandler {
   private async getMessages(
     socket: AuthenticatedSocket,
     data: GetMessagesData,
-    callback: GetMessagesCallback
+    callback: GetMessagesCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -389,14 +391,8 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      const {
-        channelId,
-        channelType,
-        limit,
-        before,
-        after,
-        aroundMessageId,
-      } = validation.data;
+      const { channelId, channelType, limit, before, after, aroundMessageId } =
+        validation.data;
 
       // Verify user is a member of the channel
       if (channelType === "dm") {
@@ -422,7 +418,7 @@ export class MessageHandlers extends BaseSocketHandler {
           channelId,
           channelType,
           aroundMessageId,
-          limit
+          limit,
         );
 
         const mappedMessages = messages.map(mapMessageId);
@@ -443,7 +439,7 @@ export class MessageHandlers extends BaseSocketHandler {
         channelType,
         limit,
         beforeDate,
-        afterDate
+        afterDate,
       );
 
       // Map _id to id for all messages
@@ -465,7 +461,7 @@ export class MessageHandlers extends BaseSocketHandler {
   private async editMessage(
     socket: AuthenticatedSocket,
     data: EditMessageData,
-    callback: EditMessageCallback
+    callback: EditMessageCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -482,13 +478,8 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      const {
-        messageId,
-        channelId,
-        channelType,
-        content,
-        storageObjectIds,
-      } = validation.data;
+      const { messageId, channelId, channelType, content, storageObjectIds } =
+        validation.data;
 
       // Prevent attachments for post channels
       if (
@@ -533,12 +524,11 @@ export class MessageHandlers extends BaseSocketHandler {
 
       // Find attachments being removed (in old but not in new)
       const removedStorageObjectIds = oldStorageObjectIds.filter(
-        (id) => !newStorageObjectIds.includes(id)
+        (id) => !newStorageObjectIds.includes(id),
       );
 
-      // Find attachments being added (in new but not in old)
-      const addedStorageObjectIds = newStorageObjectIds.filter(
-        (id) => !oldStorageObjectIds.includes(id)
+      const updatedAttachments = message.attachments?.filter(
+        (att) => !removedStorageObjectIds.includes(att.storageObjectId),
       );
 
       // Decrement refCount for removed attachments
@@ -555,53 +545,11 @@ export class MessageHandlers extends BaseSocketHandler {
         });
       }
 
-      // Fetch StorageObject data from PostgreSQL for new attachments
-      let attachments: Attachment[] = [];
-      if (newStorageObjectIds.length > 0) {
-        const storageObjects = await prisma.storageObject.findMany({
-          where: {
-            id: { in: newStorageObjectIds },
-            status: "done", // Only allow completed uploads
-          },
-        });
-
-        // Verify all StorageObjects exist and are ready
-        if (storageObjects.length !== newStorageObjectIds.length) {
-          return callback({
-            error: "One or more storage objects not found or not ready",
-          });
-        }
-
-        attachments = storageObjects.map((storageObject) => ({
-          storageObjectId: storageObject.id,
-          url: storageObject.url || "",
-          fileName: storageObject.filename,
-          contentType: storageObject.mimeType,
-          size: storageObject.size,
-          hash: storageObject.hash,
-          storageKey: storageObject.storageKey,
-        }));
-
-        // Increment refCount for newly added attachments
-        if (addedStorageObjectIds.length > 0) {
-          await prisma.storageObject.updateMany({
-            where: {
-              id: { in: addedStorageObjectIds },
-            },
-            data: {
-              refCount: {
-                increment: 1,
-              },
-            },
-          });
-        }
-      }
-
       // Update the message
       const updated = await Message.update(messageId, {
         messageId,
         content,
-        attachments,
+        attachments: updatedAttachments,
       });
 
       if (!updated) {
@@ -644,7 +592,9 @@ export class MessageHandlers extends BaseSocketHandler {
         }
       } else {
         // For post channels, emit to channel room
-        this.io.to(`channel:${channelId}`).emit(MESSAGE_EVENTS.EDITED, messageData);
+        this.io
+          .to(`channel:${channelId}`)
+          .emit(MESSAGE_EVENTS.EDITED, messageData);
       }
 
       callback({
@@ -663,7 +613,7 @@ export class MessageHandlers extends BaseSocketHandler {
   private async deleteMessage(
     socket: AuthenticatedSocket,
     data: DeleteMessageData,
-    callback: DeleteMessageCallback
+    callback: DeleteMessageCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -739,7 +689,9 @@ export class MessageHandlers extends BaseSocketHandler {
         }
       } else {
         // For post channels, emit to channel room
-        this.io.to(`channel:${channelId}`).emit(MESSAGE_EVENTS.DELETED, deletedData);
+        this.io
+          .to(`channel:${channelId}`)
+          .emit(MESSAGE_EVENTS.DELETED, deletedData);
       }
 
       callback({
@@ -758,7 +710,7 @@ export class MessageHandlers extends BaseSocketHandler {
   private async getMessageRequests(
     socket: AuthenticatedSocket,
     data: GetMessageRequestsData,
-    callback: GetMessageRequestsCallback
+    callback: GetMessageRequestsCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -805,7 +757,7 @@ export class MessageHandlers extends BaseSocketHandler {
   private async acceptMessageRequest(
     socket: AuthenticatedSocket,
     data: AcceptMessageRequestData,
-    callback: AcceptMessageRequestCallback
+    callback: AcceptMessageRequestCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -815,7 +767,8 @@ export class MessageHandlers extends BaseSocketHandler {
       }
 
       // Validate payload
-      const validationResult = AcceptMessageRequestPayloadSchema.safeParse(data);
+      const validationResult =
+        AcceptMessageRequestPayloadSchema.safeParse(data);
       if (!validationResult.success) {
         return callback({
           error: validationResult.error.errors[0]?.message || "Invalid payload",
@@ -845,7 +798,8 @@ export class MessageHandlers extends BaseSocketHandler {
       // Verify the current user is the receiver
       if (messageRequest.receiverId !== socket.userId) {
         return callback({
-          error: "Unauthorized: You are not the receiver of this message request",
+          error:
+            "Unauthorized: You are not the receiver of this message request",
         });
       }
 
@@ -857,7 +811,6 @@ export class MessageHandlers extends BaseSocketHandler {
       }
 
       const updatedChannel = await prisma.$transaction(async (tx) => {
-
         // Update the message request status to accepted
         await prisma.messageRequest.update({
           where: { id: messageRequestId },
@@ -874,7 +827,7 @@ export class MessageHandlers extends BaseSocketHandler {
         });
 
         return updatedChannel;
-      })
+      });
 
       callback({
         success: true,
@@ -894,7 +847,7 @@ export class MessageHandlers extends BaseSocketHandler {
   private async rejectMessageRequest(
     socket: AuthenticatedSocket,
     data: RejectMessageRequestData,
-    callback: RejectMessageRequestCallback
+    callback: RejectMessageRequestCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -904,7 +857,8 @@ export class MessageHandlers extends BaseSocketHandler {
       }
 
       // Validate payload
-      const validationResult = RejectMessageRequestPayloadSchema.safeParse(data);
+      const validationResult =
+        RejectMessageRequestPayloadSchema.safeParse(data);
       if (!validationResult.success) {
         return callback({
           error: validationResult.error.errors[0]?.message || "Invalid payload",
@@ -927,7 +881,8 @@ export class MessageHandlers extends BaseSocketHandler {
       // Verify the current user is the receiver
       if (messageRequest.receiverId !== socket.userId) {
         return callback({
-          error: "Unauthorized: You are not the receiver of this message request",
+          error:
+            "Unauthorized: You are not the receiver of this message request",
         });
       }
 
