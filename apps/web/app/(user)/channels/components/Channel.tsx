@@ -7,15 +7,29 @@ import {
 import { MessageInputProvider } from "@/app/(user)/channels/contexts/MessageInputContext";
 import { useConversationPreview } from "@/contexts/conversationPreviewContext";
 import { cn } from "@/lib/utils";
+import { getPostChannel } from "@/services/channelService";
 import { fetchMessages } from "@/services/messagesService";
 import { useMessagesStore } from "@/stores/messagesStore";
 import { ChannelType } from "@shared/schemas/messages";
+import type { Channel } from "@shared/types/responses";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import Chat from "./Chat";
 import ChatSkeleton from "./ChatSkeleton";
 
 const PAGE_SIZE = 50;
+const NEAR_BOTTOM_THRESHOLD_PX = 100;
+
+function isNearBottom(
+  container: HTMLElement,
+  threshold = NEAR_BOTTOM_THRESHOLD_PX,
+): boolean {
+  const { scrollTop, scrollHeight, clientHeight } = container;
+  const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+  return distanceFromBottom <= threshold;
+}
+
 interface ChannelProps {
   channelType: ChannelType;
   channelId: string;
@@ -25,6 +39,7 @@ interface ChannelProps {
 const Channel = ({ channelType, channelId }: ChannelProps) => {
   const messageInputRef = useRef<MessageInputRef>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
   const {
     state: { isOpen },
   } = useConversationPreview();
@@ -38,14 +53,28 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
     try {
       setIsInitialLoading(true);
       await fetchMessages({ channelId, channelType, limit: PAGE_SIZE });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch messages");
     } finally {
       setIsInitialLoading(false);
     }
   }, [channelId, channelType]);
 
+  const fetchPostChannelData = useCallback(async () => {
+    if (channelType !== "post") return;
+    try {
+      await getPostChannel(channelId);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch post channel");
+    }
+  }, [channelId]);
+
   useEffect(() => {
     fetchMessagesData();
-  }, [fetchMessagesData, channelId]);
+    fetchPostChannelData();
+  }, [fetchMessagesData, fetchPostChannelData, channelId]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

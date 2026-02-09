@@ -1,28 +1,4 @@
 import {
-  FRIEND_REQUEST_EVENTS,
-  FRIEND_EVENTS,
-  CHANNEL_EVENTS,
-  MESSAGE_EVENTS,
-  UPLOAD_EVENTS,
-  POST_EVENTS,
-  USER_EVENTS,
-} from "../socketEvents";
-import {
-  SocketResponse,
-  FriendRequests,
-  FriendsList,
-  Profile,
-  Channel,
-  ChannelWithUsers,
-} from "./responses";
-import {
-  SendFriendRequestPayload,
-  RemoveFriendPayload,
-  RejectFriendRequestPayload,
-  CancelFriendRequestPayload,
-  AcceptFriendRequestPayload,
-} from "../schemas/friends";
-import {
   GetDMChannelPayload,
   GetPostChannelPayload,
   JoinChannelPayload,
@@ -30,34 +6,57 @@ import {
   MarkChannelAsReadPayload,
 } from "../schemas/dm";
 import {
-  CreateMessagePayload,
-  GetMessagesPayload,
-  EditMessagePayload,
-  DeleteMessagePayload,
-  AcceptMessageRequestPayload,
-  RejectMessageRequestPayload,
-  MessageData,
-} from "../schemas/messages";
-import {
-  UploadInitPayload,
+  UploadCompletedResponse,
   UploadCompletePayload,
   UploadInitialisedResponse,
-  UploadCompletedResponse,
+  UploadInitPayload,
 } from "../schemas/fileAttachment";
-import { PostResponse } from "./posts";
 import {
+  AcceptFriendRequestPayload,
+  CancelFriendRequestPayload,
+  RejectFriendRequestPayload,
+  RemoveFriendPayload,
+  SendFriendRequestPayload,
+} from "../schemas/friends";
+import {
+  AcceptMessageRequestPayload,
+  CreateMessagePayload,
+  DeleteMessagePayload,
+  EditMessagePayload,
+  GetMessagesPayload,
+  MessageData,
+  RejectMessageRequestPayload,
+} from "../schemas/messages";
+import {
+  CHANNEL_EVENTS,
+  FRIEND_EVENTS,
+  FRIEND_REQUEST_EVENTS,
+  MESSAGE_EVENTS,
+  POST_EVENTS,
+  UPLOAD_EVENTS,
+  USER_EVENTS,
+} from "../socketEvents";
+import {
+  BookmarkPostPayload,
   CreatePostPayload,
+  DeletePostPayload,
   GetFeedPayload,
   GetRecentPostsPayload,
   JoinPostPayload,
-  UpdatePostPayload,
-  DeletePostPayload,
   LikePostPayload,
-  RemoveLikePayload,
-  BookmarkPostPayload,
+  PostResponse,
   RemoveBookmarkPayload,
+  RemoveLikePayload,
   SearchPostsPayload,
+  UpdatePostPayload,
 } from "./posts";
+import {
+  ChannelWithUsers,
+  FriendRequests,
+  FriendsList,
+  Profile,
+  SocketResponse,
+} from "./responses";
 import { GetUserProfilesPayload, UpdateUserProfilePayload } from "./users";
 
 /**
@@ -85,7 +84,7 @@ export interface ClientToServerEvents {
    */
   [FRIEND_REQUEST_EVENTS.SEND]: (
     data: SendFriendRequestPayload,
-    callback: (response: SocketResponse<FriendRequests>) => void
+    callback: (response: SocketResponse<FriendRequests>) => void,
   ) => void;
 
   /**
@@ -96,7 +95,7 @@ export interface ClientToServerEvents {
    */
   [FRIEND_REQUEST_EVENTS.ACCEPT]: (
     data: AcceptFriendRequestPayload,
-    callback: (response: SocketResponse<{ requestId: string }>) => void
+    callback: (response: SocketResponse<{ requestId: string }>) => void,
   ) => void;
 
   /**
@@ -107,7 +106,7 @@ export interface ClientToServerEvents {
    */
   [FRIEND_REQUEST_EVENTS.REJECT]: (
     data: RejectFriendRequestPayload,
-    callback: (response: SocketResponse<{ requestId: string }>) => void
+    callback: (response: SocketResponse<{ requestId: string }>) => void,
   ) => void;
 
   /**
@@ -118,7 +117,7 @@ export interface ClientToServerEvents {
    */
   [FRIEND_REQUEST_EVENTS.CANCEL]: (
     data: CancelFriendRequestPayload,
-    callback: (response: SocketResponse<{ requestId: string }>) => void
+    callback: (response: SocketResponse<{ requestId: string }>) => void,
   ) => void;
 
   // ============================================================================
@@ -132,7 +131,7 @@ export interface ClientToServerEvents {
    */
   [FRIEND_EVENTS.GET_LIST]: (
     data: {},
-    callback: (response: SocketResponse<FriendsList[]>) => void
+    callback: (response: SocketResponse<FriendsList[]>) => void,
   ) => void;
 
   /**
@@ -143,7 +142,7 @@ export interface ClientToServerEvents {
    */
   [FRIEND_EVENTS.REMOVE]: (
     data: RemoveFriendPayload,
-    callback: (response: SocketResponse<{ friendId: string }>) => void
+    callback: (response: SocketResponse<{ friendId: string }>) => void,
   ) => void;
 
   // ============================================================================
@@ -157,17 +156,17 @@ export interface ClientToServerEvents {
    */
   [CHANNEL_EVENTS.GET_DMS_LIST]: (
     data: {},
-    callback: (response: SocketResponse<ChannelWithUsers[]>) => void
+    callback: (response: SocketResponse<ChannelWithUsers[]>) => void,
   ) => void;
 
   /**
    * GET_POST_CHANNEL: Get a post channel by channel ID (if user has access).
    * @param data - { channelId: string }
-   * @param callback - SocketResponse<Channel>
+   * @param callback - SocketResponse<ChannelWithUsers>
    */
   [CHANNEL_EVENTS.GET_POST_CHANNEL]: (
     data: GetPostChannelPayload,
-    callback: (response: SocketResponse<Channel>) => void
+    callback: (response: SocketResponse<ChannelWithUsers>) => void,
   ) => void;
 
   /**
@@ -178,7 +177,7 @@ export interface ClientToServerEvents {
    */
   [CHANNEL_EVENTS.GET_DM_CHANNEL]: (
     data: GetDMChannelPayload,
-    callback: (response: SocketResponse<ChannelWithUsers>) => void
+    callback: (response: SocketResponse<ChannelWithUsers>) => void,
   ) => void;
 
   /**
@@ -190,7 +189,7 @@ export interface ClientToServerEvents {
    */
   [CHANNEL_EVENTS.JOIN]: (
     data: JoinChannelPayload,
-    callback: (response: SocketResponse<{ channelId: string }>) => void
+    callback: (response: SocketResponse<{ channelId: string }>) => void,
   ) => void;
 
   /**
@@ -202,7 +201,7 @@ export interface ClientToServerEvents {
    */
   [CHANNEL_EVENTS.LEAVE]: (
     data: LeaveChannelPayload,
-    callback: (response: SocketResponse<LeaveChannelPayload>) => void
+    callback: (response: SocketResponse<LeaveChannelPayload>) => void,
   ) => void;
 
   /**
@@ -214,7 +213,7 @@ export interface ClientToServerEvents {
    */
   [CHANNEL_EVENTS.MARK_AS_READ]: (
     data: MarkChannelAsReadPayload,
-    callback: (response: SocketResponse<{ channelId: string }>) => void
+    callback: (response: SocketResponse<{ channelId: string }>) => void,
   ) => void;
 
   // ============================================================================
@@ -230,7 +229,7 @@ export interface ClientToServerEvents {
    */
   [MESSAGE_EVENTS.CREATE]: (
     data: CreateMessagePayload,
-    callback: (response: SocketResponse<MessageData>) => void
+    callback: (response: SocketResponse<MessageData>) => void,
   ) => void;
 
   /**
@@ -241,7 +240,7 @@ export interface ClientToServerEvents {
    */
   [MESSAGE_EVENTS.GET]: (
     data: GetMessagesPayload,
-    callback: (response: SocketResponse<MessageData[]>) => void
+    callback: (response: SocketResponse<MessageData[]>) => void,
   ) => void;
 
   /**
@@ -253,7 +252,7 @@ export interface ClientToServerEvents {
    */
   [MESSAGE_EVENTS.EDIT]: (
     data: EditMessagePayload,
-    callback: (response: SocketResponse<MessageData>) => void
+    callback: (response: SocketResponse<MessageData>) => void,
   ) => void;
 
   /**
@@ -265,7 +264,7 @@ export interface ClientToServerEvents {
    */
   [MESSAGE_EVENTS.DELETE]: (
     data: DeleteMessagePayload,
-    callback: (response: SocketResponse<{ messageId: string }>) => void
+    callback: (response: SocketResponse<{ messageId: string }>) => void,
   ) => void;
 
   /**
@@ -275,13 +274,17 @@ export interface ClientToServerEvents {
    */
   [MESSAGE_EVENTS.GET_MESSAGE_REQUESTS]: (
     data: {},
-    callback: (response: SocketResponse<Array<{
-      id: string;
-      senderId: string;
-      receiverId: string;
-      channelId: string;
-      createdAt: string;
-    }>>) => void
+    callback: (
+      response: SocketResponse<
+        Array<{
+          id: string;
+          senderId: string;
+          receiverId: string;
+          channelId: string;
+          createdAt: string;
+        }>
+      >,
+    ) => void,
   ) => void;
 
   /**
@@ -293,7 +296,7 @@ export interface ClientToServerEvents {
    */
   [MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST]: (
     data: AcceptMessageRequestPayload,
-    callback: (response: SocketResponse<ChannelWithUsers>) => void
+    callback: (response: SocketResponse<ChannelWithUsers>) => void,
   ) => void;
 
   /**
@@ -305,7 +308,7 @@ export interface ClientToServerEvents {
    */
   [MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST]: (
     data: RejectMessageRequestPayload,
-    callback: (response: SocketResponse<{ messageRequestId: string }>) => void
+    callback: (response: SocketResponse<{ messageRequestId: string }>) => void,
   ) => void;
 
   // ============================================================================
@@ -319,7 +322,7 @@ export interface ClientToServerEvents {
    */
   [UPLOAD_EVENTS.INIT]: (
     data: UploadInitPayload,
-    callback: (response: SocketResponse<UploadInitialisedResponse>) => void
+    callback: (response: SocketResponse<UploadInitialisedResponse>) => void,
   ) => void;
 
   /**
@@ -329,7 +332,7 @@ export interface ClientToServerEvents {
    */
   [UPLOAD_EVENTS.COMPLETE]: (
     data: UploadCompletePayload,
-    callback: (response: SocketResponse<UploadCompletedResponse>) => void
+    callback: (response: SocketResponse<UploadCompletedResponse>) => void,
   ) => void;
 
   // ============================================================================
@@ -344,7 +347,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.CREATE]: (
     data: CreatePostPayload,
-    callback: (response: SocketResponse<PostResponse>) => void
+    callback: (response: SocketResponse<PostResponse>) => void,
   ) => void;
 
   /**
@@ -356,7 +359,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.UPDATE]: (
     data: UpdatePostPayload,
-    callback: (response: SocketResponse<PostResponse>) => void
+    callback: (response: SocketResponse<PostResponse>) => void,
   ) => void;
 
   /**
@@ -368,7 +371,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.DELETE]: (
     data: DeletePostPayload,
-    callback: (response: SocketResponse<{ postId: string }>) => void
+    callback: (response: SocketResponse<{ postId: string }>) => void,
   ) => void;
 
   /**
@@ -379,7 +382,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.LIKE]: (
     data: LikePostPayload,
-    callback: (response: SocketResponse<PostResponse>) => void
+    callback: (response: SocketResponse<PostResponse>) => void,
   ) => void;
 
   /**
@@ -390,7 +393,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.UNLIKE]: (
     data: RemoveLikePayload,
-    callback: (response: SocketResponse<PostResponse>) => void
+    callback: (response: SocketResponse<PostResponse>) => void,
   ) => void;
 
   /**
@@ -401,7 +404,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.BOOKMARK]: (
     data: BookmarkPostPayload,
-    callback: (response: SocketResponse<PostResponse>) => void
+    callback: (response: SocketResponse<PostResponse>) => void,
   ) => void;
 
   /**
@@ -412,7 +415,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.UNBOOKMARK]: (
     data: RemoveBookmarkPayload,
-    callback: (response: SocketResponse<PostResponse>) => void
+    callback: (response: SocketResponse<PostResponse>) => void,
   ) => void;
 
   /**
@@ -422,7 +425,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.GET_FEED]: (
     data: GetFeedPayload,
-    callback: (response: SocketResponse<PostResponse[]>) => void
+    callback: (response: SocketResponse<PostResponse[]>) => void,
   ) => void;
 
   /**
@@ -432,7 +435,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.GET_RECENT_POSTS]: (
     data: GetRecentPostsPayload,
-    callback: (response: SocketResponse<PostResponse[]>) => void
+    callback: (response: SocketResponse<PostResponse[]>) => void,
   ) => void;
 
   /**
@@ -442,7 +445,7 @@ export interface ClientToServerEvents {
    */
   [POST_EVENTS.SEARCH]: (
     data: SearchPostsPayload,
-    callback: (response: SocketResponse<PostResponse[]>) => void
+    callback: (response: SocketResponse<PostResponse[]>) => void,
   ) => void;
 
   /**
@@ -455,8 +458,8 @@ export interface ClientToServerEvents {
   [POST_EVENTS.RECENT_POST_ADD]: (
     data: JoinPostPayload,
     callback: (
-      response: SocketResponse<{ postId: string; userId: string }>
-    ) => void
+      response: SocketResponse<{ postId: string; userId: string }>,
+    ) => void,
   ) => void;
 
   // ============================================================================
@@ -470,7 +473,7 @@ export interface ClientToServerEvents {
    */
   [USER_EVENTS.GET_PROFILES]: (
     data: GetUserProfilesPayload,
-    callback: (response: SocketResponse<Profile[]>) => void
+    callback: (response: SocketResponse<Profile[]>) => void,
   ) => void;
 
   /**
@@ -481,7 +484,7 @@ export interface ClientToServerEvents {
    */
   [USER_EVENTS.UPDATE_PROFILE]: (
     data: UpdateUserProfilePayload,
-    callback: (response: SocketResponse<Profile>) => void
+    callback: (response: SocketResponse<Profile>) => void,
   ) => void;
 }
 

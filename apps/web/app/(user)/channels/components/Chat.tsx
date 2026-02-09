@@ -4,6 +4,7 @@ import { ChannelType, MessageData } from "@shared/schemas/messages";
 import { useCallback, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import ChatSkeleton from "./ChatSkeleton";
+import DMChannelBeginning from "./DMChannelBeginning";
 
 interface ChatProps {
   channelId: string;
@@ -84,7 +85,11 @@ const Chat = ({ channelId, channelType, messages }: ChatProps) => {
       components={{
         EmptyPlaceholder: () => <ChatSkeleton />,
         Header: () =>
-          hasMoreOlder ? <ChatSkeleton skeletonCount={10} /> : null,
+          hasMoreOlder ? (
+            <ChatSkeleton skeletonCount={10} />
+          ) : channelType === "dm" ? (
+            <DMChannelBeginning channelId={channelId} />
+          ) : null,
       }}
       initialTopMostItemIndex={messages.length - 1}
       overscan={10}

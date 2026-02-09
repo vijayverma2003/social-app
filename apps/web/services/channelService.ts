@@ -1,14 +1,14 @@
-import { CHANNEL_EVENTS } from "@shared/socketEvents";
-import { socketService } from "./socketService";
+import { usePostChannelsStore } from "@/stores/postChannelStore";
 import {
   GetPostChannelPayload,
   JoinChannelPayload,
   LeaveChannelPayload,
   MarkChannelAsReadPayload,
 } from "@shared/schemas/dm";
-import { Channel } from "@shared/types/responses";
+import { CHANNEL_EVENTS } from "@shared/socketEvents";
+import { ChannelWithUsers } from "@shared/types/responses";
 import { ClientToServerEvents } from "@shared/types/socket";
-import { usePostChannelsStore } from "@/stores/postChannelStore";
+import { socketService } from "./socketService";
 
 type JoinChannelCallback = Parameters<
   ClientToServerEvents[typeof CHANNEL_EVENTS.JOIN]
@@ -32,8 +32,10 @@ type MarkChannelAsReadCallback = Parameters<
  * @param channelId - The channel ID
  * @returns Promise that resolves with the Channel or rejects with error
  */
-export const getPostChannel = (channelId: string): Promise<Channel> => {
-  return new Promise<Channel>((resolve, reject) => {
+export const getPostChannel = (
+  channelId: string,
+): Promise<ChannelWithUsers> => {
+  return new Promise<ChannelWithUsers>((resolve, reject) => {
     const { postChannels, addPostChannel } = usePostChannelsStore.getState();
     const existing = postChannels[channelId];
 
@@ -51,7 +53,7 @@ export const getPostChannel = (channelId: string): Promise<Channel> => {
         } else {
           reject(new Error(response.error || "Failed to get post channel"));
         }
-      }) as GetPostChannelCallback
+      }) as GetPostChannelCallback,
     );
   });
 };
@@ -68,7 +70,7 @@ export const startListeningChannelEvents = (
   options?: {
     onSuccess?: () => void;
     onError?: (error: string) => void;
-  }
+  },
 ): Promise<{ channelId: string }> => {
   return new Promise<{ channelId: string }>((resolve, reject) => {
     socketService.emit(CHANNEL_EVENTS.JOIN, payload, ((response) => {
@@ -97,7 +99,7 @@ export const stopListeningChannelEvents = (
   options?: {
     onSuccess?: () => void;
     onError?: (error: string) => void;
-  }
+  },
 ): Promise<LeaveChannelPayload> => {
   return new Promise<LeaveChannelPayload>((resolve, reject) => {
     socketService.emit(CHANNEL_EVENTS.LEAVE, payload, ((response) => {
@@ -125,7 +127,7 @@ export const markChannelAsRead = (
   options?: {
     onSuccess?: () => void;
     onError?: (error: string) => void;
-  }
+  },
 ): Promise<{ channelId: string }> => {
   return new Promise<{ channelId: string }>((resolve, reject) => {
     socketService.emit(CHANNEL_EVENTS.MARK_AS_READ, payload, ((response) => {

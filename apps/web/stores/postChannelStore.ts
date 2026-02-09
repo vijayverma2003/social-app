@@ -1,11 +1,11 @@
 "use client";
 
-import { Channel } from "@shared/types/responses";
+import { Channel, ChannelWithUsers } from "@shared/types/responses";
 import { create } from "zustand";
 
 interface PostChannelsState {
-  postChannels: Record<string, Channel>;
-  addPostChannel: (channel: Channel) => void;
+  postChannels: Record<string, ChannelWithUsers>;
+  addPostChannel: (channel: ChannelWithUsers) => void;
   removePostChannel: (channelId: string) => void;
 }
 

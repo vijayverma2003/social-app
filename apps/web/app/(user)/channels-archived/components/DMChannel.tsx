@@ -25,9 +25,11 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
   const { user: currentUser } = useUser();
   const dmChannel = useDMChannelsStore((state) => state.dmChannels[channelId]);
   const resetUnreadCount = useDMChannelsStore(
-    (state) => state.resetUnreadCount
+    (state) => state.resetUnreadCount,
   );
-  const { state: { isOpen } } = useConversationPreview()
+  const {
+    state: { isOpen },
+  } = useConversationPreview();
 
   const otherUserId =
     dmChannel?.users.find((u) => u.userId !== currentUser?.id)?.userId || "";
@@ -36,7 +38,7 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
   const currentUserUnreadCount = useMemo(() => {
     if (dmChannel && currentUser?.id) {
       const channelUser = dmChannel.users.find(
-        (u) => u.userId === currentUser.id
+        (u) => u.userId === currentUser.id,
       );
       return channelUser?.totalUnreadMessages || 0;
     }
@@ -79,9 +81,9 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
     enabled: messages.length > 0,
     measureElement:
       typeof window !== "undefined" &&
-        navigator.userAgent.indexOf("Firefox") === -1
+      navigator.userAgent.indexOf("Firefox") === -1
         ? (element: Element | null) =>
-          element?.getBoundingClientRect().height ?? 80
+            element?.getBoundingClientRect().height ?? 80
         : undefined,
   });
 
@@ -89,27 +91,24 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
     (
       messageId: string,
       messageContent: string,
-      attachments?: MessageData["attachments"]
+      attachments?: MessageData["attachments"],
     ) => {
       if (messageInputRef.current) {
         messageInputRef.current.startEditing(
           messageId,
           messageContent,
-          attachments
+          attachments,
         );
       }
     },
-    []
+    [],
   );
 
-  const handleReplyMessage = useCallback(
-    (message: MessageData) => {
-      if (messageInputRef.current) {
-        messageInputRef.current.startReply(message);
-      }
-    },
-    []
-  );
+  const handleReplyMessage = useCallback((message: MessageData) => {
+    if (messageInputRef.current) {
+      messageInputRef.current.startReply(message);
+    }
+  }, []);
 
   return (
     <>
@@ -122,7 +121,14 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
           <p className="text-sm font-medium">{otherUser?.displayName}</p>
         </div>
       </MainHeader>
-      <div className={cn("w-full grid", isOpen ? "grid-cols-[1fr_0px]" : "max-lg:grid-cols-1 grid-cols-[1fr_360px]")}>
+      <div
+        className={cn(
+          "w-full grid",
+          isOpen
+            ? "grid-cols-[1fr_0px]"
+            : "max-lg:grid-cols-1 grid-cols-[1fr_360px]",
+        )}
+      >
         <div className="h-[calc(100vh-48px)] flex flex-col">
           <div className="flex-1" />
 
@@ -181,13 +187,14 @@ export const DMChannel = ({ channelId, aroundMessageId }: DMChannelProps) => {
               ref={messageInputRef}
               channelId={channelId}
               channelType="dm"
-              onSend={scrollToBottom}
             />
           </div>
         </div>
-        {!isOpen && <div className="p-6">
-          <ProfileCard userId={otherUserId} variant="popover" />
-        </div>}
+        {!isOpen && (
+          <div className="p-6">
+            <ProfileCard userId={otherUserId} variant="popover" />
+          </div>
+        )}
       </div>
     </>
   );

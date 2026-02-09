@@ -57,34 +57,34 @@ type MarkChannelAsReadCallback = Parameters<
 export class ChannelHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(CHANNEL_EVENTS.GET_DMS_LIST, (data, callback) =>
-      this.getDMChannels(socket, data, callback)
+      this.getDMChannels(socket, data, callback),
     );
 
     socket.on(CHANNEL_EVENTS.GET_POST_CHANNEL, (data, callback) =>
-      this.getPostChannel(socket, data, callback)
+      this.getPostChannel(socket, data, callback),
     );
 
     socket.on(CHANNEL_EVENTS.GET_DM_CHANNEL, (data, callback) =>
-      this.getOrCreateDMChannel(socket, data, callback)
+      this.getOrCreateDMChannel(socket, data, callback),
     );
 
     socket.on(CHANNEL_EVENTS.JOIN, (data, callback) =>
-      this.joinChannelSocketRoom(socket, data, callback)
+      this.joinChannelSocketRoom(socket, data, callback),
     );
 
     socket.on(CHANNEL_EVENTS.LEAVE, (data, callback) =>
-      this.leaveChannelSocketRoom(socket, data, callback)
+      this.leaveChannelSocketRoom(socket, data, callback),
     );
 
     socket.on(CHANNEL_EVENTS.MARK_AS_READ, (data, callback) =>
-      this.markChannelAsRead(socket, data, callback)
+      this.markChannelAsRead(socket, data, callback),
     );
   }
 
   private async getDMChannels(
     socket: AuthenticatedSocket,
     data: GetDMsListData,
-    cb: GetDMsListCallback
+    cb: GetDMsListCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -136,7 +136,7 @@ export class ChannelHandlers extends BaseSocketHandler {
   private async getOrCreateDMChannel(
     socket: AuthenticatedSocket,
     data: GetDMChannelData,
-    cb: GetDMChannelCallback
+    cb: GetDMChannelCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -164,6 +164,8 @@ export class ChannelHandlers extends BaseSocketHandler {
         where: { id: otherUserId },
         select: { id: true },
       });
+
+      console.log("otherUser", otherUser);
 
       if (!otherUser) {
         cb({ error: "User not found" });
@@ -195,7 +197,7 @@ export class ChannelHandlers extends BaseSocketHandler {
       });
 
       const existingChannel = potentialChannels.find(
-        (channel) => channel.users.length === 2
+        (channel) => channel.users.length === 2,
       );
 
       if (existingChannel) {
@@ -212,10 +214,7 @@ export class ChannelHandlers extends BaseSocketHandler {
           type: "dm",
           isRequest: true,
           users: {
-            create: [
-              { userId: socket.userId },
-              { userId: otherUserId },
-            ],
+            create: [{ userId: socket.userId }, { userId: otherUserId }],
           },
         },
         include: {
@@ -236,7 +235,7 @@ export class ChannelHandlers extends BaseSocketHandler {
   private async getPostChannel(
     socket: AuthenticatedSocket,
     data: GetPostChannelData,
-    cb: GetPostChannelCallback
+    cb: GetPostChannelCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -256,6 +255,7 @@ export class ChannelHandlers extends BaseSocketHandler {
 
       const channel = await prisma.channel.findUnique({
         where: { id: channelId },
+        include: { users: true },
       });
 
       if (!channel) {
@@ -281,7 +281,7 @@ export class ChannelHandlers extends BaseSocketHandler {
   private async joinChannelSocketRoom(
     socket: AuthenticatedSocket,
     data: JoinChannelData,
-    cb: JoinChannelCallback
+    cb: JoinChannelCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -397,7 +397,7 @@ export class ChannelHandlers extends BaseSocketHandler {
   private async leaveChannelSocketRoom(
     socket: AuthenticatedSocket,
     data: LeaveChannelData,
-    cb: LeaveChannelCallback
+    cb: LeaveChannelCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -448,7 +448,7 @@ export class ChannelHandlers extends BaseSocketHandler {
   private async markChannelAsRead(
     socket: AuthenticatedSocket,
     data: MarkChannelAsReadData,
-    cb: MarkChannelAsReadCallback
+    cb: MarkChannelAsReadCallback,
   ) {
     try {
       if (!socket.userId) {
