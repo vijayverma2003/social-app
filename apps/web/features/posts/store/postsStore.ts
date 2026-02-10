@@ -11,9 +11,10 @@ interface PostsState {
   updatePost: (post: PostResponse) => void;
   removePost: (postId: string) => void;
   prependPost: (post: PostResponse) => void;
+  getPost: (postId: string) => PostResponse | undefined;
 }
 
-export const usePostsStore = create<PostsState>((set) => ({
+export const usePostsStore = create<PostsState>((set, get) => ({
   posts: [],
 
   setPosts: (posts) => set({ posts }),
@@ -68,4 +69,6 @@ export const usePostsStore = create<PostsState>((set) => ({
       if (state.posts.some((p) => p.id === post.id)) return state;
       return { posts: [post, ...state.posts] };
     }),
+
+  getPost: (postId: string) => get().posts.find((p) => p.id === postId),
 }));

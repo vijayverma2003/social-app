@@ -19,6 +19,7 @@ import Chat from "./Chat";
 import ChatSkeleton from "./ChatSkeleton";
 import DMChannelHeader from "./DMChannelHeader";
 import DMChannelSidebar from "./DMChannelSidebar";
+import PostChannelHeader from "./PostChannelHeader";
 
 const PAGE_SIZE = 50;
 const NEAR_BOTTOM_THRESHOLD_PX = 100;
@@ -38,7 +39,8 @@ interface ChannelProps {
   postId: string;
 }
 
-const Channel = ({ channelType, channelId }: ChannelProps) => {
+const Channel = ({ channelType, channelId, postId }: ChannelProps) => {
+  console.log(channelType, channelId, postId);
   const messageInputRef = useRef<MessageInputRef>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -98,6 +100,8 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
     <main className="h-full min-h-0 flex flex-col">
       {channelType === "dm" ? (
         <DMChannelHeader channelId={channelId} />
+      ) : channelType === "post" ? (
+        <PostChannelHeader postId={postId} />
       ) : (
         <header className="p-3 border-b">
           <h1>{channelId}</h1>
@@ -140,6 +144,8 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
         </MessageInputProvider>
         {channelType === "dm" ? (
           <DMChannelSidebar channelId={channelId} />
+        ) : channelType === "post" ? (
+          <h1>Post Channel</h1>
         ) : null}
       </div>
     </main>
