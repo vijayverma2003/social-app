@@ -255,7 +255,7 @@ export class ChannelHandlers extends BaseSocketHandler {
 
       const channel = await prisma.channel.findUnique({
         where: { id: channelId },
-        include: { users: true },
+        include: { users: { take: 50 } },
       });
 
       if (!channel) {

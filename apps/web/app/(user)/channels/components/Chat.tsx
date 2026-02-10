@@ -4,7 +4,7 @@ import { ChannelType, MessageData } from "@shared/schemas/messages";
 import { useCallback, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import ChatSkeleton from "./ChatSkeleton";
-import DMChannelBeginning from "./DMChannelBeginning";
+import DMChannelBeginning from "./DMChannelChatBeginning";
 
 interface ChatProps {
   channelId: string;

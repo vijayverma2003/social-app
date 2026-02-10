@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import Chat from "./Chat";
 import ChatSkeleton from "./ChatSkeleton";
+import DMChannelHeader from "./DMChannelHeader";
+import DMChannelSidebar from "./DMChannelSidebar";
 
 const PAGE_SIZE = 50;
 const NEAR_BOTTOM_THRESHOLD_PX = 100;
@@ -94,9 +96,13 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
 
   return (
     <main className="h-full min-h-0 flex flex-col">
-      <header className="p-3 border-b">
-        <h1>{channelId}</h1>
-      </header>
+      {channelType === "dm" ? (
+        <DMChannelHeader channelId={channelId} />
+      ) : (
+        <header className="p-3 border-b">
+          <h1>{channelId}</h1>
+        </header>
+      )}
 
       <div
         className={cn(
@@ -132,6 +138,9 @@ const Channel = ({ channelType, channelId }: ChannelProps) => {
             </div>
           </div>
         </MessageInputProvider>
+        {channelType === "dm" ? (
+          <DMChannelSidebar channelId={channelId} />
+        ) : null}
       </div>
     </main>
   );
