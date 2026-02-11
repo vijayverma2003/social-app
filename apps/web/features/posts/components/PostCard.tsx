@@ -1,6 +1,7 @@
 "use client";
 
 import { ProfileCardPopover } from "@/app/(user)/components/ProfileCardPopover";
+import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -10,8 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ViewProfileButton } from "@/app/(user)/components/ViewProfileButton";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/providers/UserContextProvider";
 import {
@@ -36,7 +37,6 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ImageCollage } from "./ImageCollage";
 import { PostDeleteDialog } from "./PostDeleteDialog";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface PostCardProps {
   post: PostResponse;

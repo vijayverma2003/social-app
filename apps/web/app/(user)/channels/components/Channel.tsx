@@ -126,6 +126,7 @@ const Channel = ({ channelType, channelId, postId }: ChannelProps) => {
                 <ChatSkeleton skeletonCount={10} />
               ) : (
                 <Chat
+                  postId={postId}
                   channelId={channelId}
                   channelType={channelType}
                   messages={messages}

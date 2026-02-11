@@ -1,12 +1,15 @@
 import MessagePreview from "@/app/(user)/channels/components/MessagePreview";
 import { fetchMessages } from "@/services/messagesService";
 import { ChannelType, MessageData } from "@shared/schemas/messages";
+import { format } from "date-fns";
 import { useCallback, useMemo, useState } from "react";
 import { Virtuoso } from "react-virtuoso";
 import ChatSkeleton from "./ChatSkeleton";
 import DMChannelBeginning from "./DMChannelChatBeginning";
+import PostDiscussionBeginning from "./PostDiscussionBeginning";
 
 interface ChatProps {
+  postId?: string;
   channelId: string;
   channelType: ChannelType;
   messages: MessageData[];
@@ -21,7 +24,7 @@ function toISOString(value: Date | string): string {
 const PAGE_SIZE = 50;
 const INITIAL_FIRST_ITEM_INDEX = 100_000;
 
-const Chat = ({ channelId, channelType, messages }: ChatProps) => {
+const Chat = ({ postId, channelId, channelType, messages }: ChatProps) => {
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [hasMoreOlder, setHasMoreOlder] = useState(true);
   const [firstItemIndex, setFirstItemIndex] = useState(
@@ -69,12 +72,23 @@ const Chat = ({ channelId, channelType, messages }: ChatProps) => {
         ...message,
         lastMessage,
         repliedToMessage,
+        type: index === 0 ? "discussion-beginning" : "message",
+        dateBanner:
+          lastMessage?.createdAt && message.createdAt
+            ? new Date(lastMessage.createdAt).toDateString() !==
+              new Date(message.createdAt).toDateString()
+            : index === 0
+              ? true
+              : false,
       };
     });
   }, [messages]);
 
+  console.log(enrichedMessages);
+
   return (
     <Virtuoso
+      marginHeight={10}
       data={enrichedMessages}
       totalCount={messages.length}
       startReached={loadOlder}
@@ -84,19 +98,37 @@ const Chat = ({ channelId, channelType, messages }: ChatProps) => {
       alignToBottom
       components={{
         EmptyPlaceholder: () => <ChatSkeleton />,
-        Header: () =>
-          hasMoreOlder ? (
-            <ChatSkeleton skeletonCount={10} />
-          ) : channelType === "dm" ? (
-            <DMChannelBeginning channelId={channelId} />
-          ) : null,
       }}
       initialTopMostItemIndex={messages.length - 1}
       overscan={10}
       className="flex justify-end"
-      itemContent={(index, message) => (
-        <MessagePreview key={message.id} message={message} />
-      )}
+      itemContent={(index, message) => {
+        return (
+          <>
+            {!hasMoreOlder && message.type === "discussion-beginning" && (
+              <div>
+                {channelType === "post" && (
+                  <PostDiscussionBeginning postId={postId} />
+                )}
+                {channelType === "dm" && (
+                  <DMChannelBeginning channelId={channelId} />
+                )}
+              </div>
+            )}
+            {message.dateBanner && (
+              <div
+                className="text-xs text-muted-foreground relative mx-3 py-8 select-none"
+                role="separator"
+              >
+                <p className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-background px-2">
+                  {format(new Date(message.createdAt), "eeee, d MMMM yyyy")}
+                </p>
+              </div>
+            )}
+            <MessagePreview key={message.id} message={message} />
+          </>
+        );
+      }}
     />
   );
 };
