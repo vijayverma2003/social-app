@@ -130,6 +130,7 @@ const Channel = ({ channelType, channelId, postId }: ChannelProps) => {
                   channelId={channelId}
                   channelType={channelType}
                   messages={messages}
+                  initialLoadingComplete={!isInitialLoading}
                 />
               )}
             </div>

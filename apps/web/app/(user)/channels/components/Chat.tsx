@@ -12,6 +12,7 @@ interface ChatProps {
   postId?: string;
   channelId: string;
   channelType: ChannelType;
+  initialLoadingComplete: boolean;
   messages: MessageData[];
 }
 
@@ -24,7 +25,13 @@ function toISOString(value: Date | string): string {
 const PAGE_SIZE = 50;
 const INITIAL_FIRST_ITEM_INDEX = 100_000;
 
-const Chat = ({ postId, channelId, channelType, messages }: ChatProps) => {
+const Chat = ({
+  postId,
+  channelId,
+  channelType,
+  initialLoadingComplete,
+  messages,
+}: ChatProps) => {
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [hasMoreOlder, setHasMoreOlder] = useState(true);
   const [firstItemIndex, setFirstItemIndex] = useState(
@@ -97,7 +104,16 @@ const Chat = ({ postId, channelId, channelType, messages }: ChatProps) => {
       firstItemIndex={firstItemIndex}
       alignToBottom
       components={{
-        EmptyPlaceholder: () => <ChatSkeleton />,
+        EmptyPlaceholder: () =>
+          !initialLoadingComplete ? (
+            <ChatSkeleton />
+          ) : messages.length === 0 ? (
+            <div className="h-full flex items-center justify-center py-8">
+              <p className="text-muted-foreground text-xs">
+                No messages yet. Start a conversation!
+              </p>
+            </div>
+          ) : null,
       }}
       initialTopMostItemIndex={messages.length - 1}
       overscan={10}
