@@ -20,6 +20,7 @@ import ChatSkeleton from "./ChatSkeleton";
 import DMChannelHeader from "./DMChannelHeader";
 import DMChannelSidebar from "./DMChannelSidebar";
 import PostChannelHeader from "./PostChannelHeader";
+import PostChannelSidebar from "./PostChannelSidebar";
 
 const PAGE_SIZE = 50;
 const NEAR_BOTTOM_THRESHOLD_PX = 100;
@@ -147,7 +148,7 @@ const Channel = ({ channelType, channelId, postId }: ChannelProps) => {
         {channelType === "dm" ? (
           <DMChannelSidebar channelId={channelId} />
         ) : channelType === "post" ? (
-          <h1>Post Channel</h1>
+          <PostChannelSidebar postId={postId} />
         ) : null}
       </div>
     </main>
