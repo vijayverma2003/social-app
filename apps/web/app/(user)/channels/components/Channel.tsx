@@ -25,28 +25,26 @@ import PostChannelSidebar from "./PostChannelSidebar";
 const PAGE_SIZE = 50;
 const NEAR_BOTTOM_THRESHOLD_PX = 100;
 
-function isNearBottom(
-  container: HTMLElement,
-  threshold = NEAR_BOTTOM_THRESHOLD_PX,
-): boolean {
-  const { scrollTop, scrollHeight, clientHeight } = container;
-  const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-  return distanceFromBottom <= threshold;
-}
-
 interface ChannelProps {
   channelType: ChannelType;
   channelId: string;
   postId: string;
+  isConversationPreview?: boolean;
 }
 
-const Channel = ({ channelType, channelId, postId }: ChannelProps) => {
+const Channel = ({
+  channelType,
+  channelId,
+  postId,
+  isConversationPreview,
+}: ChannelProps) => {
   console.log(channelType, channelId, postId);
   const messageInputRef = useRef<MessageInputRef>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     state: { isOpen },
+    closeConversation,
   } = useConversationPreview();
 
   const messages = useMessagesStore(
@@ -100,9 +98,9 @@ const Channel = ({ channelType, channelId, postId }: ChannelProps) => {
   return (
     <main className="h-full min-h-0 flex flex-col">
       {channelType === "dm" ? (
-        <DMChannelHeader channelId={channelId} />
+        <DMChannelHeader channelId={channelId} isConversationPreview={isConversationPreview} />
       ) : channelType === "post" ? (
-        <PostChannelHeader postId={postId} />
+        <PostChannelHeader postId={postId} isConversationPreview={isConversationPreview} />
       ) : (
         <header className="p-3 border-b">
           <h1>{channelId}</h1>

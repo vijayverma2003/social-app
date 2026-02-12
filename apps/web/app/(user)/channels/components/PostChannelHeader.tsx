@@ -1,9 +1,18 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePostsStore } from "@/features/posts/store/postsStore";
 import { useProfilesStore } from "@/stores/profilesStore";
-import { Dot } from "lucide-react";
+import { Dot, X } from "lucide-react";
+import { useConversationPreview } from "@/contexts/conversationPreviewContext";
+import { Button } from "@/components/ui/button";
 
-const PostChannelHeader = ({ postId }: { postId: string }) => {
+const PostChannelHeader = ({
+  postId,
+  isConversationPreview,
+}: {
+  postId: string;
+  isConversationPreview?: boolean;
+}) => {
+  const { closeConversation } = useConversationPreview();
   const post = usePostsStore((state) => state.getPost(postId));
   console.log(post);
 
@@ -37,7 +46,18 @@ const PostChannelHeader = ({ postId }: { postId: string }) => {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2"></div>
+      <div className="flex items-center gap-2">
+        {isConversationPreview && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="cursor-pointer"
+            onClick={closeConversation}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
     </header>
   );
 };

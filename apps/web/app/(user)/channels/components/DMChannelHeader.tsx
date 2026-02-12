@@ -2,8 +2,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser } from "@/providers/UserContextProvider";
 import { useDMChannelsStore } from "@/stores/dmChannelStore";
 import { useProfilesStore } from "@/stores/profilesStore";
+import { useConversationPreview } from "@/contexts/conversationPreviewContext";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
-const DMChannelHeader = ({ channelId }: { channelId: string }) => {
+const DMChannelHeader = ({
+  channelId,
+  isConversationPreview,
+}: {
+  channelId: string;
+  isConversationPreview?: boolean;
+}) => {
+  const { closeConversation } = useConversationPreview();
   const { user: currentUser } = useUser();
   const dmChannel = useDMChannelsStore((state) => state.dmChannels[channelId]);
 
@@ -26,7 +36,18 @@ const DMChannelHeader = ({ channelId }: { channelId: string }) => {
         </Avatar>
         <p className="text-sm font-medium">{otherUserProfile?.displayName}</p>
       </div>
-      <div className="flex items-center gap-2"></div>
+      <div className="flex items-center gap-2">
+        {isConversationPreview && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="cursor-pointer"
+            onClick={closeConversation}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
     </header>
   );
 };
