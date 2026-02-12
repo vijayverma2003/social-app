@@ -55,7 +55,7 @@ export const createMessage = (
   options?: {
     onComplete?: (messageId: string | null) => void;
     optimisticId?: string;
-  }
+  },
 ): Promise<MessageData> => {
   return new Promise<MessageData>((resolve, reject) => {
     const { markMessageAsError } = useMessagesStore.getState();
@@ -69,7 +69,7 @@ export const createMessage = (
           markMessageAsError(
             payload.channelId,
             options.optimisticId,
-            "Failed to send message, retry again."
+            "Failed to send message, retry again.",
           );
         }
         options?.onComplete?.(null);
@@ -93,7 +93,7 @@ export const fetchMessages = (
     append?: boolean;
     onSuccess?: () => void;
     onError?: (error: string) => void;
-  }
+  },
 ): Promise<MessageData[]> => {
   return new Promise<MessageData[]>((resolve, reject) => {
     const { setMessages, prependMessages, appendMessages, messagesByChannel } =
@@ -103,8 +103,11 @@ export const fetchMessages = (
 
     // If we already have messages and this is a basic initial load (no before/after/around),
     // reuse the cached messages instead of fetching again.
-    const hasDirectionalParams =
-      !!(payload.before || (payload as any).after || (payload as any).aroundMessageId);
+    const hasDirectionalParams = !!(
+      payload.before ||
+      payload.after ||
+      payload.aroundMessageId
+    );
 
     if (messages.length > 0 && !options?.prepend && !hasDirectionalParams) {
       options?.onSuccess?.();
@@ -141,7 +144,7 @@ export const fetchMessages = (
  */
 export const deleteMessage = (
   payload: DeleteMessagePayload,
-  options?: { onComplete?: (success: boolean) => void }
+  options?: { onComplete?: (success: boolean) => void },
 ): Promise<{ messageId: string }> => {
   return new Promise<{ messageId: string }>((resolve, reject) => {
     const { removeMessage } = useMessagesStore.getState();
@@ -167,7 +170,7 @@ export const deleteMessage = (
  */
 export const editMessage = (
   payload: EditMessagePayload,
-  options?: { onComplete?: (success: boolean) => void }
+  options?: { onComplete?: (success: boolean) => void },
 ): Promise<MessageData> => {
   return new Promise<MessageData>((resolve, reject) => {
     const { updateMessage, decrementPendingEditRequests } =
@@ -195,37 +198,35 @@ export const editMessage = (
  */
 export const fetchMessageRequests = (): Promise<MessageRequest[]> => {
   return new Promise<MessageRequest[]>((resolve, reject) => {
-    socketService.emit(
-      MESSAGE_EVENTS.GET_MESSAGE_REQUESTS,
-      {},
-      (async (response) => {
-        if (response.error) {
-          reject(new Error(response.error));
-          return;
-        }
+    socketService.emit(MESSAGE_EVENTS.GET_MESSAGE_REQUESTS, {}, (async (
+      response,
+    ) => {
+      if (response.error) {
+        reject(new Error(response.error));
+        return;
+      }
 
-        if (response.success && response.data) {
-          const requests = response.data;
-          const senderIds = requests.map((r) => r.senderId);
+      if (response.success && response.data) {
+        const requests = response.data;
+        const senderIds = requests.map((r) => r.senderId);
 
-          // Fetch profiles for users who sent the requests (async, but don't block resolution)
-          if (senderIds.length > 0) {
-            try {
-              await fetchUserProfiles({ userIds: senderIds });
-            } catch (error) {
-              console.error(
-                "Failed to fetch user profiles for message requests:",
-                error
-              );
-            }
+        // Fetch profiles for users who sent the requests (async, but don't block resolution)
+        if (senderIds.length > 0) {
+          try {
+            await fetchUserProfiles({ userIds: senderIds });
+          } catch (error) {
+            console.error(
+              "Failed to fetch user profiles for message requests:",
+              error,
+            );
           }
-
-          resolve(requests);
-        } else {
-          reject(new Error("Failed to get message requests"));
         }
-      }) as GetMessageRequestsCallback
-    );
+
+        resolve(requests);
+      } else {
+        reject(new Error("Failed to get message requests"));
+      }
+    }) as GetMessageRequestsCallback);
   });
 };
 
@@ -237,29 +238,27 @@ export const fetchMessageRequests = (): Promise<MessageRequest[]> => {
  * @returns Promise that resolves with the updated channel or rejects with error
  */
 export const acceptMessageRequest = (
-  payload: AcceptMessageRequestPayload
+  payload: AcceptMessageRequestPayload,
 ): Promise<ChannelWithUsers> => {
   return new Promise<ChannelWithUsers>((resolve, reject) => {
-    socketService.emit(
-      MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST,
-      payload,
-      ((response) => {
-        if (response.error) {
-          reject(new Error(response.error));
-          return;
-        }
+    socketService.emit(MESSAGE_EVENTS.ACCEPT_MESSAGE_REQUEST, payload, ((
+      response,
+    ) => {
+      if (response.error) {
+        reject(new Error(response.error));
+        return;
+      }
 
-        if (response.success && response.data) {
-          const channel = response.data;
-          // Add the channel to the DM channels store
-          const { addDMChannel } = useDMChannelsStore.getState();
-          addDMChannel(channel);
-          resolve(channel);
-        } else {
-          reject(new Error("Failed to accept message request"));
-        }
-      }) as AcceptMessageRequestCallback
-    );
+      if (response.success && response.data) {
+        const channel = response.data;
+        // Add the channel to the DM channels store
+        const { addDMChannel } = useDMChannelsStore.getState();
+        addDMChannel(channel);
+        resolve(channel);
+      } else {
+        reject(new Error("Failed to accept message request"));
+      }
+    }) as AcceptMessageRequestCallback);
   });
 };
 
@@ -270,24 +269,22 @@ export const acceptMessageRequest = (
  * @returns Promise that resolves with the message request ID or rejects with error
  */
 export const rejectMessageRequest = (
-  payload: RejectMessageRequestPayload
+  payload: RejectMessageRequestPayload,
 ): Promise<{ messageRequestId: string }> => {
   return new Promise<{ messageRequestId: string }>((resolve, reject) => {
-    socketService.emit(
-      MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST,
-      payload,
-      ((response) => {
-        if (response.error) {
-          reject(new Error(response.error));
-          return;
-        }
+    socketService.emit(MESSAGE_EVENTS.REJECT_MESSAGE_REQUEST, payload, ((
+      response,
+    ) => {
+      if (response.error) {
+        reject(new Error(response.error));
+        return;
+      }
 
-        if (response.success && response.data) {
-          resolve(response.data);
-        } else {
-          reject(new Error("Failed to reject message request"));
-        }
-      }) as RejectMessageRequestCallback
-    );
+      if (response.success && response.data) {
+        resolve(response.data);
+      } else {
+        reject(new Error("Failed to reject message request"));
+      }
+    }) as RejectMessageRequestCallback);
   });
 };

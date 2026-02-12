@@ -4,6 +4,7 @@ import {
   MessageInput,
   MessageInputRef,
 } from "@/app/(user)/channels/components/MessageInput";
+import { useChannelView } from "@/app/(user)/channels/contexts/ChannelViewContext";
 import { MessageInputProvider } from "@/app/(user)/channels/contexts/MessageInputContext";
 import { useConversationPreview } from "@/contexts/conversationPreviewContext";
 import { cn } from "@/lib/utils";
@@ -38,31 +39,43 @@ const Channel = ({
   postId,
   isConversationPreview,
 }: ChannelProps) => {
-  console.log(channelType, channelId, postId);
   const messageInputRef = useRef<MessageInputRef>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const channelView = useChannelView();
 
   const {
     state: { isOpen },
-    closeConversation,
   } = useConversationPreview();
 
   const messages = useMessagesStore(
     useShallow((state) => state.messagesByChannel[channelId] || []),
   );
+  const clearChannel = useMessagesStore((state) => state.clearChannel);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  const aroundMessageId = channelView?.aroundMessageId ?? null;
 
   const fetchMessagesData = useCallback(async () => {
     try {
       setIsInitialLoading(true);
-      await fetchMessages({ channelId, channelType, limit: PAGE_SIZE });
+      if (aroundMessageId) {
+        clearChannel(channelId);
+        await fetchMessages({
+          channelId,
+          channelType,
+          limit: PAGE_SIZE,
+          aroundMessageId,
+        });
+      } else {
+        await fetchMessages({ channelId, channelType, limit: PAGE_SIZE });
+      }
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch messages");
     } finally {
       setIsInitialLoading(false);
     }
-  }, [channelId, channelType]);
+  }, [channelId, channelType, aroundMessageId, clearChannel]);
 
   const fetchPostChannelData = useCallback(async () => {
     if (channelType !== "post") return;
@@ -98,9 +111,15 @@ const Channel = ({
   return (
     <main className="h-full min-h-0 flex flex-col">
       {channelType === "dm" ? (
-        <DMChannelHeader channelId={channelId} isConversationPreview={isConversationPreview} />
+        <DMChannelHeader
+          channelId={channelId}
+          isConversationPreview={isConversationPreview}
+        />
       ) : channelType === "post" ? (
-        <PostChannelHeader postId={postId} isConversationPreview={isConversationPreview} />
+        <PostChannelHeader
+          postId={postId}
+          isConversationPreview={isConversationPreview}
+        />
       ) : (
         <header className="p-3 border-b">
           <h1>{channelId}</h1>
@@ -143,11 +162,13 @@ const Channel = ({
             </div>
           </div>
         </MessageInputProvider>
-        {channelType === "dm" ? (
-          <DMChannelSidebar channelId={channelId} />
-        ) : channelType === "post" ? (
-          <PostChannelSidebar postId={postId} />
-        ) : null}
+        <div className="max-lg:hidden">
+          {channelType === "dm" ? (
+            <DMChannelSidebar channelId={channelId} />
+          ) : channelType === "post" ? (
+            <PostChannelSidebar postId={postId} />
+          ) : null}
+        </div>
       </div>
     </main>
   );

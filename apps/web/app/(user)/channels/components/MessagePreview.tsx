@@ -124,11 +124,9 @@ const MessagePreview = memo(({ message, highlight }: MessagePreviewProps) => {
           <div className="flex flex-col">
             {showAvatar && (
               <div className="flex gap-2 items-center mb-1">
-                <ProfileCardPopover userId={message.authorId}>
-                  <p className="text-sm font-extrabold">
-                    {profile?.displayName || "Unknown User"}
-                  </p>
-                </ProfileCardPopover>
+                <p className="text-sm font-extrabold">
+                  {profile?.displayName || "Unknown User"}
+                </p>
                 <p className="text-[10px] text-muted-foreground">
                   {isSameDay
                     ? new Date(message.createdAt).toLocaleString("en-US", {

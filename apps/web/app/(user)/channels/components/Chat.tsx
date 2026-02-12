@@ -1,4 +1,5 @@
 import MessagePreview from "@/app/(user)/channels/components/MessagePreview";
+import { useChannelView } from "@/app/(user)/channels/contexts/ChannelViewContext";
 import { fetchMessages } from "@/services/messagesService";
 import { ChannelType, MessageData } from "@shared/schemas/messages";
 import { format } from "date-fns";
@@ -32,8 +33,13 @@ const Chat = ({
   initialLoadingComplete,
   messages,
 }: ChatProps) => {
+  const channelView = useChannelView();
+  const aroundMessageId = channelView?.aroundMessageId ?? null;
+
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [hasMoreOlder, setHasMoreOlder] = useState(true);
+  const [isLoadingNewer, setIsLoadingNewer] = useState(false);
+  const [hasMoreNewer, setHasMoreNewer] = useState(true);
   const [firstItemIndex, setFirstItemIndex] = useState(
     INITIAL_FIRST_ITEM_INDEX,
   );
@@ -69,6 +75,34 @@ const Chat = ({
     }
   }, [channelId, channelType, messages, hasMoreOlder, isLoadingOlder]);
 
+  const loadNewer = useCallback(async () => {
+    if (!aroundMessageId) return;
+    if (isLoadingNewer) return;
+    if (messages.length === 0 || !hasMoreNewer) return;
+
+    const newest = messages[messages.length - 1];
+    const after = toISOString(newest.createdAt);
+
+    setIsLoadingNewer(true);
+
+    try {
+      const result = await fetchMessages(
+        { channelId, channelType, limit: PAGE_SIZE, after },
+        { append: true },
+      );
+      setHasMoreNewer(result.length >= PAGE_SIZE);
+    } finally {
+      setIsLoadingNewer(false);
+    }
+  }, [
+    aroundMessageId,
+    channelId,
+    channelType,
+    messages,
+    hasMoreNewer,
+    isLoadingNewer,
+  ]);
+
   const enrichedMessages = useMemo(() => {
     return messages.map((message, index) => {
       const lastMessage = index > 0 ? messages[index - 1] : null;
@@ -91,7 +125,11 @@ const Chat = ({
     });
   }, [messages]);
 
-  console.log(enrichedMessages);
+  const initialScrollIndex = useMemo(() => {
+    if (!aroundMessageId || messages.length === 0) return messages.length - 1;
+    const idx = messages.findIndex((m) => m.id === aroundMessageId);
+    return idx >= 0 ? idx : messages.length - 1;
+  }, [aroundMessageId, messages]);
 
   return (
     <Virtuoso
@@ -99,10 +137,13 @@ const Chat = ({
       data={enrichedMessages}
       totalCount={messages.length}
       startReached={loadOlder}
+      endReached={aroundMessageId ? loadNewer : undefined}
       atTopThreshold={10}
-      followOutput="smooth"
+      atBottomThreshold={10}
+      followOutput={aroundMessageId ? false : "smooth"}
       firstItemIndex={firstItemIndex}
-      alignToBottom
+      alignToBottom={!aroundMessageId}
+      initialTopMostItemIndex={initialScrollIndex}
       components={{
         EmptyPlaceholder: () =>
           !initialLoadingComplete ? (
@@ -115,7 +156,6 @@ const Chat = ({
             </div>
           ) : null,
       }}
-      initialTopMostItemIndex={messages.length - 1}
       overscan={10}
       className="flex justify-end"
       itemContent={(index, message) => {

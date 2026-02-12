@@ -69,7 +69,7 @@ export class Message {
     channelType: ChannelType,
     limit: number = 50,
     before?: Date,
-    after?: Date
+    after?: Date,
   ) {
     const collection = await getCollection(COLLECTION_NAME);
     const query: any = { channelId, channelType };
@@ -86,11 +86,13 @@ export class Message {
 
     const messages = await collection
       .find<MessageData & { _id: ObjectId }>(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: after ? 1 : -1 })
       .limit(limit)
       .toArray();
 
-    return messages.reverse().map((message) => ({
+    const finalMessages = after ? messages : messages.reverse();
+
+    return finalMessages.map((message) => ({
       ...message,
       _id: message._id.toString(),
     }));
@@ -100,7 +102,7 @@ export class Message {
     channelId: string,
     channelType: ChannelType,
     messageId: string,
-    limit: number = 50
+    limit: number = 50,
   ) {
     const collection = await getCollection(COLLECTION_NAME);
 
@@ -137,14 +139,14 @@ export class Message {
     const afterMessages =
       remainingAfter > 0
         ? await collection
-          .find<MessageData & { _id: ObjectId }>({
-            channelId,
-            channelType,
-            createdAt: { $gt: createdAt },
-          })
-          .sort({ createdAt: 1 })
-          .limit(remainingAfter)
-          .toArray()
+            .find<MessageData & { _id: ObjectId }>({
+              channelId,
+              channelType,
+              createdAt: { $gt: createdAt },
+            })
+            .sort({ createdAt: 1 })
+            .limit(remainingAfter)
+            .toArray()
         : [];
 
     const orderedBefore = beforeMessages
@@ -175,7 +177,7 @@ export class Message {
           attachments: validatedData.attachments || [],
           updatedAt: new Date(),
         },
-      }
+      },
     );
 
     return result.modifiedCount > 0;
