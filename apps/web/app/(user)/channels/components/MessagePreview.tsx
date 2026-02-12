@@ -20,6 +20,7 @@ import { Loader2, RotateCcw } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { memo, useMemo } from "react";
 import { useMessageInput } from "@/app/(user)/channels/contexts/MessageInputContext";
+import { ProfileCardPopover } from "../../components/ProfileCardPopover";
 
 interface MessagePreviewProps {
   message: OptimistcMessageData & {
@@ -108,12 +109,14 @@ const MessagePreview = memo(({ message, highlight }: MessagePreviewProps) => {
           )}
         >
           {showAvatar ? (
-            <Avatar className="size-10">
-              <AvatarImage src={profile?.avatarURL || undefined} />
-              <AvatarFallback>
-                {profile?.displayName?.charAt(0).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileCardPopover userId={message.authorId}>
+              <Avatar className="size-10">
+                <AvatarImage src={profile?.avatarURL || undefined} />
+                <AvatarFallback>
+                  {profile?.displayName?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+            </ProfileCardPopover>
           ) : (
             <div className="w-10" /> // Spacer to maintain alignment
           )}
@@ -121,9 +124,11 @@ const MessagePreview = memo(({ message, highlight }: MessagePreviewProps) => {
           <div className="flex flex-col">
             {showAvatar && (
               <div className="flex gap-2 items-center mb-1">
-                <p className="text-sm font-extrabold">
-                  {profile?.displayName || "Unknown User"}
-                </p>
+                <ProfileCardPopover userId={message.authorId}>
+                  <p className="text-sm font-extrabold">
+                    {profile?.displayName || "Unknown User"}
+                  </p>
+                </ProfileCardPopover>
                 <p className="text-[10px] text-muted-foreground">
                   {isSameDay
                     ? new Date(message.createdAt).toLocaleString("en-US", {
