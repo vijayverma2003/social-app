@@ -14,7 +14,6 @@ const PostChannelHeader = ({
 }) => {
   const { closeConversation } = useConversationPreview();
   const post = usePostsStore((state) => state.getPost(postId));
-  console.log(post);
 
   const authorProfile = post?.userId
     ? useProfilesStore((state) => state.getProfile(post.userId))

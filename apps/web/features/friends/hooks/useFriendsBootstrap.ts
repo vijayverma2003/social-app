@@ -18,7 +18,6 @@ export const useFriendsBootstrap = () => {
 
     const fetchFriends = async () => {
       const onComplete = (friends: FriendsList[]) => {
-        console.log("friends", friends);
         setFriends(friends);
       };
 
@@ -38,8 +37,6 @@ export const useFriendsBootstrap = () => {
       }
     };
 
-    console.log("fetching friends");
-
     fetchFriends();
   }, [isConnected]);
 
@@ -47,7 +44,7 @@ export const useFriendsBootstrap = () => {
     if (!socket) return;
 
     function handleRemoved(
-      data: Parameters<ServerToClientEvents[typeof FRIEND_EVENTS.REMOVED]>[0]
+      data: Parameters<ServerToClientEvents[typeof FRIEND_EVENTS.REMOVED]>[0],
     ) {
       removeFriendById(data.friendId);
     }

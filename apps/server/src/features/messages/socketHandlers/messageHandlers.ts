@@ -432,8 +432,6 @@ export class MessageHandlers extends BaseSocketHandler {
       // Parse before/after dates if provided
       const beforeDate = before ? new Date(before) : undefined;
       const afterDate = after ? new Date(after) : undefined;
-      console.log("beforeDate", beforeDate);
-      console.log("afterDate", afterDate);
 
       // Get messages for standard pagination
       const messages = await Message.findByChannelIdAndType(
@@ -443,8 +441,6 @@ export class MessageHandlers extends BaseSocketHandler {
         beforeDate,
         afterDate,
       );
-
-      console.log("messages after : ", messages.length, messages[0].createdAt);
 
       // Map _id to id for all messages
       const mappedMessages = messages.map(mapMessageId);

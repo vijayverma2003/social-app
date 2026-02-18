@@ -127,7 +127,7 @@ export const fetchMessages = (
 
         options?.onSuccess?.();
         resolve(response.data);
-      } else {
+      } else if (response.error) {
         const error = response.error || "Failed to fetch messages";
         options?.onError?.(error);
         reject(new Error(error));
