@@ -11,13 +11,15 @@ import {
   RemoveLikePayloadSchema,
   BookmarkPostPayloadSchema,
   RemoveBookmarkPayloadSchema,
+  LockPostPayloadSchema,
+  UnlockPostPayloadSchema,
 } from "@shared/schemas";
 import { POST_EVENTS } from "@shared/socketEvents";
 import { ClientToServerEvents } from "@shared/types/socket";
 import { BaseSocketHandler } from "../../../BaseSocketHandler";
 import { AuthenticatedSocket } from "../../../socketHandlers";
 import { postCaptionQueue, postEmbeddingQueue } from "../../../queues";
-import { geminiAIService } from "@shared/ai/gemini"
+import { geminiAIService } from "@shared/ai/gemini";
 
 type CreatePostData = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.CREATE]
@@ -89,12 +91,26 @@ type SearchPostsCallback = Parameters<
   ClientToServerEvents[typeof POST_EVENTS.SEARCH]
 >[1];
 
+type LockPostData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.LOCK]
+>[0];
+type LockPostCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.LOCK]
+>[1];
+
+type UnlockPostData = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.UNLOCK]
+>[0];
+type UnlockPostCallback = Parameters<
+  ClientToServerEvents[typeof POST_EVENTS.UNLOCK]
+>[1];
+
 // Helper function to format post with likes count, isLiked, and isBookmarked status.
 // Accepts a Prisma client or transaction client so likes and post reads share the same transaction.
 const formatPostWithLikes = async (
   db: any,
   post: any,
-  userId: string | null
+  userId: string | null,
 ): Promise<any> => {
   const [likesCount, userLike, userBookmark] = await Promise.all([
     db.postLike.count({
@@ -102,23 +118,23 @@ const formatPostWithLikes = async (
     }),
     userId
       ? db.postLike.findUnique({
-        where: {
-          postId_userId: {
-            postId: post.id,
-            userId,
+          where: {
+            postId_userId: {
+              postId: post.id,
+              userId,
+            },
           },
-        },
-      })
+        })
       : null,
     userId
       ? db.postBookmark.findUnique({
-        where: {
-          postId_userId: {
-            postId: post.id,
-            userId,
+          where: {
+            postId_userId: {
+              postId: post.id,
+              userId,
+            },
           },
-        },
-      })
+        })
       : null,
   ]);
 
@@ -135,7 +151,7 @@ const formatPostWithLikes = async (
 const formatPostsWithLikes = async (
   db: any,
   posts: any[],
-  userId: string | null
+  userId: string | null,
 ): Promise<any[]> => {
   if (posts.length === 0) return posts;
 
@@ -148,36 +164,36 @@ const formatPostsWithLikes = async (
     }),
     userId
       ? db.postLike.findMany({
-        where: {
-          postId: { in: postIds },
-          userId,
-        },
-        select: {
-          postId: true,
-        },
-      })
+          where: {
+            postId: { in: postIds },
+            userId,
+          },
+          select: {
+            postId: true,
+          },
+        })
       : [],
     userId
       ? db.postBookmark.findMany({
-        where: {
-          postId: { in: postIds },
-          userId,
-        },
-        select: {
-          postId: true,
-        },
-      })
+          where: {
+            postId: { in: postIds },
+            userId,
+          },
+          select: {
+            postId: true,
+          },
+        })
       : [],
   ]);
 
   const likesMap = new Map(
-    likesCounts.map((item: any) => [item.postId, item._count])
+    likesCounts.map((item: any) => [item.postId, item._count]),
   );
   const userLikesSet = new Set(
-    (userLikes as Array<{ postId: string }>).map((like) => like.postId)
+    (userLikes as Array<{ postId: string }>).map((like) => like.postId),
   );
   const userBookmarksSet = new Set(
-    (userBookmarks as Array<{ postId: string }>).map((b) => b.postId)
+    (userBookmarks as Array<{ postId: string }>).map((b) => b.postId),
   );
 
   return posts.map((post) => ({
@@ -191,50 +207,58 @@ const formatPostsWithLikes = async (
 export class PostHandlers extends BaseSocketHandler {
   public setupHandlers(socket: AuthenticatedSocket) {
     socket.on(POST_EVENTS.CREATE, (data, callback) =>
-      this.createPost(socket, data, callback)
+      this.createPost(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.UPDATE, (data, callback) =>
-      this.updatePost(socket, data, callback)
+      this.updatePost(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.GET_FEED, (data, callback) =>
-      this.getFeed(socket, data, callback)
+      this.getFeed(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.GET_RECENT_POSTS, (data, callback) =>
-      this.getRecentPosts(socket, data, callback)
+      this.getRecentPosts(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.SEARCH, (data, callback) =>
-      this.searchPosts(socket, data, callback)
+      this.searchPosts(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.DELETE, (data, callback) =>
-      this.deletePost(socket, data, callback)
+      this.deletePost(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.LIKE, (data, callback) =>
-      this.likePost(socket, data, callback)
+      this.likePost(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.UNLIKE, (data, callback) =>
-      this.removeLike(socket, data, callback)
+      this.removeLike(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.BOOKMARK, (data, callback) =>
-      this.bookmarkPost(socket, data, callback)
+      this.bookmarkPost(socket, data, callback),
     );
 
     socket.on(POST_EVENTS.UNBOOKMARK, (data, callback) =>
-      this.removeBookmark(socket, data, callback)
+      this.removeBookmark(socket, data, callback),
+    );
+
+    socket.on(POST_EVENTS.LOCK, (data, callback) =>
+      this.lockPost(socket, data, callback),
+    );
+
+    socket.on(POST_EVENTS.UNLOCK, (data, callback) =>
+      this.unlockPost(socket, data, callback),
     );
   }
 
   private async createPost(
     socket: AuthenticatedSocket,
     data: CreatePostData,
-    callback: CreatePostCallback
+    callback: CreatePostCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -325,15 +349,21 @@ export class PostHandlers extends BaseSocketHandler {
         const formattedPost = await formatPostWithLikes(
           tx,
           createdPost,
-          socket.userId ?? null
+          socket.userId ?? null,
         );
 
         return { post: formattedPost };
       });
 
       if (storageObjectIds && storageObjectIds.length > 0) {
-        await postCaptionQueue.add(`post-caption:${post.id}`, { postId: post.id });
-      } else { await postEmbeddingQueue.add(`post-embedding:${post.id}`, { postId: post.id }); }
+        await postCaptionQueue.add(`post-caption:${post.id}`, {
+          postId: post.id,
+        });
+      } else {
+        await postEmbeddingQueue.add(`post-embedding:${post.id}`, {
+          postId: post.id,
+        });
+      }
 
       // Broadcast to all users (posts are public)
       // Note: For broadcast, we don't include isLiked/isBookmarked since they're user-specific
@@ -355,7 +385,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async updatePost(
     socket: AuthenticatedSocket,
     data: UpdatePostData,
-    callback: UpdatePostCallback
+    callback: UpdatePostCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -398,7 +428,7 @@ export class PostHandlers extends BaseSocketHandler {
         select: { storageObjectId: true },
       });
       const oldStorageObjectIds = existingAttachments.map(
-        (att) => att.storageObjectId
+        (att) => att.storageObjectId,
       );
 
       // Validate and fetch StorageObject data from PostgreSQL if attachments are provided
@@ -482,7 +512,7 @@ export class PostHandlers extends BaseSocketHandler {
       const formattedPost = await formatPostWithLikes(
         prisma,
         updatedPost,
-        socket.userId
+        socket.userId,
       );
 
       // Broadcast to all users (posts are public)
@@ -509,7 +539,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async getFeed(
     socket: AuthenticatedSocket,
     data: GetFeedData,
-    callback: GetFeedCallback
+    callback: GetFeedCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -573,7 +603,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async getRecentPosts(
     socket: AuthenticatedSocket,
     data: GetRecentPostsData,
-    callback: GetRecentPostsCallback
+    callback: GetRecentPostsCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -645,7 +675,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async searchPosts(
     socket: AuthenticatedSocket,
     data: SearchPostsData,
-    callback: SearchPostsCallback
+    callback: SearchPostsCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -663,13 +693,18 @@ export class PostHandlers extends BaseSocketHandler {
 
       const { query, take, offset } = validation.data;
 
-      const queryEmbedding = await geminiAIService.generateVectorEmbedding(query);
+      const queryEmbedding =
+        await geminiAIService.generateVectorEmbedding(query);
 
       let rows;
 
-      if (queryEmbedding && queryEmbedding?.vector && queryEmbedding?.vector.length >= 0) {
-        console.log('Vector Search for query -', query)
-        const queryVector = `[${queryEmbedding.vector.join(',')}]`;
+      if (
+        queryEmbedding &&
+        queryEmbedding?.vector &&
+        queryEmbedding?.vector.length >= 0
+      ) {
+        console.log("Vector Search for query -", query);
+        const queryVector = `[${queryEmbedding.vector.join(",")}]`;
 
         rows = await prisma.$queryRaw<{ id: string }[]>`
         WITH scored AS (
@@ -694,7 +729,7 @@ export class PostHandlers extends BaseSocketHandler {
         LIMIT ${take} OFFSET ${offset};
       `;
       } else {
-        console.log('Text Search for query -', query)
+        console.log("Text Search for query -", query);
         rows = await prisma.$queryRaw<{ id: string }[]>`
         WITH scored AS (
           SELECT p.id,
@@ -738,7 +773,9 @@ export class PostHandlers extends BaseSocketHandler {
         });
         // Preserve ranked order from raw query (ids are already DESC by ts_rank → index 0 = best match)
         const orderMap = new Map(ids.map((id, i) => [id, i]));
-        posts.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)); // ascending index = best match first
+        posts.sort(
+          (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
+        ); // ascending index = best match first
         return formatPostsWithLikes(tx, posts, socket.userId ?? null);
       });
 
@@ -755,7 +792,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async deletePost(
     socket: AuthenticatedSocket,
     data: DeletePostData,
-    callback: DeletePostCallback
+    callback: DeletePostCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -801,7 +838,7 @@ export class PostHandlers extends BaseSocketHandler {
 
       // Get storage object IDs to decrement refCount
       const storageObjectIds = existingPost.attachments.map(
-        (att) => att.storageObjectId
+        (att) => att.storageObjectId,
       );
 
       const channelId = existingPost.channelId;
@@ -840,7 +877,7 @@ export class PostHandlers extends BaseSocketHandler {
         try {
           const deletedMessages = await Message.deleteByChannelId(channelId);
           console.log(
-            `Deleted ${deletedMessages} messages from channel ${channelId} for post ${postId}`
+            `Deleted ${deletedMessages} messages from channel ${channelId} for post ${postId}`,
           );
         } catch (error) {
           console.error("Error deleting messages from MongoDB:", error);
@@ -866,7 +903,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async likePost(
     socket: AuthenticatedSocket,
     data: LikePostData,
-    callback: LikePostCallback
+    callback: LikePostCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -966,7 +1003,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async removeLike(
     socket: AuthenticatedSocket,
     data: RemoveLikeData,
-    callback: RemoveLikeCallback
+    callback: RemoveLikeCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -1060,7 +1097,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async bookmarkPost(
     socket: AuthenticatedSocket,
     data: BookmarkPostData,
-    callback: BookmarkPostCallback
+    callback: BookmarkPostCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -1145,7 +1182,7 @@ export class PostHandlers extends BaseSocketHandler {
   private async removeBookmark(
     socket: AuthenticatedSocket,
     data: RemoveBookmarkData,
-    callback: RemoveBookmarkCallback
+    callback: RemoveBookmarkCallback,
   ) {
     try {
       if (!socket.userId) {
@@ -1225,6 +1262,172 @@ export class PostHandlers extends BaseSocketHandler {
         error instanceof Error ? error.message : "Failed to remove bookmark";
       callback({
         error: message,
+      });
+    }
+  }
+
+  private async lockPost(
+    socket: AuthenticatedSocket,
+    data: LockPostData,
+    callback: LockPostCallback,
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      const validation = LockPostPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { postId } = validation.data;
+
+      const existingPost = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { id: true, userId: true, locked: true },
+      });
+
+      if (!existingPost) {
+        return callback({
+          error: "Post not found",
+        });
+      }
+
+      if (existingPost.userId !== socket.userId) {
+        return callback({
+          error: "Only the author of the post can lock it",
+        });
+      }
+
+      if (existingPost.locked) {
+        return callback({
+          error: "Post is already locked",
+        });
+      }
+
+      const formattedPost = await prisma.$transaction(async (tx) => {
+        await tx.post.update({
+          where: { id: postId },
+          data: { locked: true },
+        });
+
+        const post = await tx.post.findUnique({
+          where: { id: postId },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+          },
+        });
+
+        if (!post) {
+          throw new Error("Post not found after lock");
+        }
+
+        return formatPostWithLikes(tx, post, socket.userId ?? null);
+      });
+
+      // Broadcast POST_LOCKED to the author only
+      socket.emit(POST_EVENTS.LOCKED, formattedPost);
+
+      callback({
+        success: true,
+        data: formattedPost,
+      });
+    } catch (error) {
+      console.error("Error locking post:", error);
+      callback({
+        error: error instanceof Error ? error.message : "Failed to lock post",
+      });
+    }
+  }
+
+  private async unlockPost(
+    socket: AuthenticatedSocket,
+    data: UnlockPostData,
+    callback: UnlockPostCallback,
+  ) {
+    try {
+      if (!socket.userId) {
+        return callback({
+          error: "Unauthorized",
+        });
+      }
+
+      const validation = UnlockPostPayloadSchema.safeParse(data);
+      if (!validation.success) {
+        return callback({
+          error: validation.error.message || "Invalid payload",
+        });
+      }
+
+      const { postId } = validation.data;
+
+      const existingPost = await prisma.post.findUnique({
+        where: { id: postId },
+        select: { id: true, userId: true, locked: true },
+      });
+
+      if (!existingPost) {
+        return callback({
+          error: "Post not found",
+        });
+      }
+
+      if (existingPost.userId !== socket.userId) {
+        return callback({
+          error: "Only the author of the post can unlock it",
+        });
+      }
+
+      if (!existingPost.locked) {
+        return callback({
+          error: "Post is not locked",
+        });
+      }
+
+      const formattedPost = await prisma.$transaction(async (tx) => {
+        await tx.post.update({
+          where: { id: postId },
+          data: { locked: false },
+        });
+
+        const post = await tx.post.findUnique({
+          where: { id: postId },
+          include: {
+            attachments: {
+              include: {
+                storageObject: true,
+              },
+            },
+          },
+        });
+
+        if (!post) {
+          throw new Error("Post not found after unlock");
+        }
+
+        return formatPostWithLikes(tx, post, socket.userId ?? null);
+      });
+
+      // Broadcast POST_UNLOCKED to the author only
+      socket.emit(POST_EVENTS.UNLOCKED, formattedPost);
+
+      callback({
+        success: true,
+        data: formattedPost,
+      });
+    } catch (error) {
+      console.error("Error unlocking post:", error);
+      callback({
+        error: error instanceof Error ? error.message : "Failed to unlock post",
       });
     }
   }

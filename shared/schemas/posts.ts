@@ -122,6 +122,20 @@ export const RemoveBookmarkPayloadSchema = z
   })
   .strict();
 
+// Lock Post Payload Schema (for socket events)
+export const LockPostPayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();
+
+// Unlock Post Payload Schema (for socket events)
+export const UnlockPostPayloadSchema = z
+  .object({
+    postId: z.string().trim().min(1, "Post ID is required"),
+  })
+  .strict();
+
 // Search Posts Payload Schema (for socket events) - safe search string length
 const SEARCH_STRING_MAX_LENGTH = 200;
 

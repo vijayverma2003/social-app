@@ -44,7 +44,9 @@ import {
   GetRecentPostsPayload,
   JoinPostPayload,
   LikePostPayload,
+  LockPostPayload,
   PostResponse,
+  UnlockPostPayload,
   RemoveBookmarkPayload,
   RemoveLikePayload,
   SearchPostsPayload,
@@ -462,6 +464,30 @@ export interface ClientToServerEvents {
     ) => void,
   ) => void;
 
+  /**
+   * LOCK: Lock a post (prevents further edits/comments)
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<PostResponse> - Returns the updated post
+   * @requires User must be the author of the post
+   * @broadcasts LOCKED to the author only
+   */
+  [POST_EVENTS.LOCK]: (
+    data: LockPostPayload,
+    callback: (response: SocketResponse<PostResponse>) => void,
+  ) => void;
+
+  /**
+   * UNLOCK: Unlock a post
+   * @param data - { postId: string }
+   * @param callback - SocketResponse<PostResponse> - Returns the updated post
+   * @requires User must be the author of the post
+   * @broadcasts UNLOCKED to the author only
+   */
+  [POST_EVENTS.UNLOCK]: (
+    data: UnlockPostPayload,
+    callback: (response: SocketResponse<PostResponse>) => void,
+  ) => void;
+
   // ============================================================================
   // USER EVENTS
   // ============================================================================
@@ -684,6 +710,20 @@ export interface ServerToClientEvents {
     postId: string;
     userId: string;
   }) => void;
+
+  /**
+   * LOCKED: A post was locked
+   * @emitted_to The author of the post only
+   * @param data - PostResponse - The updated post with locked: true
+   */
+  [POST_EVENTS.LOCKED]: (data: PostResponse) => void;
+
+  /**
+   * UNLOCKED: A post was unlocked
+   * @emitted_to The author of the post only
+   * @param data - PostResponse - The updated post with locked: false
+   */
+  [POST_EVENTS.UNLOCKED]: (data: PostResponse) => void;
 
   // ============================================================================
   // USER EVENTS

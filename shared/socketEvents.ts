@@ -73,6 +73,8 @@ export const POST_EVENTS = {
   GET_RECENT_POSTS: "post:get_recent_posts",
   SEARCH: "post:search",
   RECENT_POST_ADD: "post:recent_post_add",
+  LOCK: "post:lock",
+  UNLOCK: "post:unlock",
 
   // Server -> Client events (notifications)
   CREATED: "post:created",
@@ -83,6 +85,8 @@ export const POST_EVENTS = {
   BOOKMARKED: "post:bookmarked",
   UNBOOKMARKED: "post:unbookmarked",
   RECENT_POST_ADDED: "post:recent_post_added",
+  LOCKED: "post:locked",
+  UNLOCKED: "post:unlocked",
 } as const;
 
 export const USER_EVENTS = {

@@ -158,6 +158,7 @@ model Post {
   embeddingModel       String?                      @db.VarChar(255)
   createdAt            DateTime                     @default(now())
   updatedAt            DateTime                     @updatedAt
+  locked               Boolean                      @default(false)
   user                 User                         @relation(fields: [userId], references: [id])
   channel              Channel?                     @relation(fields: [channelId], references: [id])
   attachments          PostAttachment[]
