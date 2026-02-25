@@ -39,7 +39,6 @@ model User {
   accounts      Account[]
 
   @@unique([username, discriminator])
-  @@map(name: "user")
 }
 
 model Session {
