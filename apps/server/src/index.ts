@@ -7,6 +7,8 @@ import router from "./routes";
 import { clerkMiddleware } from "@clerk/express";
 import { PORT } from "./config/vars";
 import { errorHandler } from "./middleware/errorMiddleware";
+import {toNodeHandler} from "better-auth/node";
+import { auth } from "./services/auth";
 
 const app = express();
 
@@ -16,6 +18,9 @@ app.use(
     credentials: true,
   })
 );
+
+app.all(`/api/auth/*`, toNodeHandler(auth));
+
 app.use(express.json());
 app.use(clerkMiddleware());
 app.use("/api", router);
