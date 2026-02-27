@@ -15,6 +15,7 @@
     "@shared": "workspace:*",
     "@tanstack/react-virtual": "^3.13.18",
     "axios": "^1.13.2",
+    "better-auth": "^1.4.19",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

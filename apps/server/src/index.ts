@@ -5,21 +5,21 @@ import cors from "cors";
 import * as mongodb from "@database/mongodb";
 import router from "./routes";
 import { clerkMiddleware } from "@clerk/express";
-import { PORT } from "./config/vars";
+import { NEXT_PUBLIC_URL, PORT } from "./config/vars";
 import { errorHandler } from "./middleware/errorMiddleware";
-import {toNodeHandler} from "better-auth/node";
+import { toNodeHandler } from "better-auth/node";
 import { auth } from "./services/auth";
 
 const app = express();
 
 app.use(
   cors({
-    origin: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
+    origin: [NEXT_PUBLIC_URL],
     credentials: true,
-  })
+  }),
 );
 
-app.all(`/api/auth/*`, toNodeHandler(auth));
+app.all(`/api/v1/auth/*splat`, toNodeHandler(auth));
 
 app.use(express.json());
 app.use(clerkMiddleware());
