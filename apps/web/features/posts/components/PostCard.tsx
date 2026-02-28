@@ -83,12 +83,12 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
           onComplete: (updatedPost) => {
             setIsLiked(updatedPost.isLiked);
           },
-        }
+        },
       ).catch(() => {
         // Error already handled via toast
       });
     },
-    [post.id, isLiked]
+    [post.id, isLiked],
   );
 
   const handleBookmark = useCallback(
@@ -114,12 +114,12 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
           onComplete: (updatedPost) => {
             setIsBookmarked(updatedPost.isBookmarked);
           },
-        }
+        },
       ).catch(() => {
         // Error already handled via toast
       });
     },
-    [post.id, isBookmarked]
+    [post.id, isBookmarked],
   );
 
   const handleDeleteClick = useCallback(
@@ -127,7 +127,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
       e.preventDefault();
       setDeleteDialogOpen(true);
     },
-    []
+    [],
   );
 
   return (
@@ -137,9 +137,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       />
-      <div
-        className="w-full max-w-2xl bg-background rounded-2xl pb-8 shadow-md shadow-background/30 group space-y-6"
-      >
+      <div className="w-full max-w-2xl bg-background rounded-2xl pb-8 shadow-md shadow-background/30 group space-y-6">
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -156,7 +154,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 </AvatarFallback>
               </Avatar>
 
-              <p className="text-sm font-medium">{displayName}</p>
+              <p className="text-sm font-bold">{displayName}</p>
             </ProfileCardPopover>
 
             <Dot color="var(--muted-foreground)" />
@@ -169,7 +167,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
               className={cn(
                 "cursor-pointer hover:text-amber-500",
                 isBookmarked && "text-amber-500 bg-amber-500/10",
-                "group-hover:opacity-100 opacity-0 transition-opacity duration-300"
+                "group-hover:opacity-100 opacity-0 transition-opacity duration-300",
               )}
               onClick={handleBookmark}
             >
@@ -179,7 +177,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
               <DropdownMenuTrigger
                 className={cn(
                   buttonVariants({ size: "icon", variant: "ghost" }),
-                  "cursor-pointer"
+                  "cursor-pointer",
                 )}
               >
                 <EllipsisVerticalIcon />
@@ -238,7 +236,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 url: att.storageObject.url || "",
                 fileName: att.storageObject.filename,
                 contentType: att.storageObject.mimeType,
-                alt: att.storageObject.caption
+                alt: att.storageObject.caption,
               }))}
             />
           )}
@@ -279,7 +277,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
               variant="secondary"
               className={cn(
                 "cursor-pointer",
-                isLiked ? "text-red-500 bg-red-500/10" : "hover:text-red-500"
+                isLiked ? "text-red-500 bg-red-500/10" : "hover:text-red-500",
               )}
               onClick={handleLike}
             >
@@ -292,7 +290,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
               type="button"
               className={cn(
                 buttonVariants({ size: "icon", variant: "secondary" }),
-                "cursor-pointer"
+                "cursor-pointer",
               )}
               onClick={() => onPreviewChat?.(post)}
             >
@@ -304,7 +302,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
                 href={`/channels/${post.id}/${post.channelId}`}
                 className={cn(
                   "cursor-pointer",
-                  buttonVariants({ variant: "secondary" })
+                  buttonVariants({ variant: "secondary" }),
                 )}
               >
                 <MessageCircle />
@@ -324,9 +322,7 @@ export const PostCard = ({ post, userId, onPreviewChat }: PostCardProps) => {
 export const PostCardSkeleton = () => {
   return (
     <>
-      <div
-        className="w-full max-w-2xl bg-background rounded-2xl pb-8 shadow-md shadow-background/30 group space-y-6"
-      >
+      <div className="w-full max-w-2xl bg-background rounded-2xl pb-8 shadow-md shadow-background/30 group space-y-6">
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -343,7 +339,6 @@ export const PostCardSkeleton = () => {
             <Skeleton className="h-4 w-5/6" />
             <Skeleton className="h-4 w-4/6" />
           </div>
-
         </div>
 
         {/* Actions */}

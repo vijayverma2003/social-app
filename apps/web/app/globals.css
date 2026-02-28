@@ -6,9 +6,9 @@
 
 :root {
   --radius: 0.05rem;
-  --card: oklch(1 0 0);
+  --card: oklch(0.9618 0.0025 88.64);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.9618 0.0025 88.64);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.51 0.23 277);
   --primary-foreground: oklch(0.96 0.02 272);
@@ -35,7 +35,7 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --background: oklch(1 0 0);
+  --background: oklch(0.9618 0.0025 88.64);
   --foreground: oklch(0.145 0 0);
 }
 
@@ -76,7 +76,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-satoshi);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
@@ -127,7 +127,7 @@
 }
 
 body {
-  font-family: var(--font-outfit), Arial, Helvetica, sans-serif;
+  font-family: var(--font-satoshi), Arial, Helvetica, sans-serif;
 }
 
 @layer base {
@@ -136,6 +136,11 @@ body {
     @apply border-border outline-ring/50;
     @apply border-border outline-ring/50;
   }
+
+  html {
+    font-weight: 500;
+  }
+
   body {
     @apply bg-background text-foreground;
     @apply bg-background text-foreground;

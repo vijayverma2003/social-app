@@ -5,8 +5,16 @@ import "./globals.css";
 import { SocketContextProvider } from "@/providers/SocketContextProvider";
 import { UserContextProvider } from "@/providers/UserContextProvider";
 import { Toaster } from "sonner";
+import localFont from "next/font/local";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
+
+const satoshi = localFont({
+  src: "../public/fonts/satoshi/Satoshi-Variable.woff2",
+  display: "swap",
+  variable: "--font-satoshi",
+  weight: "300 900",
+});
 
 export const metadata: Metadata = {
   title: "The Social App",
@@ -20,9 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={outfit.variable}>
+      <html lang="en" className={`${satoshi.variable}`}>
         <body
-          className={`${outfit.variable} antialiased h-screen overflow-hidden dark`}
+          className={`${satoshi.variable} antialiased h-screen overflow-hidden`}
         >
           <UserContextProvider>
             <SocketContextProvider>{children}</SocketContextProvider>
