@@ -30,7 +30,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${satoshi.variable}`}>
         <body
-          className={`${satoshi.variable} antialiased h-screen overflow-hidden`}
+          className={`${satoshi.variable} antialiased h-screen overflow-hidden dark`}
         >
           <UserContextProvider>
             <SocketContextProvider>{children}</SocketContextProvider>

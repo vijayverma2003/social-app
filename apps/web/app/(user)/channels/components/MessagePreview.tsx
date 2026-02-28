@@ -187,7 +187,7 @@ const MessagePreview = memo(({ message, highlight }: MessagePreviewProps) => {
 
             {/* Show uploaded attachments */}
             {message.attachments && message.attachments.length > 0 && (
-              <div className="max-w-xl">
+              <div className="max-w-xl min-h-[280px]">
                 {/* Image collage */}
                 <ImageCollage
                   images={message.attachments.map((attachment) => ({

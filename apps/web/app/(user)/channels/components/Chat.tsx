@@ -137,13 +137,15 @@ const Chat = ({
       data={enrichedMessages}
       totalCount={messages.length}
       startReached={loadOlder}
+      computeItemKey={(index, message) => message.id}
       endReached={aroundMessageId ? loadNewer : undefined}
-      atTopThreshold={10}
-      atBottomThreshold={10}
+      atTopThreshold={400}
+      atBottomThreshold={400}
       followOutput={aroundMessageId ? false : "smooth"}
       firstItemIndex={firstItemIndex}
       alignToBottom={!aroundMessageId}
       initialTopMostItemIndex={initialScrollIndex}
+      increaseViewportBy={{ top: 500, bottom: 500 }}
       components={{
         EmptyPlaceholder: () =>
           !initialLoadingComplete ? (
@@ -156,13 +158,13 @@ const Chat = ({
             </div>
           ) : null,
       }}
-      overscan={10}
-      className="flex justify-end"
+      overscan={200}
+      defaultItemHeight={36}
       itemContent={(index, message) => {
         return (
           <>
             {!hasMoreOlder && message.type === "discussion-beginning" && (
-              <div>
+              <div className="min-h-[200px]">
                 {channelType === "post" && (
                   <PostDiscussionBeginning postId={postId} />
                 )}
@@ -173,7 +175,7 @@ const Chat = ({
             )}
             {message.dateBanner && (
               <div
-                className="text-xs text-muted-foreground relative mx-3 py-8 select-none"
+                className="h-[64px] text-xs text-muted-foreground relative mx-3 py-8 select-none"
                 role="separator"
               >
                 <p className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-background px-2">
